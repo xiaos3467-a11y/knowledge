@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>图解讲义馆 · 六册</title>
+<title>图解讲义馆 · 七册</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --paper:#F2F3EF; --ink:#1E232B; --ink2:#5B636F; --line:#D9DCD3;
-  --red:#CE3B24; --blue:#15607E; --green:#3D7A2C; --orange:#B4530A; --purple:#6B3FA0; --teal:#0F6E73;
+  --red:#CE3B24; --blue:#15607E; --green:#3D7A2C; --orange:#B4530A; --purple:#6B3FA0; --teal:#0F6E73; --navy:#3D5A80;
   --serif:"Noto Serif SC","STZhongsong","SimSun",serif;
   --sans:"Noto Sans SC","Microsoft YaHei",sans-serif;
 }
@@ -39,7 +39,7 @@ a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:14
 <div class="wrap">
   <header>
     <h1>图解讲义馆</h1>
-    <p>六册手写单文件讲义:每讲一张<b>按得下去</b>的动画。无框架、无构建、无外链依赖,离线可开——也是 Vercel 上最省心的一种项目。</p>
+    <p>七册手写单文件讲义:每讲一张<b>按得下去</b>的动画。无框架、无构建、无外链依赖,离线可开——也是 Vercel 上最省心的一种项目。</p>
   </header>
   <div class="shelf">
     <a class="book" style="--c:var(--red)" href="redis-illustrated.html">
@@ -68,6 +68,13 @@ a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:14
       <h2>Spring Boot 图解讲义</h2>
       <div class="meta">自动装配 · 十一讲 · 10 图 + starter 顾问</div>
       <p>自动配置漏斗重跑 ConditionEvaluation、BOM 仲裁前后、配置优先级水塔、fat jar 爆炸视图、Actuator 裸奔/收口对比、自研 Starter 五步工坊、启动排障室。</p>
+      <span class="go">开卷 →</span>
+    </a>
+    <a class="book" style="--c:var(--navy)" href="java-concurrency-illustrated.html">
+      <span class="pen">玄</span>
+      <h2>Java 并发 图解讲义</h2>
+      <div class="meta">JUC · 十一讲 · 11 图 + 线程池沙盘</div>
+      <p>开篇线程池沙盘狂点提交看"核心→队列→临时→拒绝"全路径;两线程 i++ 竞态实演、Dekker 重排剧场、volatile 缓存失效、锁升级阶梯、CAS 三啄木鸟与 ABA、AQS 锁交接接力棒、拒绝策略调音台、ThreadLocal 僵尸抽屉、CHM 一桶一锁、三剑客门、CompletableFuture DAG 令牌流。</p>
       <span class="go">开卷 →</span>
     </a>
     <a class="book" style="--c:var(--purple)" href="architecture-illustrated.html">

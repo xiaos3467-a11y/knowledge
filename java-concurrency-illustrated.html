@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java 并发 图解讲义 · JUC 十一讲</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F6F2; --card:#FFFFFF; --stage:#FAFBF7;
+  --ink:#1E232B; --ink2:#59616E; --line:#DDE0D8;
+  --pen:#3D5A80; --pen-bg:#E9EFF6; --pen-line:#BFD0E2;
+  --warn:#C2571A; --warn-bg:#FBEDE2; --warn-line:#E7C4A6;
+  --teal:#0E7C6B; --teal-bg:#E8F4F1;
+  --red:#B3341F; --red-bg:#FAEEE9;
+  --grape:#5B4A96; --grape-bg:#EEEAF8;
+  --amber:#A9750A; --amber-bg:#FAF2DE;
+  --gray:#7A828C;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --serif:"Noto Serif SC","Source Han Serif SC","STZhongsong","SimSun",serif;
+  --sans:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+  --kai:"KaiTi","STKaiti","Kaiti SC",var(--serif);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(30,35,43,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,35,43,.04) 1px,transparent 1px);
+  background-size:28px 28px}
+::selection{background:rgba(61,90,128,.18)}
+a{color:var(--pen);text-decoration:none}
+.wrap{display:grid;grid-template-columns:224px minmax(0,832px);gap:52px;max-width:1180px;margin:0 auto;padding:0 24px}
+main{min-width:0;padding-bottom:96px}
+section.ch{margin-top:96px;scroll-margin-top:24px}
+.kicker{font-family:var(--serif);color:var(--pen);font-weight:600;font-size:14px;letter-spacing:.12em;margin-bottom:6px}
+h1,h2{font-family:var(--serif);font-weight:900;line-height:1.3}
+h2{font-size:32px;margin-bottom:18px}
+h3{font-size:18px;margin:30px 0 10px;font-weight:700}
+p{margin:12px 0;max-width:76ch}
+p.lead{font-size:17px;color:var(--ink2)}
+ul.tight{margin:8px 0 8px 1.4em}
+ul.tight li{margin:6px 0}
+code.k{font-family:var(--mono);font-size:.86em;background:#EBEDE6;border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+mark{background:none;color:var(--pen);font-weight:700}
+mark.w{color:var(--warn)}
+.think{font-family:var(--kai);color:var(--pen);background:var(--pen-bg);border:1px dashed var(--pen-line);border-radius:8px;padding:8px 14px;font-size:15px;margin:18px 0}
+.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pen);border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;font-size:15px}
+.note b.tag{color:var(--pen);font-weight:700;margin-right:6px}
+aside.toc{position:sticky;align-self:start;top:24px;height:calc(100vh - 48px);overflow:auto;padding:28px 0;scrollbar-width:thin}
+.toc-brand{font-family:var(--serif);font-weight:900;font-size:19px;line-height:1.4;margin-bottom:14px}
+.toc-brand small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--pen);letter-spacing:.18em;font-weight:600}
+.toc ol{list-style:none}
+.toc li a{display:flex;gap:10px;align-items:baseline;padding:5.5px 10px;border-radius:6px;font-size:13.5px;color:var(--ink2);border-left:2px solid transparent}
+.toc li a i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--gray);width:20px;flex:none}
+.toc li a:hover{background:#ECEEE6;color:var(--ink)}
+.toc li a.active{color:var(--pen);font-weight:700;border-left-color:var(--pen);background:rgba(61,90,128,.07)}
+.toc li a.active i{color:var(--pen)}
+.hero{padding-top:48px}
+.hero-title{font-size:clamp(40px,6vw,66px);line-height:1.14}
+.hero-title .stroke{position:relative;display:inline-block}
+.hero-title .stroke svg{position:absolute;left:-4px;right:-4px;bottom:-8px;width:calc(100% + 8px);height:16px;overflow:visible}
+.hero-title .stroke svg path{stroke:var(--pen);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:460;stroke-dashoffset:460;animation:wipe 1s .5s ease-out forwards}
+@keyframes wipe{to{stroke-dashoffset:0}}
+.hero-sub{margin-top:16px;font-size:15.5px;color:var(--ink2);max-width:72ch}
+.hero-kicker{font-family:var(--serif);letter-spacing:.3em;color:var(--pen);font-size:14px;font-weight:600;margin-bottom:10px}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+.caret{display:inline-block;width:9px;height:1.05em;background:var(--pen);vertical-align:-2px;animation:blink 1.1s infinite}
+.reveal{opacity:0;transform:translateY(14px);animation:rv .7s ease-out forwards}
+.reveal.d1{animation-delay:.1s}.reveal.d2{animation-delay:.25s}.reveal.d3{animation-delay:.45s}
+@keyframes rv{to{opacity:1;transform:none}}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+@keyframes slidein{from{transform:translateX(-10px);opacity:0}}
+/* 线程池 hero */
+.pool{margin-top:34px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 44px rgba(30,35,43,.14);overflow:hidden}
+.pl-bar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#22303F;color:#C6D3E2;font-family:var(--mono);font-size:12px;flex-wrap:wrap}
+.pl-bar b{color:#8FB4DC}
+.pl-body{padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:12px}
+.pl-flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.pl-col{border:1.5px dashed var(--line);border-radius:10px;padding:6px 8px;min-width:120px;flex:1;font-size:12px}
+.pl-col h5{font-size:11.5px;font-family:var(--mono);color:var(--gray);margin-bottom:5px}
+.pl-tk{display:inline-block;font-family:var(--mono);font-size:10.5px;background:var(--pen);color:#fff;border-radius:5px;padding:2px 7px;margin:2px;animation:pop .25s}
+.pl-tk.done{background:var(--gray);opacity:.5}
+.pl-tk.dead{background:var(--red)}
+.pl-slave{width:100%;height:20px;border-radius:4px;background:#E9EBE4;margin:3px 0;position:relative;overflow:hidden}
+.pl-slave i{position:absolute;left:0;top:0;bottom:0;background:var(--teal);width:0;transition:width .3s}
+.pl-cell{display:inline-block;width:22px;height:22px;border:1.5px solid var(--line);border-radius:5px;margin:2px;text-align:center;line-height:20px;font-family:var(--mono);font-size:10px;vertical-align:top}
+.pl-cell.full{background:var(--amber);border-color:var(--amber);color:#fff}
+.pl-stats{font-family:var(--mono);font-size:12px;line-height:2;background:var(--stage);border:1px solid var(--line);border-radius:10px;padding:8px 12px;align-self:start}
+.pl-stats b{color:var(--pen)}
+.pl-log{font-family:var(--mono);font-size:11.5px;max-height:120px;overflow:auto;padding:8px 12px;background:#1E232B;color:#C9D0DA;border-radius:0 0 10px 10px;line-height:1.7;scrollbar-width:thin}
+.pl-log .w{color:#E8B54A}.pl-log .e{color:#F08A72}.pl-log .o{color:#6FC2AE}.pl-log .d{color:#7A828C}
+/* 通用 */
+.demo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin:26px 0;box-shadow:0 2px 0 rgba(30,35,43,.03)}
+.fig-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.fig-no{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--pen);border-radius:4px;padding:2px 8px;flex:none}
+.fig-title{font-family:var(--serif);font-size:17px;font-weight:600}
+.caption{font-family:var(--kai);color:var(--ink2);font-size:14px;line-height:1.7;margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
+.caption::before{content:"图注 · ";color:var(--pen)}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:14px}
+.dctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.dctrl .gap{flex:1}
+.btn{font-family:var(--sans);font-size:13px;color:var(--ink);background:#fff;border:1px solid #C7CCC0;border-radius:7px;padding:5px 14px;cursor:pointer;line-height:1.6;transition:border-color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--pen);color:var(--pen)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.solid:hover:not(:disabled){background:var(--pen);border-color:var(--pen);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{border-color:var(--pen);color:var(--pen);background:var(--pen-bg);font-weight:700}
+.btn.warn-o{border-color:var(--warn);color:var(--warn)}
+.btn.warn-o.on{background:var(--warn-bg)}
+.btn:focus-visible,a:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+.hint{font-size:13px;color:var(--ink2);margin-top:10px}
+.hint b{color:var(--pen)}
+.say{font-size:13.5px;min-height:2.2em;padding:6px 2px;color:var(--ink2);line-height:1.8}
+.say b{color:var(--pen)}
+.say.bad b{color:var(--warn)}
+.pill{display:inline-block;font-size:12px;font-family:var(--mono);border-radius:99px;padding:1px 10px;border:1px solid var(--line);background:#fff}
+.pill.pen{color:var(--pen);border-color:var(--pen-line);background:var(--pen-bg)}
+.pill.teal{color:var(--teal);border-color:#BFDDD5;background:var(--teal-bg)}
+.pill.warn{color:var(--warn);border-color:var(--warn-line);background:var(--warn-bg)}
+svg text{font-family:var(--sans)}
+table.tb{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;background:var(--card)}
+table.tb th,table.tb td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top}
+table.tb th{background:#ECEEE6;font-weight:700;font-size:13px}
+table.tb td.m{font-family:var(--mono);font-size:12.5px}
+/* 通用小件 */
+.boxes{display:grid;gap:10px}
+.bx{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:8px 12px;font-size:12.5px;transition:all .3s}
+.bx b{font-family:var(--mono)}
+.bx.hot{border-color:var(--pen);background:var(--pen-bg)}
+.bx.bad{border-color:var(--red);background:var(--red-bg)}
+.bx.good{border-color:var(--teal);background:var(--teal-bg)}
+.bx.dim{opacity:.4}
+.tval{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--pen)}
+.step-lane{border:1px solid var(--line);border-radius:8px;background:var(--card);padding:5px 10px;font-family:var(--mono);font-size:12px;margin:5px 0;min-height:30px;line-height:1.9}
+.step-lane .ln{display:inline-block;border-radius:4px;padding:0 6px;margin:1px 3px 1px 0;background:#EFF1EC}
+.step-lane .ln.act{background:var(--pen);color:#fff}
+.step-lane .ln.stale{background:var(--red-bg);color:var(--red)}
+.mono{font-family:var(--mono)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:13.5px;line-height:1.7}
+.card b{display:block;font-family:var(--serif);font-size:14.5px;margin-bottom:4px}
+.card b::before{content:"问 ";color:var(--pen)}
+footer{margin-top:88px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2);font-family:var(--kai);line-height:1.9}
+@media (max-width:1120px){
+  .wrap{grid-template-columns:minmax(0,860px);justify-content:center}
+  aside.toc{position:static;height:auto;order:-1;padding:12px 0 0}
+  .toc ol{display:flex;overflow-x:auto;gap:4px;padding-bottom:8px;scrollbar-width:thin}
+  .toc li a{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;border-radius:4px}
+  .toc li a.active{border-bottom-color:var(--pen);background:none}
+  .toc-brand{padding-left:10px}
+}
+@media (max-width:820px){
+  .pl-body{grid-template-columns:1fr}
+  h2{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+  .reveal{opacity:1;transform:none}
+  .hero-title .stroke svg path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<aside class="toc" aria-label="目录">
+  <div class="toc-brand"><small>JAVA CONCURRENCY</small>Java 并发 图解讲义</div>
+  <nav><ol>
+    <li><a href="#hero"><i>00</i>开篇 · 线程池沙盘</a></li>
+    <li><a href="#ch-race"><i>01</i>三大病害的根源</a></li>
+    <li><a href="#ch-jmm"><i>02</i>JMM 与 happens-before</a></li>
+    <li><a href="#ch-vol"><i>03</i>volatile 的两副担子</a></li>
+    <li><a href="#ch-lock"><i>04</i>synchronized 锁升级</a></li>
+    <li><a href="#ch-cas"><i>05</i>CAS·原子类·LongAdder</a></li>
+    <li><a href="#ch-aqs"><i>06</i>AQS 与 ReentrantLock</a></li>
+    <li><a href="#ch-pool"><i>07</i>线程池参数与拒绝</a></li>
+    <li><a href="#ch-tl"><i>08</i>ThreadLocal 与泄漏</a></li>
+    <li><a href="#ch-chm"><i>09</i>ConcurrentHashMap</a></li>
+    <li><a href="#ch-gate"><i>10</i>三剑客协同原语</a></li>
+    <li><a href="#ch-cf"><i>11</i>CompletableFuture 编排</a></li>
+    <li><a href="#ch-cards"><i>附</i>面试速查卡</a></li>
+  </ol></nav>
+</aside>
+
+<main>
+
+<section id="hero" class="hero">
+  <p class="hero-kicker reveal d1">JUC · 十一讲</p>
+  <h1 class="hero-title reveal d1">Java 并发<br><span class="stroke">图解讲义<svg viewBox="0 0 200 12" aria-hidden="true"><path d="M3 8 C 40 2, 70 11, 105 6 S 170 3, 197 7"/></svg></span></h1>
+  <p class="hero-sub reveal d2">开篇是一台<b>线程池沙盘</b>:调好 core / max / 队列三个参数,狂点"提交任务"——亲眼看任务如何<mark>先填核心线程 → 塞队列 → 再扩临时工 → 最后拒绝</mark>。这条执行顺序,是整册的地基。</p>
+  <div class="pool reveal d2">
+    <div class="pl-bar">
+      <b>ThreadPoolExecutor</b> · new ThreadPoolExecutor(core, max, keepAlive, workQueue)
+      <span style="flex:1"></span>
+      <button class="btn solid" id="pl-submit" style="background:#8FB4DC;border-color:#8FB4DC;color:#22303F;font-weight:700">＋ 提交 1 个任务</button>
+      <button class="btn" id="pl-burst" style="border-color:#8FB4DC;color:#8FB4DC">⚡ 突发 8 个</button>
+      <button class="btn" id="pl-drain" style="border-color:#8FB4DC;color:#8FB4DC">♻ 开始消费</button>
+    </div>
+    <div class="pl-body">
+      <div>
+        <div class="dctrl" style="margin:0 0 12px">
+          <label class="mono" style="font-size:12px">core <input type="range" min="1" max="4" value="2" id="pl-core"> <b id="pl-corev">2</b></label>
+          <label class="mono" style="font-size:12px">max <input type="range" min="2" max="8" value="4" id="pl-max"> <b id="pl-maxv">4</b></label>
+          <label class="mono" style="font-size:12px">队列容量 <input type="range" min="1" max="6" value="3" id="pl-q" > <b id="pl-qv">3</b></label>
+        </div>
+        <div class="pl-flow">
+          <div class="pl-col"><h5>新提交</h5><div id="pl-in" style="min-height:26px"></div>
+            <div style="font-size:10.5px;color:var(--gray);margin-top:4px">workerCount &lt; core → 直接建核心线程</div></div>
+          <div class="pl-col"><h5>任务队列</h5><div id="pl-queue"></div>
+            <div style="font-size:10.5px;color:var(--gray);margin-top:4px">满了才继续扩线程</div></div>
+          <div class="pl-col" style="flex:1.6"><h5>工作线程</h5><div id="pl-workers"></div></div>
+          <div class="pl-col"><h5>拒绝区</h5><div id="pl-rej" style="min-height:26px"></div>
+            <div style="font-size:10.5px;color:var(--gray);margin-top:4px">AbortPolicy 抛异常</div></div>
+        </div>
+      </div>
+      <div class="pl-stats" id="pl-stats"></div>
+    </div>
+    <div class="pl-log" id="pl-log"></div>
+  </div>
+</section>
+
+<section class="ch" id="ch-race">
+  <p class="kicker">第 一 讲</p>
+  <h2>并发三大病害:原子性、可见性、有序性</h2>
+  <p class="lead"><code class="k">i++</code> 看着是一行,机器里是三步:<mark>读内存 → 加一 → 写回</mark>。两个线程交错执行,两条"读"可能读到同一个旧值——写回两次,只加了一次。这是<b>原子性</b>问题;线程各自抱着 CPU 缓存/工作内存的副本,<b>改了别人看不见</b>,是可见性问题;编译器和 CPU 为了快,<b>会悄悄调换不冲突的指令</b>,是有序性问题。三者叠加,才有 JMM 和 java.util.concurrent 这一整套解药。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 1</span><span class="fig-title">两个线程各加 4 次 i++ · 交错上演,结局随机</span></div>
+    <div class="stage">
+      <div class="step-lane" id="rc-a"><b style="font-family:var(--sans)">线程 A</b> </div>
+      <div class="step-lane" id="rc-b"><b style="font-family:var(--sans)">线程 B</b> </div>
+      <div class="say" id="rc-say">i 的初值 = 5。先"裸奔"跑一局,再上 synchronized 跑一局,对比结果。</div>
+    </div>
+    <div class="dctrl">
+      <button class="btn warn-o" id="rc-bare">▶ 裸奔:交错执行</button>
+      <button class="btn" id="rc-sync">▶ 加锁:同一时刻只进一个</button>
+      <span class="gap"></span><span>最终值 <span class="tval" id="rc-i">5</span></span>
+    </div>
+    <p class="caption">裸奔局里留意"读→加→写"被打断的瞬间——两次读拿到同一个 5,就注定少加一次。真实程序里这个竞争窗口每天在产线上演,只是概率稀释成了"偶尔少一单"。</p>
+  </div>
+  <div class="note"><b class="tag">要点</b>一句话分清:<b>原子性</b>解决"做一半被人插队"(锁/CAS),<b>可见性</b>解决"我改了你不知道"(volatile/锁),<b>有序性</b>解决"先后被偷偷调换"(屏障/依赖约束)。后三讲各治一味。</div>
+</section>
+
+<section class="ch" id="ch-jmm">
+  <p class="kicker">第 二 讲</p>
+  <h2>JMM:happens-before 是法官,不是时钟</h2>
+  <p class="lead">Java 内存模型(JMM)不描述缓存硬件,它是一份<b>契约</b>:规定"什么情况下,线程 A 的写保证对线程 B 可见"。判据叫 <mark>happens-before</mark>——别读成"时间上先发生",它是<b>可见性秩序的偏序关系</b>。八条常用规则:程序顺序、监视器锁(解锁 hb 后续加锁)、volatile 写 hb 后续读、线程 start/run、join 收尾、传递性……<b>两个操作若没有 happens-before 关系,JVM 有权任意重排、不保证可见</b>。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 2</span><span class="fig-title">Dekker 小剧场 · 加不加屏障,两种世界</span></div>
+    <div class="stage">
+      <div class="boxes" style="grid-template-columns:1fr 1fr">
+        <div class="bx" id="jk-a"><b>线程 A</b><br>1. x = 1<br>2. r1 = y.read()</div>
+        <div class="bx" id="jk-b"><b>线程 B</b><br>1. y = 1<br>2. r2 = x.read()</div>
+      </div>
+      <div class="dctrl">
+        <button class="btn warn-o" id="jk-reorder">▶ 无同步:x=1 压在 r1 后面重排</button>
+        <button class="btn" id="jk-barrier">▶ volatile/锁:建立 happens-before</button>
+      </div>
+      <div class="say" id="jk-say">x、y 初值 0。问:r1 == 0 且 r2 == 0 可能发生吗?</div>
+    </div>
+    <p class="caption">无同步时,<b>可能!</b>A 的两行被重排成"先读 y 再写 x",B 同样——两人各读到对方的 0。这不是 bug 而是契约允许:两条语句无数据依赖,JMM 不管。写 x 用 volatile(或加锁)后,<b>"写 hb 读"链子锁死,同局面不可能再出现</b>。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-vol">
+  <p class="kicker">第 三 讲</p>
+  <h2>volatile:可见性 + 有序性,唯独不给原子性</h2>
+  <p class="lead">volatile 的硬件落地:写时<b>刷主存 + 失效其他 CPU 缓存行(锁前缀指令)</b>,读时直读;同时读写两侧插内存屏障,配合 JMM 规则杜绝绕过它的重排。适用画像就两种:<mark>状态位标志</mark>(一写多读)和 <mark>DCL 单例的引用</mark>。为什么 DCL 必须 volatile?<code class="k">instance = new Singleton()</code> 实为三步:分配内存→初始化→指派针;<b>后两步重排</b>时,第二个线程在第一线程"还没构造完"的对象上判空通过,拿到半成品。它给不了原子性——<code class="k">volatile i++</code> 照样丢更新。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 3</span><span class="fig-title">主内存与两块"工作内存" · 开关 volatile 看缓存失效</span></div>
+    <div class="stage">
+      <div class="boxes" style="grid-template-columns:1fr 1.2fr 1fr;align-items:center">
+        <div class="bx" id="vo-t1"><b>线程 T1(写)</b><br>工作内存 flag = <span class="tval" id="vo-w">true</span><br><small>停机?改个值…</small></div>
+        <div class="bx" id="vo-main" style="text-align:center"><b>主内存</b><br><span class="tval" id="vo-m">true</span><div id="vo-arrow" style="font-size:11px;color:var(--gray)">← 同步 →</div></div>
+        <div class="bx" id="vo-t2"><b>线程 T2(读)</b><br>循环 while(flag) 干活<br>读到 <span class="tval" id="vo-r">true</span> → <span id="vo-verdict">永不退出 ⚠</span></div>
+      </div>
+      <div class="dctrl">
+        <button class="btn warn-o" id="vo-plain">▶ 普通字段:T1 改了,但 T2 看不见</button>
+        <button class="btn" id="vo-vola">▶ volatile:写即刷出,读即失效</button>
+      </div>
+      <div class="say" id="vo-say">生产事故翻译:T2 是"热更新开关监听线程",普通 boolean 开关 = 你关了它不知道。</div>
+    </div>
+    <p class="caption">口诀:<b>一写多读用 volatile,多写用锁或原子类</b>。追问"volatile 怎么保证有序"别背硬件细节,答 JMM 规则:volatile 写 hb 后面对它的读,且它与前后语句间不许跨越重排(屏障实现这一契约)。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-lock">
+  <p class="kicker">第 四 讲</p>
+  <h2>synchronized 锁升级:从无锁一路到重量级</h2>
+  <p class="lead">HotSpot 的发现:<b>大多数加锁其实根本没竞争</b>,不该一上来就惊动操作系统。于是锁在对象头 Mark Word 里逐级"变身":<b>无锁 → 偏向锁</b>(记录归属线程,同一把钥匙只用一个人——进出自如零开销,但 15 后交替竞争要撤销,反而更亏,JDK 15 默认废弃)<b>→ 轻量级锁</b>(CAS 把 Mark Word 拷进线程栈的 Lock Record,自旋等待,<b>不停用户态</b>)<b>→ 重量级锁</b>(CAS 几次仍失败,膨胀出 Monitor 对象,没抢到的 park 挂起,交给 OS 调度——<b>用户/内核态切换的贵钱</b>)。锁只能升不能降(回收例外)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 4</span><span class="fig-title">锁升级阶梯 · 选一种竞争剧本,看 Mark Word 的形态</span></div>
+    <div class="stage">
+      <div class="boxes" style="grid-template-columns:repeat(4,1fr)">
+        <div class="bx" id="lk-s0" style="text-align:center"><b>无锁</b><br><span class="mono" style="font-size:10.5px">…hashage|01</span></div>
+        <div class="bx" id="lk-s1" style="text-align:center"><b>偏向</b><br><span class="mono" style="font-size:10.5px">threadid|epoch|1 01</span></div>
+        <div class="bx" id="lk-s2" style="text-align:center"><b>轻量级</b><br><span class="mono" style="font-size:10.5px">→LockRecord 00</span></div>
+        <div class="bx" id="lk-s3" style="text-align:center"><b>重量级</b><br><span class="mono" style="font-size:10.5px">→Monitor 10</span></div>
+      </div>
+      <div class="dctrl">
+        <button class="btn on" data-lk="single">剧本:同一线程反复进出</button>
+        <button class="btn" data-lk="alternate">剧本:两个线程轮流(不重叠)</button>
+        <button class="btn warn-o" data-lk="contend">剧本:真·同时抢</button>
+      </div>
+      <div class="say" id="lk-say"></div>
+    </div>
+    <p class="caption">Monitor 内部三件套:owner(持锁人)、EntryList(等锁队列)、WaitSet(wait 后睡觉的池子)——<code class="k">wait/notify</code> 就是把线程在前两者间搬运。升级不可逆:<b>高频交替访问会反复撤销偏向,这正是 15 之后干脆默认关掉偏向锁的原因</b>。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-cas">
+  <p class="kicker">第 五 讲</p>
+  <h2>CAS:乐观的代价、ABA 与 LongAdder</h2>
+  <p class="lead">"我以为它是 5,还是 5 我就改成 6,不是 5 我重来"——这就是 <mark>CAS(比较并交换)</mark>,一条 CPU 原子指令(cmpxchg)。Atomic* 家族、synchronized 的轻量级锁、ConcurrentHashMap 的空桶写入,底下全是它。三大代价:<b>高竞争=高自旋</b>(三个线程九个循环轮着白干 CPU);<b>只盯一个位置</b>(多变量原子还得回到锁);<b>ABA 问题</b>(值转一圈回来,中间被谁动过它不知道)。解药对应:竞争高换 <mark>LongAdder</mark>(热点拆 cell 数组分桶记账,读时 sum());需要版本语义用 <code class="k">AtomicStampedReference</code>(值+版本号双保险)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 5</span><span class="fig-title">三只啄木鸟抢一个值 · 失败重试、ABA 与分桶</span></div>
+    <div class="stage">
+      <div class="boxes" style="grid-template-columns:repeat(3,1fr)">
+        <div class="bx" id="cs-a"><b>线程 A</b><br><span class="mono" style="font-size:11px">期望 5 → 写 6</span></div>
+        <div class="bx" id="cs-b"><b>线程 B</b><br><span class="mono" style="font-size:11px">期望 5 → 写 7</span></div>
+        <div class="bx" id="cs-c"><b>线程 C</b><br><span class="mono" style="font-size:11px">期望 5 → 写 8</span></div>
+      </div>
+      <div class="dctrl">
+        <button class="btn solid" id="cs-race">▶ 一起 CAS(值 = 5)</button>
+        <button class="btn warn-o" id="cs-aba">▶ 演 ABA:5→3→5 转一圈</button>
+        <button class="btn" id="cs-adder">▶ 竞争太凶?换 LongAdder 分桶</button>
+      </div>
+      <div class="say" id="cs-say">共享值 v = <span class="tval" id="cs-v">5</span></div>
+      <div id="cs-adder-box" class="mono" style="display:none;font-size:12px;margin-top:6px"></div>
+    </div>
+    <p class="caption">ABA 要命吗?纯计数不要命;<b>链表节点复用/栈弹栈就致命</b>(节点被回收又重用,指针校验被骗过)。LongAdder 的哲学:把"一个热门值"变"一串分片",写永不争抢,读再合并——<b>用空间换冲突</b>,和分段锁一脉相承。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-aqs">
+  <p class="kicker">第 六 讲</p>
+  <h2>AQS:一个 int、一条队列、一套模板</h2>
+  <p class="lead">ReentrantLock、CountDownLatch、Semaphore 看着各玩各的,骨架都是 <mark>AQS(AbstractQueuedSynchronizer)</mark>:一个 <code class="k">volatile int state</code> 表达资源状态(锁:0/1,重入次数;共享:信号量个数、倒数计数),加不上锁的线程包成节点<b>挂进 CLH 双向队列,park 睡觉</b>;释放时唤醒队头继续抢。子类只需重写 <code class="k">tryAcquire/tryRelease</code>(独占)或 <code class="k">tryAcquireShared</code>(共享)几个钩子——这就是"模板方法模式"在 JUC 里的封神之作。公平 vs 非公平差一行代码:<b>加锁前先不先看队里有没有人等着(有=老实排队=公平;没有也抢=吞吐高但可能饿死后来者)</b>。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 6</span><span class="fig-title">state 与 CLH 队列 · 步进看锁的交接</span></div>
+    <div class="stage">
+      <div class="boxes" style="grid-template-columns:150px 1fr;align-items:center">
+        <div class="bx" style="text-align:center"><b>state</b><br><span class="tval" id="aq-st">0</span><br><small style="font-size:10.5px;color:var(--gray)" id="aq-owner">未持有</small></div>
+        <div class="bx" id="aq-q"><b>CLH 队列</b> <span class="mono" style="font-size:11.5px" id="aq-nodes">[ 空 ]</span></div>
+      </div>
+      <div class="dctrl">
+        <button class="btn solid" id="aq-next">下一步 ▸</button>
+        <button class="btn" id="aq-reset">重来</button>
+        <div class="radios" style="display:flex;gap:4px;align-items:center"><span style="font-size:12.5px;color:var(--ink2)">模式</span><button class="btn on" data-f="fair">公平锁</button><button class="btn" data-f="unfair">非公平锁</button></div>
+      </div>
+      <div class="say" id="aq-say"></div>
+    </div>
+    <p class="caption">剧本:T1 上锁成功 → T2 来抢入队 park → T3 也来排队 → T1 重入(state+1)→ T1 两层解锁归零 → <b>唤醒队头 T2</b> 交接锁。非公平模式下 T3 可能在交接瞬间插队直接抢走——吞吐↑,但 T2 可能被反复插队饿死。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-pool">
+  <p class="kicker">第 七 讲</p>
+  <h2>线程池下半场:拒绝策略与参数怎么定</h2>
+  <p class="lead">开篇沙盘演了执行顺序,这讲补两个工程问题。<b>队满了怎么办</b>——四种内置拒绝策略:<code class="k">AbortPolicy</code>(默认,抛异常,快而诚实)、<code class="k">CallerRunsPolicy</code>(让提交者自己跑,天然反压,但会拖慢上游)、<code class="k">DiscardPolicy</code>(静默丢,<mark>业务别用</mark>)、<code class="k">DiscardOldestPolicy</code>(丢最老的腾位,适合时效性数据如行情)。<b>线程数怎么定</b>——先脑公式:CPU 密集 N+1、IO 密集理论 2N,但真实答案永远是<b>压测</b>:从核数起步,盯三个指标调(队列堆积、CPU 利用率、任务 P99)。IO 密集远超 2N 也常见(取决于下游,不取决于本机核数)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 7</span><span class="fig-title">拒绝策略四门课 + 参数调音台</span></div>
+    <div class="stage">
+      <div class="dctrl" style="margin-top:0">
+        <span style="font-size:13px">池已饱和(沙盘同款 max=4 队列=3),来新任务 T17 →</span>
+        <button class="btn on" data-rj="abort">Abort</button>
+        <button class="btn" data-rj="caller">CallerRuns</button>
+        <button class="btn" data-rj="discard">Discard</button>
+        <button class="btn" data-rj="oldest">DiscardOldest</button>
+      </div>
+      <div class="say" id="rj-say" style="min-height:3.4em"></div>
+      <div style="border-top:1px dashed var(--line);margin-top:8px;padding-top:10px;font-size:13px">
+        压测调音台:当前队列积压 <b id="rj-backlog">0</b> · CPU <b id="rj-cpu">40%</b> · P99 <b id="rj-p99">80ms</b><br>
+        <span style="font-size:12px;color:var(--ink2)">线程数</span>
+        <button class="btn" id="rj-minus">−</button><b class="tval" id="rj-n" style="font-size:14px">8</b><button class="btn" id="rj-plus">＋</button>
+        <span style="font-size:12px;color:var(--gray);margin-left:8px">每点一次模拟一轮压测结果</span>
+      </div>
+    </div>
+    <p class="caption">CallerRuns 的妙处是<b>不需要任何协调就实现反压</b>:提交方被拉去干活,自然就慢下来了。调音台里把线程从 1 加到 64,看三个指标怎么此消彼长——<b>最优值只存在于你的流量模型里,不存在于博客口诀里</b>。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-tl">
+  <p class="kicker">第 八 讲</p>
+  <h2>ThreadLocal:每个线程一个抽屉,以及忘记锁门</h2>
+  <p class="lead">ThreadLocal 不是"变量本地化"的魔法:每个 <code class="k">Thread</code> 对象自带一张 <code class="k">ThreadLocalMap</code>,<mark>key 是 ThreadLocal 的弱引用,value 是值本体</mark>。get/set 都是"以当前 TL 实例为 key 查自己的表"——不同线程天然隔离,免锁。名场面三连:SimpleDateFormat 线程隔离(历史)、<b>用户上下文/traceId 透传</b>、Spring 事务的 Connection 绑定(和 MySQL 册的 ThreadLocal 账本同一个思想)。<b>泄漏点</b>:线程池的线程不死,弱引用 key 被 GC 回收后,value 还挂在表里变"僵尸";下次 set 会顺带清理,但最可靠永远是——<mark>用完 finally remove()</mark>。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 8</span><span class="fig-title">线程的抽屉柜 · 演示一次"强引用丢弃 → key 先没 value 后没"</span></div>
+    <div class="stage">
+      <div class="boxes" style="grid-template-columns:1fr 1fr">
+        <div class="bx" id="tl-main"><b>堆</b><br><span class="mono" style="font-size:11.5px">tlRef → ThreadLocal@A7<br>(业务代码的强引用)</span></div>
+        <div class="bx" id="tl-thread"><b>Thread-1 的 ThreadLocalMap</b><br><span class="mono" style="font-size:11.5px" id="tl-entry">Entry[ key=WeakRef→A7 , value="用户上下文" ]</span></div>
+      </div>
+      <div class="dctrl">
+        <button class="btn warn-o" id="tl-drop">① 业务代码置空强引用 tlRef=null</button>
+        <button class="btn warn-o" id="tl-gc">② GC 来了(回收弱引用 key)</button>
+        <button class="btn" id="tl-remove">③ 正确姿势:remove()</button>
+      </div>
+      <div class="say" id="tl-say"></div>
+    </div>
+    <p class="caption">走完①②看 Entry 的样子:<b>key 成了 null 而 value 还在链上</b>——线程池线程永生,这个抽屉就永远锁着不放。③ remove 才是真正的清理(为什么弱引用反而"帮了忙":key==null 的 Entry 是 set/get 时顺手清扫的路标)。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-chm">
+  <p class="kicker">第 九 讲</p>
+  <h2>ConcurrentHashMap:从分段锁到"一桶一锁"</h2>
+  <p class="lead">JDK 7 的 Segment(默认 16 段)把并发粒度定死在"段";JDK 8 推倒重来:<mark>空桶用 CAS 写入,非空桶对头节点 synchronized</mark>——锁粒度细化到单个桶,并发度=数组长度且能扩容。配套的细活:链表长度 ≥8 <b>且数组 ≥64</b> 才树化(否则先扩容);扩容用 <code class="k">sizeCtl</code> + ForwardingNode 做<b>多线程协作迁移</b>(帮忙搬桶的线程随处可见);计数不用 AtomicLong 硬攒,用 <code class="k">CounterCells</code>(还是 LongAdder 那招)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 9</span><span class="fig-title">16 桶棋盘 · put 时到底锁了什么</span></div>
+    <div class="stage">
+      <div class="mono" style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px;font-size:11px" id="chm-grid"></div>
+      <div class="dctrl">
+        <button class="btn solid" id="chm-put">▶ put("key42", v)</button>
+        <button class="btn warn-o" id="chm-hot">▶ 持续往同一个桶塞 9 个(树化之路)</button>
+        <button class="btn" id="chm-reset">重置</button>
+      </div>
+      <div class="say" id="chm-say"></div>
+    </div>
+    <p class="caption">绿色=CAS 直写空桶;黄色=synchronized 锁住该桶头节点(别的桶照常营业);红色=这桶太挤转红黑树。对比 1.7:两个 key 落不同段才并行——<b>8 的桶粒度把"分段锁"的思想做到了极致</b>。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-gate">
+  <p class="kicker">第 十 讲</p>
+  <h2>三剑客:Latch 等事件、Barrier 等同伴、Semaphore 限流量</h2>
+  <p class="lead">三个都是 AQS 共享模式的皮:<b>CountDownLatch</b>=一次性倒计时门闩(N 件事都做完我才走;N 个微服务健康检查后放行流量);<b>CyclicBarrier</b>=多人集合点(凑齐 N 个<b>互相等</b>,可重复用,还能在破局时跑一段 barrierAction——分片并行计算的"每轮对齐");<b>Semaphore</b>=令牌池(许可 N 个,acquire/release 控制并发访问量——限流、连接池、10 车道收费站)。一句话分工:<mark>Latch 是"别人等我",Barrier 是"我们等我们",Semaphore 是"人多请取号"</mark>。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 10</span><span class="fig-title">三扇门 · 每扇推一遍</span></div>
+    <div class="stage">
+      <div class="dctrl" style="margin-top:0">
+        <button class="btn on" data-g="latch">CountDownLatch(3)</button>
+        <button class="btn" data-g="barrier">CyclicBarrier(3)</button>
+        <button class="btn" data-g="sema">Semaphore(2 许可)</button>
+      </div>
+      <div class="boxes" style="grid-template-columns:repeat(6,1fr);margin-top:10px" id="gt-cells"></div>
+      <div class="say" id="gt-say"></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="gt-play">▶ 自动演示</button>
+      <button class="btn" id="gt-step">▸ 单步</button>
+    </div>
+    <p class="caption">看 Barrier 和 Latch 的关键区别:第二轮场景——Latch 归零即废;Barrier 放行后<b>自动复位再来一局</b>。Semaphore 演示 6 个任务抢 2 个许可,进出有序。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-cf">
+  <p class="kicker">第 十一 讲</p>
+  <h2>CompletableFuture:把回调拼成 DAG</h2>
+  <p class="lead">Future 的痛:只能 get 干等、不能组合。CompletableFuture 把异步任务当积木:<code class="k">supplyAsync</code> 起一枪,<code class="k">thenApply</code> 串行变形,<code class="k">thenCombine</code> 两路汇合,<code class="k">allOf</code> 多路齐发,<code class="k">exceptionally/handle</code> 兜异常,<code class="k">orTimeout</code>(9+) 限时止损。<b>两条铁律</b>:① 不带 Async 后缀的回调"谁完成谁执行"(可能在你的主线程!),跨阶段续写要么统一带 <code class="k">Async+自定义 executor</code>,要么接受在默认池;② <mark>别用公共 ForkJoinPool 跑阻塞 IO</mark>——它按核数规划工人,一卡全卡,自建业务池才是正解。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 11</span><span class="fig-title">价格+库存并行查询的编排图 · 一颗令牌的旅程</span></div>
+    <div class="stage">
+      <svg id="cf-svg" viewBox="0 0 640 240" width="100%" style="max-height:240px"></svg>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="cf-play">▶ 正常编排</button>
+      <button class="btn warn-o" id="cf-err">▶ 库存接口超时(看 exceptionally 兜底)</button>
+      <span class="hint" id="cf-say"></span>
+    </div>
+    <p class="caption">两个供给节点并行起跑(默认池),<b>都到货才点亮 combine</b>——比串行快了近一半;超时分支里红色令牌半路坠毁,橙色兜底值顶上——主流程永不抛穿,这正是"异常也是一种数据流"的设计。</p>
+  </div>
+  <div class="note"><b class="tag">要点</b>面试收口:并行编排省的是<b>等待时间</b>(max(a,b) 而非 a+b);executor 必须按 IO/CPU 分池;orTimeout 只"按时放弃",不真正中断底层 IO——连接照样占着,超时值还要配到 HTTP 客户端层。</div>
+</section>
+
+<section class="ch" id="ch-cards">
+  <p class="kicker">附 录</p>
+  <h2>面试速查卡</h2>
+  <div class="cards" id="card-grid"></div>
+</section>
+
+<footer>
+  Java 并发 图解讲义 · 系列第七册 · 手写 vanilla JS/SVG 无依赖 · 口径 JDK 8-21(偏向锁废弃等差异已标注)。
+</footer>
+</main>
+</div>
+
+<script>
+/* ============ 工具 ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+function h(tag,attrs){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k==='text')e.textContent=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)));}return e;}
+const svgNS='http://www.w3.org/2000/svg';
+function S(tag,attrs){const e=document.createElementNS(svgNS,tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='text')e.textContent=v;else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c)e.append(c);}return e;}
+function runGuard(){let id=0;return{next(){return++id},alive(my){return my===id}};}
+const safe=(name,fn)=>{try{fn();}catch(e){console.error('[demo:'+name+']',e);}};
+const INIT={};
+const reg=(n,f)=>{INIT[n]=f;};
+
+/* ============ hero 线程池沙盘 ============ */
+function initPool(){
+  const inEl=$('#pl-in'),qEl=$('#pl-queue'),wEl=$('#pl-workers'),rejEl=$('#pl-rej'),stats=$('#pl-stats'),logEl=$('#pl-log');
+  const g=runGuard();
+  let core=2,max=4,qcap=3,queue=[],workers=[],rej=0,seq=0,busy=false,done=0;
+  function cfg(){core=+$('#pl-core').value;max=Math.max(core,+$('#pl-max').value);qcap=+$('#pl-q').value;
+    $('#pl-corev').textContent=core;$('#pl-maxv').textContent=max;$('#pl-qv').textContent=qcap;}
+  function log(t,c){const l=h('div',{class:c||''},t);logEl.append(l);logEl.scrollTop=logEl.scrollHeight;}
+  function tk(id){return h('span',{class:'pl-tk',id:'pkt'+id},'T'+id);}
+  function renderQ(){qEl.innerHTML='';for(let i=0;i<qcap;i++){const c=h('span',{class:'pl-cell'+(i<queue.length?' full':'')},i<queue.length?String(queue[i].id):'');qEl.append(c);}}
+  function renderW(){wEl.innerHTML='';
+    workers.forEach((w,i)=>{
+      const cell=h('div',{class:'mono',style:'font-size:11px;margin:2px 0'});
+      const name=h('span',{style:'color:'+(w.core?'var(--teal)':'var(--amber)')},'W'+(i+1)+(w.core?'(核)':'(临)')+' ');
+      const bar=h('span',{class:'pl-slave',style:'display:inline-block;width:110px;vertical-align:middle'},h('i',{id:'wbar'+i,style:'width:'+(w.task?30:0)+'%'}));
+      cell.append(name,w.task?('任务T'+w.task.id):'<span style="color:var(--gray)">空闲</span>',bar);
+      wEl.append(cell);
+    });
+  }
+  function statsUp(){
+    const alive=workers.length;const tmp=alive-core;
+    stats.innerHTML='池状态: '+alive+' 线程 (核心 '+core+(tmp>0?' + 临时 '+tmp:'')+')<br>队列 <b>'+queue.length+'/'+qcap+'</b> · 完成 <b>'+done+'</b> · 被拒 <b style="color:var(--red)">'+rej+'</b><br><span style="color:var(--gray);font-size:11px">规则:workerCount&lt;core→建线程;否则入队;队满且&lt;max→临时线程;再满→拒绝</span>';
+  }
+  function submit(){
+    cfg();const t={id:++seq};
+    inEl.innerHTML='';inEl.append(tk(t.id));
+    if(workers.length<core){
+      workers.push({task:null,core:true});
+      claim(t);log('workerCount<core → 新建核心线程 W'+workers.length+(t? ' 执行 T'+t.id:''),'o');
+    }else if(queue.length<qcap){
+      queue.push(t);log('核心已满 → T'+t.id+' 进队列(第'+queue.length+'格)');
+    }else if(workers.length<max){
+      workers.push({task:null,core:false});
+      claim(t);log('队列也满!→ 扩容<b>临时线程</b> W'+workers.length+' 执行 T'+t.id,'w');
+    }else{
+      rej++;const r=h('span',{class:'pl-tk dead'},'T'+t.id);rejEl.append(r);
+      log('已达 max('+max+') 且队列满 → <b>RejectExecutionException</b>!T'+t.id+' 被拒','e');
+    }
+    renderQ();renderW();statsUp();
+    setTimeout(()=>{inEl.innerHTML='';},350);
+  }
+  function claim(t){
+    const w=workers.find(x=>!x.task);
+    if(w){w.task=t;busyTick(w);}
+  }
+  function busyTick(w){
+    const i=workers.indexOf(w);
+    let p=0;const bar=$('#wbar'+i);
+    const iv=setInterval(()=>{
+      if(!g.alive(iv.my)){clearInterval(iv);return}
+      p+=10+Math.random()*18;if(bar)bar.style.width=Math.min(100,p)+'%';
+      if(p>=100){clearInterval(iv);
+        done++;w.task=null;
+        if(queue.length){const nx=queue.shift();w.task=nx;renderQ();busyTick(w);renderW();statsUp();return;}
+        if(!w.core&&workers.length>core&&queue.length===0){workers.splice(i,1);log('临时线程闲置超时 → 收缩至 '+workers.length,'d');}
+        renderW();statsUp();}
+    },140);
+    iv.my=g.next();
+  }
+  /* drain: 什么都不用做,自动消费 */
+  $('#pl-submit').onclick=submit;
+  $('#pl-burst').onclick=()=>{for(let i=0;i<8;i++)setTimeout(()=>{cfg();
+    if(workers.filter(w=>!w.task).length>=core&&queue.length>=qcap&&workers.length>=max){/* 走 submit 的拒绝路径 */}
+    submit();},i*160);};
+  ['pl-core','pl-max','pl-q'].forEach(id=>$('#'+id).oninput=()=>{cfg();renderQ();statsUp();});
+  cfg();renderQ();renderW();statsUp();
+  log('调好参数,点右上角提交。观察顺序:核心线程 → 队列 → 临时线程 → 拒绝。','d');
+}
+reg('pool',initPool);
+
+/* ============ 图1 竞态 ============ */
+function initRace(){
+  const aEl=$('#rc-a'),bEl=$('#rc-b'),iEl=$('#rc-i'),say=$('#rc-say');
+  function lane(root,steps,i0){root.innerHTML='<b style="font-family:var(--sans)">'+root.firstChild.textContent+'</b> ';
+    const els=steps.map((s,j)=>{const el=h('span',{class:'ln'},s);root.append(el);return el;});
+    return els;}
+  async function play(sync){
+    const my=g.next();let i=i0=5;iEl.textContent=i;
+    const stA=['读5','+1','写?'],stB=['读5','+1','写?'];
+    let readA=null,readB=null,stepA=0,stepB=0;
+    aEl.innerHTML='<b style="font-family:var(--sans)">线程 A</b> ';bEl.innerHTML='<b style="font-family:var(--sans)">线程 B</b> ';
+    const la=[],lb=[];for(let k=0;k<3;k++){la.push(h('span',{class:'ln'},'···'));aEl.append(la[k]);}for(let k=0;k<3;k++){lb.push(h('span',{class:'ln'},'···'));bEl.append(lb[k]);}
+    say.innerHTML=sync?'上锁:A 的三步没做完,B 进不来。':'裸奔:调度器随机切线程——注意"读"和"写"之间被插队。';
+    const seqA=[0,1,2],seqB=[0,1,2];const order=[];
+    if(sync){order.push(0,0,0,1,1,1);}
+    else{let a=0,b=0;while(a<3||b<3){
+      if(a<3&&(b>=3||Math.random()<.5)){order.push(0);a++;}else if(b<3){order.push(1);b++;}}}
+    let doneA=0,doneB=0;
+    for(const who of order){
+      if(!g.alive(my))return;
+      if(who===0){
+        const el=la[doneA];
+        if(doneA===0){readA=i;el.textContent='读'+i;el.classList.add('act');}
+        if(doneA===1){el.textContent='加→'+(readA+1);el.classList.add('act');}
+        if(doneA===2){el.textContent='写'+(readA+1);i=readA+1;iEl.textContent=i;el.classList.add('act');}
+        doneA++;
+        if(doneA===1&&!sync&&Math.random()<.6&&!g.alive(my))return;
+      }else{
+        const el=lb[doneB];
+        if(doneB===0){readB=i;el.textContent='读'+i;el.classList.add('act');}
+        if(doneB===1){el.textContent='加→'+(readB+1);el.classList.add('act');}
+        if(doneB===2){el.textContent='写'+(readB+1);i=readB+1;iEl.textContent=i;el.classList.add('act');}
+        doneB++;
+      }
+      await sleep(sync?620:rnd(430,760));
+    }
+    if(!g.alive(my))return;
+    if(sync)say.innerHTML='结果 <b>'+i+'</b> ——加锁保证"读改写成对出现",永远 +2。';
+    else say.innerHTML=(i<7?'翻车!结果 <b>'+i+'</b> ——有一轮"读"读到旧值,两次写回互相覆盖。':'这次侥幸 <b>'+i+'</b> ——换个交错就是 6。并发 bug 的讨厌之处:它大多数时候是对的。');
+  }
+  const g=runGuard();
+  $('#rc-bare').onclick=()=>play(false);
+  $('#rc-sync').onclick=()=>play(true);
+}
+reg('race',initRace);
+
+/* ============ 图2 JMM ============ */
+function initJmm(){
+  const say=$('#jk-say'),a=$('#jk-a'),b=$('#jk-b');
+  const g=runGuard();
+  async function play(barrier){
+    const my=g.next();
+    [a,b].forEach(x=>x.classList.remove('hot','bad','good'));
+    say.innerHTML='x=0,y=0。';
+    if(!barrier){
+      a.classList.add('bad');b.classList.add('bad');
+      say.innerHTML+='无同步:A 实际执行 <b>y读在前、x写在后</b>,B 同样——于是 <b style="color:var(--warn)">r1=0 且 r2=0 发生!</b> 每条语句单看都没问题,坏在两条流互相交错且各自被重排。';
+      await sleep(1000);if(!g.alive(my))return;
+      a.classList.add('dim');b.classList.add('dim');
+    }else{
+      a.classList.add('good');b.classList.add('good');
+      say.innerHTML+='volatile 写 x / y:写前屏障 + 读前屏障,happens-before 链条锁死——<b style="color:var(--teal)">r1,r2 不可能同为 0</b>。至少一个人看见对方的 1。';
+    }
+  }
+  $('#jk-reorder').onclick=()=>play(false);
+  $('#jk-barrier').onclick=()=>play(true);
+}
+reg('jmm',initJmm);
+
+/* ============ 图3 volatile ============ */
+function initVol(){
+  const w=$('#vo-w'),m=$('#vo-m'),r=$('#vo-r'),vd=$('#vo-verdict'),say=$('#vo-say');
+  const g=runGuard();
+  async function play(vola){
+    const my=g.next();
+    w.textContent='true';m.textContent='true';r.textContent='true';vd.textContent='运行中…';vd.style.color='';
+    say.innerHTML=vola?'volatile 字段:T1 写 → 立即刷主存,并让 T2 的缓存行失效。':'普通字段:T1 写入后…先别急,看 T2。';
+    await sleep(900);if(!g.alive(my))return;
+    w.textContent='false';
+    await sleep(500);if(!g.alive(my))return;
+    if(vola){m.textContent='false';await sleep(300);r.textContent='false';vd.textContent='退出 ✓ 停机生效';vd.style.color='var(--teal)';
+      say.innerHTML='写主存 + 失效读侧:<b>可见性即刻生效</b>。这就是 volatile 的第一副担子。';}
+    else{r.textContent='true';vd.textContent='还在 while 里出不来 ⚠';vd.style.color='var(--red)';
+      say.innerHTML='T1 的工作内存改了 false,但<b>没刷主存</b>(或 T2 一直没失效缓存副本)——T2 读到陈旧 true,永远停不下来。第二副担子(有序性)见 DCL。';}
+  }
+  $('#vo-plain').onclick=()=>play(false);
+  $('#vo-vola').onclick=()=>play(true);
+}
+reg('vol',initVol);
+
+/* ============ 图4 锁升级 ============ */
+function initLock(){
+  const say=$('#lk-say'),st=[$('#lk-s0'),$('#lk-s1'),$('#lk-s2'),$('#lk-s3')];
+  const SCR={
+    single:[1,'单线程反复进:<b>偏向锁</b>一擦即过——Mark Word 记下线程 ID,同线程再进只是比对,零 CAS 开销。(15 后默认关闭:撤销太贵,收益太小)'],
+    alternate:[2,'两线程<b>轮流</b>拿锁(时间上不打架):轻量级锁——各自 CAS 替换 Mark Word 成 Lock Record 指针,拿不到就<b>自旋几次</b>,全程用户态,不打扰 OS。'],
+    contend:[3,'真·同时抢:CAS 自旋失败超过阈值/次数 → <b>膨胀为重量级锁</b>:Monitor(owner+EntryList),抢不到的线程 park 挂起,等唤醒要经历用户/内核态切换——能扛但贵。'],
+  };
+  function go(k){
+    const [idx,text]=SCR[k];
+    st.forEach((s,j)=>{s.classList.toggle('hot',j<=idx);s.classList.toggle('good',j===idx);});
+    say.innerHTML=text;
+  }
+  $$('[data-lk]').forEach(b=>b.onclick=()=>{$$('[data-lk]').forEach(x=>x.classList.toggle('on',x===b));go(b.dataset.lk);});
+  go('single');
+}
+reg('lock',initLock);
+
+/* ============ 图5 CAS ============ */
+function initCas(){
+  const say=$('#cs-say'),vEl=$('#cs-v'),ab=$('#cs-adder-box');
+  const g=runGuard();
+  const A=$('#cs-a'),B=$('#cs-b'),C=$('#cs-c');
+  async function race(){
+    const my=g.next();vEl.textContent='5';
+    [A,B,C].forEach(x=>x.classList.remove('hot','bad','good'));
+    say.innerHTML='三方同时 CAS(期望5):只有<b>一个赢家</b>,其余失败重试。';
+    const order=[A,B,C].sort(()=>Math.random()-.5);
+    await sleep(500);
+    if(!g.alive(my))return;
+    order.forEach((el,i)=>{setTimeout(()=>{
+      if(!g.alive(my))return;
+      if(i===0){el.classList.add('good');say.innerHTML='<b>'+el.querySelector('b').textContent+'</b> 抢到 5→新值 ✓;其余两个"期望值已过期"→ 重读再 CAS(自旋)。高竞争时,这就是空转的 CPU。';}
+      else{el.classList.add('hot');el.classList.add('bad');}
+    },i*600);});
+  }
+  $('#cs-race').onclick=race;
+  $('#cs-aba').onclick=async()=>{
+    const my=g.next();[A,B,C].forEach(x=>x.classList.remove('hot','bad','good'));
+    vEl.textContent='5';say.innerHTML='C 出门前看到 5…';
+    await sleep(800);vEl.textContent='3';if(!g.alive(my))return;say.innerHTML='(B 把 5 改成 3)…';
+    await sleep(800);vEl.textContent='5';if(!g.alive(my))return;say.innerHTML='(又被改回 5)C 回来 CAS(期望5)→ <b style="color:var(--red)">成功了,但它不知道中间发生过什么</b> = ABA。链表复用场景会接错线:AtomicStampedReference 给值盖"版本号"戳,5→3→5 版本 1→2→3,骗不过。';
+  };
+  $('#cs-adder').onclick=async()=>{
+    const my=g.next();
+    vEl.textContent='5';say.innerHTML='LongAdder 上场:不再三个抢一个值——';
+    ab.style.display='block';ab.innerHTML='';
+    const cells=['base 5','cell0','cell1','cell2'];
+    for(let i=0;i<4;i++){await sleep(420);ab.append(h('span',{class:'pill'+(i===0?' pen':''),'style':'margin:2px'},cells[i]));}
+    await sleep(400);
+    ab.innerHTML+='<br>×3 线程写散在不同 cell,<b>sum() 时再加总</b>——写几乎无冲突,读稍贵。热点被分桶稀释了。';
+  };
+}
+reg('cas',initCas);
+
+/* ============ 图6 AQS ============ */
+function initAqs(){
+  const stEl=$('#aq-st'),owner=$('#aq-owner'),nodes=$('#aq-nodes'),say=$('#aq-say');
+  const g=runGuard();
+  let fair=true,step=0;
+  const STEPS=[
+    ['0','未持有','[ 空 ]','T1: lock() → CAS state 0→1 ✓ 成为 owner。',null],
+    ['1','T1','[ 空 ]','T1 干活中。此刻 T2 来抢:',null],
+    ['1','T1','T2','T2 CAS 失败'+':'+(fair?'公平锁先看队尾——直接入队':'非公平抢一次,又失败')+' → 包成节点入 CLH 队列,<b>park 睡觉</b>。',null],
+    ['1','T1','T2 ⇄ T3','T3 也来,排在 T2 后面。(注意:非公平模式下 T3 可能在某次释放瞬间插队成功)',null],
+    ['2','T1','T2 ⇄ T3','T1 里又调了一次 lock(可重入):state 1→2,owner 仍是 T1。',null],
+    ['1','T1','T2 ⇄ T3','T1 unlock():state 2→1,还没完——重入没退干净,<b>不唤醒</b>。',null],
+    ['0','未持有','T2 ⇄ T3','最后一次 unlock:state→0 → <b>unpark 队头 T2</b>。T2 醒来 CAS 成功,owner=T2,T2 出队。',null],
+    ['1','T2','T3','T2 干活…unlock 后同样的交接唤醒 T3。锁在队列里像接力棒一样传。',null],
+  ];
+  function draw(){
+    const s=STEPS[Math.min(step,STEPS.length-1)];
+    stEl.textContent=s[0];owner.textContent=s[1];nodes.textContent=s[2]==='[ 空 ]'?'[ 空 ]':'[ '+s[2]+' ]';
+    say.innerHTML=s[3];
+    $('#aq-q').classList.toggle('hot',step>=2&&step<=7);
+  }
+  $('#aq-next').onclick=()=>{if(step<STEPS.length-1){step++;draw();}};
+  $('#aq-reset').onclick=()=>{step=0;draw();};
+  $$('#d-aqs-wrap [data-f], .dctrl [data-f]').forEach(b=>{if(!b.dataset.f)return;b.onclick=()=>{fair=b.dataset.f==='fair';$$('.dctrl [data-f]').forEach(x=>x.classList.toggle('on',x===b));step=0;draw();};});
+  draw();
+}
+reg('aqs',initAqs);
+
+/* ============ 图7 拒绝策略+调音台 ============ */
+function initReject(){
+  const say=$('#rj-say');
+  const RJ={
+    abort:'<b>AbortPolicy</b>:抛 RejectedExecutionException,调用方感知、自行降级——<b>默认且诚实</b>。',
+    caller:'<b>CallerRunsPolicy</b>:让提交任务的线程自己跑一遍——不丢不抛,提交者跑任务期间自然<b>放慢投递=反压</b>。但注意:它会阻塞上游(比如 Tomcat 线程)。',
+    discard:'<b>DiscardPolicy</b>:悄悄丢掉,一声不吭——除了"丢了也无所谓"的埋点日志,业务基本别用。',
+    oldest:'<b>DiscardOldestPolicy</b>:踢掉队头最老的,塞最新的——适合<b>时效数据</b>(行情快照、最新位置),旧值本就作废。',
+  };
+  $$('[data-rj]').forEach(b=>b.onclick=()=>{$$('[data-rj]').forEach(x=>x.classList.toggle('on',x===b));say.innerHTML=RJ[b.dataset.rj];});
+  say.innerHTML=RJ.abort;
+  let n=8;
+  function stress(){
+    // 简易模型:吞吐=核数相关;过高线程→上下文切换/CPU 饱和;过低→积压
+    const cpu=n<=8?Math.round(n/8*72):Math.min(98,72+(n-8)*1.1);
+    const backlog=n<4?'🔴 大量堆积':(n<8?Math.round((8-n)*30)+'':n<=24?'0':(n-24)*7+'');
+    const p99=Math.round(n<8?40+(8-n)*22:(n<=24?80+(n-8)*1.5:240+(n-24)*8));
+    $('#rj-cpu').textContent=cpu+'%';
+    $('#rj-backlog').textContent=backlog;
+    $('#rj-p99').textContent=p99+'ms';
+    $('#rj-n').textContent=n;
+  }
+  $('#rj-plus').onclick=()=>{n=Math.min(64,n*2);stress();};
+  $('#rj-minus').onclick=()=>{n=Math.max(1,Math.floor(n/2));stress();};
+  stress();
+}
+reg('reject',initReject);
+
+/* ============ 图8 ThreadLocal ============ */
+function initTl(){
+  const main=$('#tl-main'),thr=$('#tl-thread'),entry=$('#tl-entry'),say=$('#tl-say');
+  entry.innerHTML='Entry[ key=WeakRef→<b style="color:var(--pen)">A7</b> , value="用户上下文" ]';
+  main.innerHTML='<b>堆</b><br><span class="mono" style="font-size:11.5px">tlRef → ThreadLocal@A7<br>(业务代码的强引用)</span>';
+  const g=runGuard();
+  async function step1(){const my=g.next();main.classList.add('hot');
+    main.innerHTML='<b>堆</b><br><span class="mono" style="font-size:11.5px">tlRef = null …(×)<br>ThreadLocal@A7 仅剩弱引用可达</span>';
+    say.innerHTML='强引用断了,但 <b>Map 里的 value 还活着</b>——线程不死,它就永远占着。点②看 GC。';}
+  async function step2(){const my=g.next();thr.classList.add('hot');
+    entry.innerHTML='Entry[ key=<b style="color:var(--red)">null</b> , value="用户上下文" ] <b style="color:var(--red)">← 僵尸抽屉!</b>';
+    say.innerHTML='GC 回收弱引用 → key=null 但 value 引用链还在:<b style="color:var(--red)">内存泄漏</b>。线程池复用该线程跑 100 万任务,这坨对象陪 100 万轮。';}
+  async function step3(){const my=g.next();thr.classList.remove('hot');
+    entry.innerHTML='Entry 被清扫 ✓';
+    say.innerHTML='<b>remove()</b> 斩断 value 引用——所以规矩是:try/finally 里 set 完必 remove。(为什么弱引用反而是帮忙:key==null 的 Entry 是后续 set/get 探测式清扫的路标,但清扫时机不可靠,别赌)';}
+  $('#tl-drop').onclick=step1;$('#tl-gc').onclick=step2;$('#tl-remove').onclick=step3;
+}
+reg('tl',initTl);
+
+/* ============ 图9 CHM ============ */
+function initChm(){
+  const grid=$('#chm-grid'),say=$('#chm-say');
+  let cells=[];
+  function build(){grid.innerHTML='';cells=[];
+    for(let i=0;i<16;i++){const c=h('div',{class:'mono',style:'border:1.5px solid var(--line);border-radius:7px;min-height:46px;padding:3px 5px;font-size:10px;background:var(--card);text-align:center'},'桶'+i);grid.append(c);cells.push(c);}}
+  function put(i,label,color){cells[i].style.borderColor=color;cells[i].style.background=color+'22';cells[i].textContent=label;}
+  build();
+  const g=runGuard();
+  async function putDemo(){const my=g.next();build();
+    const k=42,i=k%16;
+    say.innerHTML='hash("key42")%16 = 桶'+i+'(空)→ <b>CAS 直接写入</b>,全程无锁 ✓';
+    put(i,'T1<br>key42','var(--teal)');}
+  async function hotDemo(){const my=g.next();build();
+    const i=3;
+    say.innerHTML='坏哈希:所有 key 挤桶'+i+'——';
+    for(let j=1;j<=8;j++){if(!g.alive(my))return;put(i,'T'+j+'…','var(--amber)');say.innerHTML='桶'+i+' 已有 '+j+' 项,锁该桶头节点(黄),<b>其他桶照常并发</b>。';await sleep(420);}
+    put(i,'≥8 →','var(--red)');say.innerHTML='链表长 ≥8 且表 ≥64 → <b style="color:var(--red)">树化</b>:查询 O(n)→O(logn);删除回落到 6 再退化(滞回防抖动)。';
+  }
+  $('#chm-put').onclick=putDemo;$('#chm-hot').onclick=hotDemo;$('#chm-reset').onclick=build;
+  say.innerHTML='点剧本。绿色空桶=CAS;黄色=桶级 synchronized。';
+}
+reg('chm',initChm);
+
+/* ============ 图10 三剑客 ============ */
+function initGate(){
+  const cellsEl=$('#gt-cells'),say=$('#gt-say');
+  let mode='latch',stepIdx=0;
+  const SC={
+    latch:{tasks:['服务A就绪','服务B就绪','缓存预热'],
+      seq:['倒计时=3:主线程(切流量)park 等待,三任务并行启动','缓存预热完成 countDown → 2','服务A 就绪 → 1(主线程还在等——还差一个)','服务B 就绪 → 0:<b>门闩弹开,主线程瞬间唤醒</b>','⚠ 这闩是一次性的:再 countDown 无意义,想复用?换 Barrier'],
+      cells:(k)=>k.map((st,i)=>['任务'+(i+1),st])},
+    barrier:{tasks:['分片1完成','分片2完成','分片3完成'],
+      seq:['3 个分片线程各算各的,到 await() 集合点停住','分片1 到齐点报到:1/3(继续等)','分片2 报到:2/3','分片3 报到:3/3 → <b>破局!先跑 barrierAction(汇总),全员同时放行</b>','下一轮?Barrier <b>自动复位</b>继续用——Latch 做不到'],
+      cells:(k)=>k.map((st,i)=>['分片'+(i+1),st])},
+    sema:{tasks:['T1','T2','T3','T4','T5','T6'],
+      seq:['2 个许可全部空闲','T1 acquire ✓ 进隧道(T1 占用中)','T2 acquire ✓ 进隧道(许可=0!)','T3 acquire 失败 → park 等许可','T1 release:许可回填 → <b>T3 立刻获许可进</b>','限流/连接池/并发闸,Semaphore 一句话:<b>人多,请取号</b>'],
+      cells:(k)=>k.slice(0,2).map((st,i)=>['许可'+(i+1),st])},
+  };
+  function render(){
+    const S_=SC[mode];cellsEl.innerHTML='';
+    if(mode==='sema'){
+      for(let i=0;i<6;i++){
+        const st=stepIdx;
+        let txt='排队',cls='dim';
+        if(i<2){cls='good';txt='空闲';}
+        if(i>=2&&i<6){txt='未发放';cls='dim';}
+        if(S_.cells)0;
+        // 覆盖式时间线
+      }
+      // 简化:两许可+6任务两行展示
+      cellsEl.style.gridTemplateColumns='repeat(6,1fr)';
+      const jobs=['T1','T2','T3','T4','T5','T6'];
+      jobs.forEach((j,i)=>{
+        let t='等待取号',c='dim';
+        if(stepIdx===1&&i===0){t='隧道内';c='good';}
+        if(stepIdx===2&&i<2){t='隧道内';c='good';}
+        if(stepIdx===2&&i>=2){t='等待';c='dim';}
+        if(stepIdx===3){t=i<2?'隧道内':(i===2?'等许可 ⚠':'等待取号');c=i<2?'good':(i===2?'bad':'dim');}
+        if(stepIdx>=4){t=(i===1||i===2)?'隧道内':(i===3||i===4?'等许可':'已完工');c=(i===1||i===2)?'good':(i>=3?'dim':'good');}
+        if(stepIdx>=5){t='陆续放行';c='';}
+        cellsEl.append(h('div',{class:'bx '+c,style:'text-align:center;padding:5px'},'<b>'+j+'</b><br><small>'+t+'</small>'));
+      });
+      // 许可指示
+      return;
+    }
+    cellsEl.style.gridTemplateColumns='repeat(3,1fr)';
+    const T=S_.tasks;
+    for(let i=0;i<3;i++){
+      let t='进行中',c='';
+      if(mode==='latch'){if(i<stepIdx-1){t='✓ done';c='good';}if(stepIdx<=0)t='待命';}
+      if(mode==='barrier'){if(stepIdx<=0)t='计算中';if(i<stepIdx-2){t='到集合点(等)';c='hot';}if(stepIdx>=4){t='✓ 放行';c='good';}}
+      cellsEl.append(h('div',{class:'bx '+c,style:'text-align:center;padding:6px'},'<b>'+T[i]+'</b><br><small>'+t+'</small>'));
+    }
+    say.innerHTML=S_.seq[Math.min(stepIdx,S_.seq.length-1)]||'点单步/自动开始。';
+  }
+  function tick(){if(stepIdx<5){stepIdx++;render();return true}return false;}
+  $$('#ch-gate [data-g]').forEach(b=>b.onclick=()=>{mode=b.dataset.g;stepIdx=0;$$('[data-g]').forEach(x=>x.classList.toggle('on',x===b));render();});
+  $('#gt-step').onclick=tick;
+  const g=runGuard();
+  $('#gt-play').onclick=async()=>{const my=g.next();stepIdx=0;render();while(g.alive(my)&&tick())await sleep(1400);};
+  render();
+}
+reg('gate',initGate);
+
+/* ============ 图11 CompletableFuture DAG ============ */
+function initCf(){
+  const box=$('#cf-svg'),say=$('#cf-say');
+  const svgNS2='http://www.w3.org/2000/svg';
+  const N={start:{x:60,y:120},price:{x:230,y:60},stock:{x:230,y:180},comb:{x:390,y:120},out:{x:550,y:120}};
+  function link(a,b,color,w){const A=N[a],Bx=N[b];const p=document.createElementNS(svgNS2,'line');
+    p.setAttribute('x1',A.x+34);p.setAttribute('y1',A.y);p.setAttribute('x2',Bx.x-34);p.setAttribute('y2',Bx.y);
+    p.setAttribute('stroke',color||'#C7CCC0');p.setAttribute('stroke-width',w||2);box.append(p);return p;}
+  function node(id,label,color,cls){const A=N[id];const g2=document.createElementNS(svgNS2,'g');g2.setAttribute('id','n-'+id);
+    const r=document.createElementNS(svgNS2,'rect');r.setAttribute('x',A.x-36);r.setAttribute('y',A.y-20);r.setAttribute('width',72);r.setAttribute('height',40);r.setAttribute('rx',9);
+    r.setAttribute('fill',color||'#fff');r.setAttribute('stroke',cls==='err'?'var(--red)':cls==='hot'?'var(--pen)':'#9FB2C8');r.setAttribute('stroke-width',2);
+    const t=document.createElementNS(svgNS2,'text');t.setAttribute('x',A.x);t.setAttribute('y',A.y-2);t.setAttribute('text-anchor','middle');t.setAttribute('font-size',10);
+    const t2=document.createElementNS(svgNS2,'text');t2.setAttribute('x',A.x);t2.setAttribute('y',A.y+12);t2.setAttribute('text-anchor','middle');t2.setAttribute('font-size',9.5);t2.setAttribute('fill','#59616E');
+    t.textContent=label.split('|')[0];t2.textContent=label.split('|')[1]||'';
+    g2.append(r,t,t2);box.append(g2);return g2;}
+  function build(){box.innerHTML='';
+    link('start','price');link('start','stock');link('price','comb');link('stock','comb');link('comb','out');
+    node('start','supplyAsync|并行起点');node('price','查价格|pool-A 180ms');node('stock','查库存|pool-B 220ms');node('comb','thenCombine|价+库=报价');node('out','join|返回前端');}
+  function tok(x,y,color){const c=document.createElementNS(svgNS2,'circle');c.setAttribute('r',6);c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('fill',color);box.append(c);return c;}
+  async function moveTok(c,from,to,ms){const A=N[from],B=N[to];const t0=performance.now();
+    return new Promise(res=>{(function f(){const p=Math.min(1,(performance.now()-t0)/ms);
+      c.setAttribute('cx',A.x+34+(B.x-34-A.x-34)*p);c.setAttribute('cy',A.y+(B.y-A.y)*p);
+      if(p<1)requestAnimationFrame(f);else res();})();});}
+  async function play(normal){
+    const my=g.next();build();
+    const t1=tok(N.start.x+34,N.start.y,'var(--pen)'),t2=tok(N.start.x+34,N.start.y,'var(--teal)');
+    say.textContent='两个任务同时起跑…';
+    await Promise.all([moveTok(t1,'start','price',normal?900:700),moveTok(t2,'start','stock',normal?1100:(normal===false?4000:1200))]);
+    if(!g.alive(my))return;
+    if(!normal){
+      t2.setAttribute('fill','#B3341F');
+      say.innerHTML='stock 超时/失败 💥 → 但 <code class="k">exceptionally(e->库存未知)</code> 顶上兜底值…';
+      const t3=tok(N.stock.x,N.stock.y,'var(--amber)');
+      $('#n-stock').querySelector('rect').setAttribute('stroke','#B3341F');
+      await moveTok(t3,'stock','comb',600);if(!g.alive(my))return;
+      await moveTok(t1,'price','comb',400);if(!g.alive(my))return;
+      $('#n-comb').querySelector('rect').setAttribute('fill','#FAF2DE');
+      await moveTok(t1,'comb','out',400);if(!g.alive(my))return;
+      $('#n-out').querySelector('rect').setAttribute('fill','#E8F4F1');
+      say.innerHTML+='→ 组合节点用兜底值继续:<b style="color:var(--teal)">主流程活着,异常被当成数据流</b>。';
+      return;
+    }
+    await moveTok(t1,'price','comb',400);await moveTok(t2,'stock','comb',400);
+    if(!g.alive(my))return;
+    $('#n-comb').querySelector('rect').setAttribute('fill','#E9EFF6');
+    const t3=tok(N.comb.x,N.comb.y,'var(--pen)');
+    await moveTok(t3,'comb','out',400);
+    $('#n-out').querySelector('rect').setAttribute('fill','#E8F4F1');
+    say.innerHTML='<b>≈max(180,220)+ε=230ms</b> 收工——串行要 400ms。并行省等待,combine 等齐再算,一切都在图上看得见。';
+  }
+  build();say.textContent='点剧本。';
+  $('#cf-play').onclick=()=>play(true);
+  $('#cf-err').onclick=()=>play(false);
+}
+reg('cf',initCf);
+
+/* ============ 附录 ============ */
+function initCards(){
+  const grid=$('#card-grid');
+  const data=[
+    ['线程池执行顺序?','核心线程 → 队列 → 临时线程 → 拒绝。不是"先填满所有线程再排队"。'],
+    ['volatile 保证什么?','可见性+有序性,不保证原子性。适用:状态标志、DCL 引用。'],
+    ['锁升级链路?','无锁→偏向(15废弃)→轻量级 CAS自旋→重量级 Monitor 挂起;只升不降。'],
+    ['CAS 三代价?','高竞争自旋耗 CPU、单变量、ABA(版本号 AtomicStampedReference 解)。'],
+    ['AQS 是什么?','volatile state + CLH 队列的同步器框架;独占/共享两组 tryXxx 模板钩子。'],
+    ['公平 vs 非公平?','非公平抢锁多一次 CAS 机会:吞吐高,可能饿死;公平先排队:有序,上下文切换多。'],
+    ['ThreadLocal 泄漏原因?','key 弱引用 value 强引用;线程池线程不死,value 驻留。规矩:set 之后 finally remove。'],
+    ['CHM 1.7 vs 1.8?','分段锁 Segment → CAS+桶头 synchronized;sizeCtl 协作扩容;≥8 且表≥64 树化。'],
+    ['Latch/Barrier/Semaphore?','等事件(一次性)/等彼此(可复用,破局动作)/限并发(令牌池)。'],
+    ['线程数多少合适?','CPU≈N+1、IO 起步 2N;真答案=压测找队列/利用率/P99 三线交点。'],
+    ['synchronized vs ReentrantLock?','都重入都独占;Lock 多了:可中断 tryLock、公平可选、多条件队列、跨范围锁定。'],
+    ['cf 用公共池的坑?','ForkJoin 默认池按核数配,阻塞 IO 会拖死所有阶段——生产必传自定义 Executor。'],
+  ];
+  data.forEach(([q,a])=>{grid.append(h('div',{class:'card'},h('b',null,q),a));});
+}
+reg('cards',initCards);
+
+/* ============ 目录高亮 & 装配 ============ */
+function initSpy(){
+  const links=$$('.toc a');
+  const secs=links.map(a=>$(a.getAttribute('href'))).filter(Boolean);
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-18% 0px -72% 0px'});
+  secs.forEach(s=>io.observe(s));
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  Object.entries(INIT).forEach(([n,f])=>safe(n,f));
+  initSpy();
+});
+</script>
+</body>
+</html>
