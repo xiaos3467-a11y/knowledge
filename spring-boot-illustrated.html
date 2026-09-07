@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spring Boot 图解讲义 · 自动装配十二讲</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F6F2; --card:#FFFFFF; --stage:#FAFBF7;
+  --ink:#1E232B; --ink2:#59616E; --line:#DDE0D8;
+  --pen:#B4530A; --pen-bg:#FBEEE0; --pen-line:#E4C093;
+  --gr:#3D7A2C; --gr-bg:#EDF4E7; --gr-line:#C9DFBD;
+  --warn:#C0392B; --warn-bg:#FBE9E6; --warn-line:#EAB9B0;
+  --teal:#0E7C6B; --teal-bg:#E8F4F1;
+  --grape:#5B4A96; --grape-bg:#EEEAF8;
+  --amber:#A9750A; --amber-bg:#FAF2DE;
+  --gray:#7A828C;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --serif:"Noto Serif SC","Source Han Serif SC","STZhongsong","SimSun",serif;
+  --sans:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+  --kai:"KaiTi","STKaiti","Kaiti SC",var(--serif);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(30,35,43,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,35,43,.04) 1px,transparent 1px);
+  background-size:28px 28px}
+::selection{background:rgba(180,83,10,.18)}
+a{color:var(--pen);text-decoration:none}
+.wrap{display:grid;grid-template-columns:224px minmax(0,832px);gap:52px;max-width:1180px;margin:0 auto;padding:0 24px}
+main{min-width:0;padding-bottom:96px}
+section.ch{margin-top:96px;scroll-margin-top:24px}
+.kicker{font-family:var(--serif);color:var(--pen);font-weight:600;font-size:14px;letter-spacing:.12em;margin-bottom:6px}
+h1,h2{font-family:var(--serif);font-weight:900;line-height:1.3}
+h2{font-size:32px;margin-bottom:18px}
+h3{font-size:18px;margin:30px 0 10px;font-weight:700}
+p{margin:12px 0;max-width:76ch}
+p.lead{font-size:17px;color:var(--ink2)}
+ul.tight{margin:8px 0 8px 1.4em}
+ul.tight li{margin:6px 0}
+code.k{font-family:var(--mono);font-size:.86em;background:#EBEDE6;border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+mark{background:none;color:var(--pen);font-weight:700}
+mark.g{color:var(--gr)}
+.think{font-family:var(--kai);color:var(--pen);background:var(--pen-bg);border:1px dashed var(--pen-line);border-radius:8px;padding:8px 14px;font-size:15px;margin:18px 0}
+.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pen);border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;font-size:15px}
+.note b.tag{color:var(--pen);font-weight:700;margin-right:6px}
+aside.toc{position:sticky;align-self:start;top:24px;height:calc(100vh - 48px);overflow:auto;padding:28px 0;scrollbar-width:thin}
+.toc-brand{font-family:var(--serif);font-weight:900;font-size:19px;line-height:1.4;margin-bottom:14px}
+.toc-brand small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--pen);letter-spacing:.18em;font-weight:600}
+.toc ol{list-style:none}
+.toc li a{display:flex;gap:10px;align-items:baseline;padding:5.5px 10px;border-radius:6px;font-size:13.5px;color:var(--ink2);border-left:2px solid transparent}
+.toc li a i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--gray);width:20px;flex:none}
+.toc li a:hover{background:#ECEEE6;color:var(--ink)}
+.toc li a.active{color:var(--pen);font-weight:700;border-left-color:var(--pen);background:rgba(180,83,10,.06)}
+.toc li a.active i{color:var(--pen)}
+.hero{padding-top:48px}
+.hero-top{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:40px;align-items:end}
+.hero-title{font-size:clamp(40px,5.8vw,66px);line-height:1.14}
+.hero-title .stroke{position:relative;display:inline-block}
+.hero-title .stroke svg{position:absolute;left:-4px;right:-4px;bottom:-8px;width:calc(100% + 8px);height:16px;overflow:visible}
+.hero-title .stroke svg path{stroke:var(--pen);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:420;stroke-dashoffset:420;animation:wipe 1s .5s ease-out forwards}
+@keyframes wipe{to{stroke-dashoffset:0}}
+.hero-sub{margin-top:16px;font-size:15.5px;color:var(--ink2)}
+.hero-kicker{font-family:var(--serif);letter-spacing:.3em;color:var(--pen);font-size:14px;font-weight:600;margin-bottom:10px}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+.caret{display:inline-block;width:9px;height:1.05em;background:var(--pen);vertical-align:-2px;animation:blink 1.1s infinite}
+.reveal{opacity:0;transform:translateY(14px);animation:rv .7s ease-out forwards}
+.reveal.d1{animation-delay:.1s}.reveal.d2{animation-delay:.25s}.reveal.d3{animation-delay:.45s}
+@keyframes rv{to{opacity:1;transform:none}}
+/* starter 顾问 */
+.advisor{grid-column:1/-1;margin-top:34px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 44px rgba(30,35,43,.12);overflow:hidden}
+.ad-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#F0EEE7;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12px;color:var(--ink2)}
+.ad-body{padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:12px;font-size:12.5px}
+.ad-col{background:var(--stage);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-height:130px}
+.ad-col h5{font-size:11.5px;font-family:var(--mono);color:var(--gray);margin-bottom:6px}
+.ad-col li{margin:4px 0;font-family:var(--mono);font-size:11.5px;list-style:none;animation:pop .25s}
+.ad-chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 16px}
+.ad-chip{font-family:var(--mono);font-size:12px;border:1px solid #C7CCC0;background:#fff;border-radius:99px;padding:4px 14px;cursor:pointer;transition:all .15s}
+.ad-chip.on{background:var(--pen);border-color:var(--pen);color:#fff;font-weight:600}
+.ad-chip:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.demo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin:26px 0;box-shadow:0 2px 0 rgba(30,35,43,.03)}
+.fig-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.fig-no{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--pen);border-radius:4px;padding:2px 8px;flex:none}
+.fig-title{font-family:var(--serif);font-size:17px;font-weight:600}
+.caption{font-family:var(--kai);color:var(--ink2);font-size:14px;line-height:1.7;margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
+.caption::before{content:"图注 · ";color:var(--pen)}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.dctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.dctrl .gap{flex:1}
+.btn{font-family:var(--sans);font-size:13px;color:var(--ink);background:#fff;border:1px solid #C7CCC0;border-radius:7px;padding:5px 14px;cursor:pointer;line-height:1.6;transition:border-color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--pen);color:var(--pen)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.solid:hover:not(:disabled){background:var(--pen);border-color:var(--pen);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{border-color:var(--pen);color:var(--pen);background:var(--pen-bg);font-weight:700}
+.btn.warn-o{border-color:var(--warn);color:var(--warn)}
+.btn:focus-visible,a:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+.hint{font-size:13px;color:var(--ink2);margin-top:10px}
+.hint b{color:var(--pen)}
+.dlog{font-family:var(--mono);font-size:12.5px;line-height:1.7;background:#1E232B;color:#C9D0DA;border-radius:8px;padding:10px 14px;margin-top:12px;max-height:170px;overflow:auto;scrollbar-width:thin}
+.dlog .ln-ok{color:#6FC2AE}.dlog .ln-err{color:#F08A72}.dlog .ln-warn{color:#E8B54A}.dlog .ln-dim{color:#7A828C}
+.say{font-size:13.5px;min-height:2.4em;padding:8px 14px;color:var(--ink2);line-height:1.8}
+.say b{color:var(--pen)}
+.say.bad b{color:var(--warn)}
+.pill{display:inline-block;font-size:12px;font-family:var(--mono);border-radius:99px;padding:1px 10px;border:1px solid var(--line);background:#fff}
+.pill.pen{color:var(--pen);border-color:var(--pen-line);background:var(--pen-bg)}
+.pill.gr{color:var(--gr);border-color:var(--gr-line);background:var(--gr-bg)}
+/* 图1 时代对比 */
+.er-swap{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+.er-col{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:10px 14px;font-size:12.5px}
+.er-col h4{font-family:var(--mono);font-size:12.5px;margin-bottom:8px}
+.er-col pre{font-family:var(--mono);font-size:11px;line-height:1.75;color:var(--ink2);white-space:pre-wrap;margin:6px 0;background:#22262D;color:#C9D0DA;border-radius:8px;padding:8px 11px}
+.er-pain{color:var(--warn)}
+.er-win{color:var(--teal)}
+/* stepper 复用 */
+.stp{display:grid;grid-template-columns:1fr 300px;gap:12px;padding:14px}
+.stp-list{display:grid;gap:3px;align-content:start}
+.stp-item{display:flex;gap:10px;align-items:baseline;font-size:12.5px;border:1px solid transparent;border-radius:7px;padding:4px 10px;color:var(--ink2);cursor:pointer}
+.stp-item i{font-style:normal;font-family:var(--mono);font-size:10.5px;width:22px;flex:none;color:var(--gray)}
+.stp-item.cur{background:var(--pen-bg);border-color:var(--pen-line);color:var(--ink);font-weight:700}
+.stp-item.cur i{color:var(--pen)}
+.stp-item.done{color:var(--teal)}
+.stp-card{background:var(--stage);border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:12.5px;align-self:start;line-height:1.8}
+.stp-card b{color:var(--pen)}
+.stp-card .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;border-radius:4px;padding:1px 7px;margin:2px 4px 2px 0;background:#ECEEE6;color:var(--ink2)}
+/* 图3 漏斗 */
+.fn-wrap{display:grid;grid-template-columns:240px minmax(0,1fr);gap:12px;padding:14px}
+.fn-sw{display:flex;flex-wrap:wrap;gap:6px;align-content:start}
+.fn-sw .btn{font-family:var(--mono);font-size:11px;padding:3px 10px}
+.fn-rows{display:grid;gap:4px}
+.fn-row{display:grid;grid-template-columns:1fr 100px;gap:8px;align-items:center;border:1px solid var(--line);border-radius:6px;padding:3px 10px;background:#F6F7F3;font-family:var(--mono);font-size:11.5px;transition:all .3s}
+.fn-row.pass{border-color:var(--gr);background:var(--gr-bg)}
+.fn-row.reject{opacity:.5;text-decoration:line-through}
+.fn-row .why{font-size:10px;color:var(--gray);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fn-row.pass .why{color:var(--gr)}
+.fn-row.reject .why{color:var(--warn);text-decoration:none}
+/* 图4 BOM 树 */
+.bom-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+.bom-tree{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:9px 13px;font-family:var(--mono);font-size:11.5px;line-height:2.05}
+.bom-tree h5{font-family:var(--sans);font-size:12.5px;margin-bottom:4px}
+.bom-node{padding-left:18px;position:relative;color:var(--ink2)}
+.bom-node::before{content:"├─";position:absolute;left:0;color:var(--gray)}
+.bom-win{color:var(--teal);font-weight:700}
+.bom-lose{color:var(--warn);text-decoration:line-through}
+.bom-edict{margin-top:8px;border-top:1px dashed var(--pen-line);padding-top:6px;font-size:11px;color:var(--pen)}
+/* 图5 水塔 */
+.wt-wrap{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:12px;padding:14px}
+.wt-layers{display:grid;gap:5px}
+.wt-lay{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--card);padding:5px 11px;font-size:12px;font-family:var(--mono);transition:all .3s}
+.wt-lay small{font-family:var(--sans);color:var(--gray)}
+.wt-lay.filled{border-color:var(--pen)}
+.wt-lay.winner{background:var(--pen-bg);border-color:var(--pen);font-weight:700;box-shadow:0 0 0 3px rgba(180,83,10,.14)}
+.wt-lay .v{color:var(--teal)}
+.wt-val{display:flex;gap:5px;flex-wrap:wrap}
+.wt-val .btn{font-family:var(--mono);font-size:11px;padding:2px 8px}
+/* 图6 jar */
+.jar-stage{padding:14px;perspective:900px}
+.jar-layers{position:relative;height:300px}
+.jar-lay{position:absolute;left:50%;transform:translateX(-50%);width:70%;border:1.5px solid var(--ink);border-radius:10px;background:var(--card);padding:8px 14px;font-size:12.5px;cursor:pointer;transition:top .6s cubic-bezier(.3,.7,.3,1),box-shadow .2s}
+.jar-lay b{font-family:var(--mono);font-size:12.5px;color:var(--pen)}
+.jar-lay small{color:var(--ink2)}
+.jar-lay.on{box-shadow:0 6px 20px rgba(30,35,43,.18);border-color:var(--pen)}
+.jar-desc{min-height:44px;padding:6px 14px 12px;font-size:13px;color:var(--ink2);line-height:1.7}
+.jar-desc b{color:var(--pen)}
+/* 图7 actuator */
+.ac-wrap{display:grid;grid-template-columns:210px minmax(0,1fr);gap:12px;padding:14px}
+.ac-eps{display:grid;gap:5px;align-content:start}
+.ac-eps .btn{font-family:var(--mono);font-size:11.5px;text-align:left}
+.ac-res{background:#22262D;color:#C9D0DA;border-radius:10px;padding:10px 14px;font-family:var(--mono);font-size:11.5px;line-height:1.75;min-height:180px;white-space:pre;overflow:auto}
+.ac-res .er{color:#F08A72}.ac-res .hl{color:#8CC63F}
+/* 图8 starter 工坊 */
+.sw-code{background:#22262D;color:#C9D0DA;border-radius:10px;padding:10px 14px;font-family:var(--mono);font-size:11.5px;line-height:1.8;white-space:pre;overflow:auto}
+.sw-code .an{color:#8CC63F}.sw-code .kw{color:#E8B54A}.sw-code .st{color:#9AD1E8}.sw-code .cm{color:#7A8283}
+/* 图9 slices */
+.sl-lanes{padding:14px;display:grid;gap:10px}
+.sl-lane{display:grid;grid-template-columns:200px 1fr 120px;gap:10px;align-items:center;font-size:12.5px;cursor:pointer}
+.sl-track{position:relative;height:26px;background:#EDEFEA;border:1px solid var(--line);border-radius:13px}
+.sl-bar{position:absolute;left:3px;top:3px;height:18px;border-radius:9px;background:var(--pen);width:0;transition:width 1s;display:flex;align-items:center;justify-content:flex-end;color:#fff;font-size:9.5px;font-family:var(--mono);padding-right:7px}
+.sl-lane.sel .sl-bar{background:var(--gr)}
+.sl-info{margin:0 14px 12px;padding:8px 12px;background:var(--stage);border:1px solid var(--line);border-radius:8px;font-size:12.5px;line-height:1.8;min-height:44px}
+.sl-info b{color:var(--pen)}
+/* 图10 排障 */
+.fs-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px}
+.fs-card{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:9px 12px;font-size:12.5px;cursor:pointer;transition:all .2s}
+.fs-card h5{font-family:var(--mono);font-size:12px;color:var(--warn)}
+.fs-card pre{font-family:var(--mono);font-size:10.5px;color:var(--ink2);background:#22262D;color:#C9D0DA;border-radius:6px;padding:6px 9px;margin:6px 0;line-height:1.6;overflow:hidden;max-height:58px}
+.fs-card .fix{display:none;font-size:12px;color:var(--gr);line-height:1.8;margin-top:4px}
+.fs-card.open{border-color:var(--pen)}
+.fs-card.open .fix{display:block}
+table.tb{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;background:var(--card)}
+table.tb th,table.tb td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top}
+table.tb th{background:#ECEEE6;font-weight:700;font-size:13px}
+table.tb td.m{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:13.5px;line-height:1.7}
+.card b{display:block;font-family:var(--serif);font-size:14.5px;margin-bottom:4px}
+.card b::before{content:"问 ";color:var(--pen)}
+.card a{font-family:var(--mono);font-size:11px;color:var(--gray)}
+footer{margin-top:88px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2);font-family:var(--kai);line-height:1.9}
+@media (max-width:1120px){
+  .wrap{grid-template-columns:minmax(0,860px);justify-content:center}
+  aside.toc{position:static;height:auto;order:-1;padding:12px 0 0}
+  .toc ol{display:flex;overflow-x:auto;gap:4px;padding-bottom:8px;scrollbar-width:thin}
+  .toc li a{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;border-radius:4px}
+  .toc li a.active{border-bottom-color:var(--pen);background:none}
+  .toc-brand{padding-left:10px}
+}
+@media (max-width:820px){
+  .hero-top{grid-template-columns:1fr}
+  .ad-body,.er-swap,.bom-grid,.wt-wrap,.ac-wrap,.stp,.fn-wrap,.fs-cards{grid-template-columns:1fr}
+  h2{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+  .reveal{opacity:1;transform:none}
+  .hero-title .stroke svg path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<aside class="toc" aria-label="目录">
+  <div class="toc-brand"><small>SPRING BOOT · ILLUSTRATED</small>Spring Boot 图解讲义</div>
+  <nav><ol>
+    <li><a href="#hero"><i>00</i>开篇 · starter 顾问</a></li>
+    <li><a href="#ch-era"><i>01</i>没有 Boot 的世界</a></li>
+    <li><a href="#ch-run"><i>02</i>run() 启动全流程</a></li>
+    <li><a href="#ch-auto"><i>03</i>自动装配漏斗</a></li>
+    <li><a href="#ch-bom"><i>04</i>依赖仲裁与 BOM</a></li>
+    <li><a href="#ch-cfg"><i>05</i>配置优先级水塔</a></li>
+    <li><a href="#ch-jar"><i>06</i>可执行 jar 解剖</a></li>
+    <li><a href="#ch-act"><i>07</i>Actuator 工作台</a></li>
+    <li><a href="#ch-starter"><i>08</i>自研 Starter 工坊</a></li>
+    <li><a href="#ch-slice"><i>09</i>测试切片</a></li>
+    <li><a href="#ch-boot3"><i>10</i>Boot 3 与新特性</a></li>
+    <li><a href="#ch-fix"><i>11</i>启动失败排障室</a></li>
+    <li><a href="#ch-cards"><i>附</i>面试速查卡</a></li>
+  </ol></nav>
+</aside>
+
+<main>
+
+<section id="hero" class="hero">
+  <div class="hero-top">
+    <div>
+      <p class="hero-kicker reveal d1">自动装配 · 十二讲</p>
+      <h1 class="hero-title reveal d1">Spring Boot<br><span class="stroke">图解讲义<svg viewBox="0 0 200 12" aria-hidden="true"><path d="M3 8 C 40 2, 70 11, 105 6 S 170 3, 197 7"/></svg></span></h1>
+      <p class="hero-sub reveal d2">一台 <mark>starter 顾问</mark>:勾上几个 starter,实时看它<b>带进什么依赖、点亮哪些自动配置、送你哪些默认值</b>——这就是"约定优于配置"的裸形。</p>
+    </div>
+    <div class="reveal d3">
+      <p style="font-size:13.5px;color:var(--ink2)">"图解讲义"系列第四册,<b style="color:var(--gr)">橙笔版</b>。十一讲、<b style="font-family:var(--mono);color:var(--pen)">10</b> 张交互动画,口径 Spring Boot 3.x / 2.x 差异都标注。</p>
+    </div>
+  </div>
+  <div class="advisor reveal d2">
+    <div class="ad-bar">spring-initializr · starter 顾问 —— 勾选你"引入"的依赖</div>
+    <div class="ad-body">
+      <div class="ad-col"><h5>传递带进来的依赖(节选)</h5><ul id="ad-deps"></ul></div>
+      <div class="ad-col"><h5>点亮的自动配置(节选)</h5><ul id="ad-auto"></ul></div>
+      <div class="ad-col"><h5>白送的默认值</h5><ul id="ad-props"></ul></div>
+    </div>
+    <div class="ad-chips" id="ad-chips"></div>
+  </div>
+</section>
+
+<!-- 第1讲 -->
+<section class="ch" id="ch-era">
+  <p class="kicker">第 一 讲</p>
+  <h2>Boot 治的不是 Spring 的病,是"配置的病"</h2>
+  <p class="lead">Spring 本身把对象管理治好了,但"起一个新 Web 工程"仍是体力活:web.xml 或 JavaConfig、DispatcherServlet 手动注册、Tomcat 插件与部署描述符、Jackson 转换器手配、数据源和事务管理器一行行 bean、版本对不上还互相打架。<mark>Spring Boot 的答案:把"每个团队都要抄一遍的样板"沉淀成 starter + 自动配置 + 内嵌容器 + 可执行 jar</mark>——它不替换 Spring,它是 Spring 的"出厂预装配"。</p>
+  <p>三个词记住 Boot:<b>约定优于配置</b>(默认值覆盖 90% 场景,如 H2 内存库自动配好连接串)、<b>起步依赖</b>(按"功能"聚合 jar 并统一版本)、<b>自动配置</b>(按 classpath 上有什么类,决定装不装某套 Bean——下一讲的漏斗)。它仍是 Spring:上一册的容器、生命周期、AOP、事务在这里 100% 成立。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 1</span><span class="fig-title">同一个"起个 Web 工程",2004 年与 2016 年的体力账</span></div>
+    <div class="stage er-swap" id="d-era">
+      <div class="er-col"><h4 style="color:var(--warn)">Spring(手工时代)</h4>
+        <pre>&lt;<span class="er-pain">web.xml</span>&gt; DispatcherServlet 注册
+&lt;<span class="er-pain">mvc:annotation-driven</span>&gt; / JavaConfig
+<span class="er-pain">pom:</span> web/spring-webmvc/jackson/servlet-api
+     四个 jar 手工对齐版本
+<span class="er-pain">Tomcat:</span> 本地装一个,IDEA 配 artifacts
+<span class="er-pain">数据源:</span> ComboPooledDataSource 手写 @Bean
+<span class="er-pain">打包:</span> war → 拷进 webapps → 重启
+<span class="er-pain">上线:</span> 换环境 = 改 6 个配置文件</pre>
+      </div>
+      <div class="er-col"><h4 style="color:var(--teal)">Spring Boot(预装配时代)</h4>
+        <pre>一个注解 <span class="er-win">@SpringBootApplication</span>
+一个依赖 <span class="er-win">spring-boot-starter-web</span>(版本全家桶统一)
+内嵌 <span class="er-win">Tomcat</span>,无需安装
+数据源:有 H2 在 classpath → <span class="er-win">自动配好</span>;生产改 url 即切
+打包 <span class="er-win">java -jar app.jar</span> 即部署
+配置 <span class="er-win">application.yml</span> 一份,<span class="er-win">--spring.profiles.active=prod</span>
+     一参数换环境</pre>
+      </div>
+    </div>
+    <p class="caption">左边不是黑历史,是"每一步都要有人懂"的成本;Boot 把这些步骤标准化成默认值。<mark>会 Boot ≠ 懂 Spring</mark>——出了约定范围(自定义 Converter、换连接池、改启动流程)拼的还是上一册的功夫。</p>
+  </div>
+</section>
+
+<!-- 第2讲 -->
+<section class="ch" id="ch-run">
+  <p class="kicker">第 二 讲</p>
+  <h2>main 方法一行,背后十件事</h2>
+  <p class="lead"><code class="k">SpringApplication.run(App.class, args)</code> 拆开:<b>构造期</b>——推断应用类型(SERVLET/REACTIVE/NONE)、从 SPI 加载 ApplicationContextInitializer 与 ApplicationListener、定位主配置类。<b>运行期</b>——广播 starting → 准备 Environment(命令行、profile、yml 全部汇入)→ 创建上下文 → <mark>refresh()(真正的重头:第 3 册整个生命周期在这里跑)</mark> → 调用 Runner 家族 → started/ready 事件。</p>
+  <p>几个高频追问都藏在这十步里:<b>内嵌 Tomcat 什么时候起?</b>——refresh 中 InetServletWebServerApplicationContext.onRefresh 就起了(所以端口占用错在 Bean 创建之后、Runner 之前);<b>CommandLineRunner/ApplicationRunner 何时跑?</b>——容器就绪之后,预热、任务注册在这;<b>失败呢?</b>——FailureAnalyzers 链负责把 300 行堆栈翻译成人话(第 11 讲排障室)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 2</span><span class="fig-title">run() 十步流水 · 点任意一步看"谁在这埋了钩子"</span></div>
+    <div class="stage stp" id="d-run"></div>
+    <div class="dctrl"><button class="btn solid" id="run-next">下一步 ▸</button><button class="btn" id="run-reset">重置</button><button class="btn" id="run-auto">▶▶ 连播</button></div>
+    <p class="caption">记住三个"钩子位":②的 Initializer(动手前改上下文)、⑤的 Environment(动手外加配置)、⑩的 Runner(动手完做业务)——绝大多数"启动时我要做点事"的需求都该落在其中之一,而不是散落在 @PostConstruct。</p>
+  </div>
+</section>
+
+<!-- 第3讲 -->
+<section class="ch" id="ch-auto">
+  <p class="kicker">第 三 讲</p>
+  <h2>自动装配漏斗:142 个候选怎么筛出你这 9 个</h2>
+  <p class="lead"><code class="k">@EnableAutoConfiguration</code> → AutoConfigurationImportSelector → 读取 <mark>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</mark>(Boot 3;2.x 在 spring.factories),拿到全部候选自动配置类 → 每个类头上都顶着一排 <code class="k">@Conditional</code>:OnClass(类路径有 X 才装)、OnMissingBean(你没自己配我才配——<b>这是"覆盖默认"的机制底座</b>)、OnProperty、OnWebApplication……逐层过滤,<b>最后进容器的只有十几到几十个</b>。<code class="k">--debug</code>/启动日志 <code class="k">ConditionEvaluationReport</code> 就是这张漏斗的出厂检验单。</p>
+  <p>理解到这一层,两个"玄学"当场破产:① <mark>换连接池不用写配置</mark>——DataSourceAutoConfiguration 按顺序探测 Hikari→Tomcat→Dbcp,有 Hikari 类就装它(想换?引入对应类或自己定义 DataSource Bean,OnMissingBean 让位);② <mark>排除自动配置</mark>:<code class="k">@SpringBootApplication(exclude=JpaRepositoriesAutoConfiguration.class)</code>——嫌它自作主张时的标准撤回姿势。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 3</span><span class="fig-title">自动配置漏斗 · 勾选 classpath,重跑评估</span></div>
+    <div class="stage fn-wrap" id="d-funnel">
+      <div>
+        <div style="font-size:12px;color:var(--ink2);margin-bottom:6px">classpath 上有什么(模拟 pom):</div>
+        <div class="fn-sw" id="fn-sw"></div>
+      </div>
+      <div class="fn-rows" id="fn-rows"></div>
+    </div>
+    <div class="dctrl"><button class="btn solid" id="fn-play">▶ 重新评估 ConditionEvaluationReport</button>
+      <span class="hint">生产排查同款命令:<b>java -jar app.jar --debug</b> 或 Actuator /conditions</span></div>
+    <p class="caption">只勾 javax.sql 不勾 H2 会怎样?DataSourceAutoConfiguration 照样<b>通过</b>(类在)→ 但没有 url 也没有嵌入式库 → 启动直接 <code class="k">Failed to determine a suitable driver class</code>——"通过条件"≠"能启动",漏斗只管装配,不管体检。这也解释了排障室第 2 张卡。</p>
+  </div>
+</section>
+
+<!-- 第4讲 -->
+<section class="ch" id="ch-bom">
+  <p class="kicker">第 四 讲</p>
+  <h2>依赖仲裁与 BOM:谁压过了谁</h2>
+  <p class="lead">Maven 面对同一个库多版本入场的仲裁规则很朴素:<mark>最短路径优先,同深度先声明优先</mark>。坑由此而生:你 starter-web 里想要 spring-core 6.1,某个老工具包 depth-2 拽着 5.3 先声明了——<b>老版本赢,Boot 全家桶被压</b>,启动才炸 NoSuchMethodError。<mark>spring-boot-dependencies(BOM)是"家长令":它 import 一份 dependencyManagement,把所有传递依赖的版本钉死</mark>——你的 pom 继承 Boot parent 或 import BOM 后,无论依赖树里谁喊几版,家长说了算。</p>
+  <p>实操三板斧:<b>Boot parent 兜底</b>(普通工程全走它,子模块引依赖不写 version);<b>冲突显形</b>靠 <code class="k">mvn dependency:tree -Dverbose</code> 找"omitted for conflict";<b>必须覆盖家长时</b>,在 properties 里改版本变量(如 <code class="k">&lt;jackson-bom.version&gt;</code>)而不是硬 import——后者会让"家长令"局部失效,迟早再打起来。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 4</span><span class="fig-title">同一棵依赖树,BOM 前后两次仲裁</span></div>
+    <div class="stage bom-grid" id="d-bom">
+      <div class="bom-tree" id="bom-before"><h5 style="color:var(--warn)">没有 BOM(裸 Maven 仲裁)</h5></div>
+      <div class="bom-tree" id="bom-after"><h5 style="color:var(--teal)">继承 spring-boot-starter-parent</h5></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="bom-play">▶ 开演:两个 spring-core 打架</button>
+      <span class="hint">左边按 Maven 规则仲裁,右边"家长令"一票定版</span>
+    </div>
+    <p class="caption">左:myutils 最短路径带着 spring-core:5.3 胜出——Boot 的 6.1 被 omitted,启动时方法签名对不上 NoSuchMethodError;右:BOM 钉 6.1,<b>所有声明的"约等于"建议版本</b>被统一抹平。这也是 Boot 升级时"别自作聪明钉版本"的由来。</p>
+  </div>
+</section>
+
+<!-- 第5讲 -->
+<section class="ch" id="ch-cfg">
+  <p class="kicker">第 五 讲</p>
+  <h2>配置水塔:同一个 key,听上面的</h2>
+  <p class="lead">Boot 把配置源堆成一座水塔,<mark>同一 key 上层覆盖下层</mark>:命令行(&gt;--server.port=9090) → SPRING_APPLICATION_JSON → 环境变量(SERVER_PORT) → 各 profile 的 application-{profile}.yml → 主 application.yml → @PropertySource → 默认值。profile 内部也分层:profile 文件压主文件,profile 顺序由 <code class="k">spring.profiles.group</code>/<code class="k">active</code> 定。</p>
+  <p>配套心法:<b>机密不进 yml</b>——走环境变量/配置中心/加密的 <code class="k">ENC(...)</code>;<b>@ConfigurationProperties 优于 @Value</b>(批量绑定+宽松匹配+校验+IDE 元数据),@Value 留给单点;所谓<b>宽松绑定</b>:yml 里 <code class="k">my-app.name-server</code>、环境变量 <code class="k">MY_APP_NAME_SERVER</code>、System prop <code class="k">myAppNameServer</code>——同一个键的三个变体,绑同一个字段。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 5</span><span class="fig-title">server.port 七层水塔 · 给每层倒水,看谁说了算</span></div>
+    <div class="stage wt-wrap" id="d-wtower">
+      <div class="wt-layers" id="wt-lays"></div>
+      <div>
+        <div style="font-size:12.5px;color:var(--ink2)">给选中层倒水:</div>
+        <div class="wt-val" id="wt-vals" style="margin:6px 0 10px"></div>
+        <div class="dctrl" style="flex-direction:column;align-items:stretch;margin:0">
+          <button class="btn solid" id="wt-scenario">🎬 生产发布剧本:三层都有水</button>
+          <button class="btn" id="wt-clear">清空</button>
+        </div>
+        <div class="say" id="wt-say" style="padding:4px 0 0"></div>
+      </div>
+    </div>
+    <p class="caption">水塔顶部先被喝干:最上层有值即生效,下面的层全被无视——"线上用启动参数临时救火"能压过一切,正是这个顺序。环境变量层用 <code class="k">SERVER_PORT</code> 这种"全大写+下划线"变体?宽松绑定照样接住。</p>
+  </div>
+</section>
+
+<!-- 第6讲 -->
+<section class="ch" id="ch-jar">
+  <p class="kicker">第 六 讲</p>
+  <h2>可执行 jar 解剖:为什么它不用 Tomcat 也能跑</h2>
+  <p class="lead"><code class="k">java -jar app.jar</code> 跑起来的不是普通 jar。spring-boot-maven-plugin 打成 <mark>fat jar(jar in jar)</mark>:<code class="k">META-INF/MANIFEST.MF</code> 里 Main-Class 不是你的 App,而是 <b>JarLauncher</b>;Start-Class 才是你。MANIFEST 之下,你的类在 <code class="k">BOOT-INF/classes</code>,<b>100+ 个依赖 jar 原封不动嵌在 BOOT-INF/lib</b>(不解压,靠自定义 LaunchedURLClassLoader 以嵌套路径直读);<code class="k">org/springframework/boot/loader</code> 是这套启动魔术的实现。Tomcat 呢?<code class="k">tomcat-embed-core</code> 就在 lib 里——它只是个库,ServletWebServerFactory 在代码里 new 出它并 listen 端口。</p>
+  <p>这解释了三个现象:<b>为什么 Boot 的 Main 类 IDE 能直接跑</b>(类路径普通方式组装,没走 Launcher);<b>为什么 fat jar 里资源要用 ClassLoader.getResource 而不是 File API</b>(它在嵌套 jar 里,不是文件系统);<b>为什么 java 9+ 的 -jar 仍可</b>(Loader 只依赖标准 URLClassLoader 定制)。war 部署老 Tomcat 的兼容路径:继承 SpringBootServletInitializer 把"控制权"还给容器。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 6</span><span class="fig-title">爆炸视图 · 点层名看每层的职责</span></div>
+    <div class="stage jar-stage">
+      <div class="jar-layers" id="jar-lays"></div>
+    </div>
+    <div class="jar-desc" id="jar-desc">点任意一层。</div>
+    <div class="dctrl"><button class="btn solid" id="jar-explode">💥 爆炸 / 合体</button><span class="hint">合体态=真实磁盘上的样子;爆炸后从上往下读就是启动顺序</span></div>
+    <p class="caption">注意最上层的 JarLauncher:它构造 LaunchedURLClassLoader 指向"嵌套 jar 的 URL"再反射调 Start-Class.main——"jar 里跑 jar"的全部秘密就这一句。</p>
+  </div>
+</section>
+
+<!-- 第7讲 -->
+<section class="ch" id="ch-act">
+  <p class="kicker">第 七 讲</p>
+  <h2>Actuator:给运行中的进程装仪表盘</h2>
+  <p class="lead">spring-boot-starter-actuator 点亮一串 HTTP/JMX 端点:<code class="k">/health</code>(健康检查聚合,探活/K8s 就绪探针直接吃它,<code class="k">management.endpoint.health.probes.enabled=true</code> 出 liveness/readiness)、<code class="k">/metrics</code>(Micrometer 指标,喂 Prometheus)、<code class="k">/info /env /configprops /beans /mappings /loggers</code>(动态改日志级别!)、<code class="k">/heapdump /threaddump</code>(现场拍片)、<code class="k">/shutdown</code>。<b>危险项(env 泄漏配置、heapdump 几百 M、shutdown 直接关服)必须收口</b>:只暴露 health/info/metrics,挂 management.server.port 走内网,加 Spring Security。</p>
+  <p>自定义三板斧:HealthIndicator 加一路依赖自检、@Bean Metric 埋业务指标、Micrometer Observation API 统一日志+指标+链路——Boot 3 把这三件事收进了"可观测性"一个门面。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 7</span><span class="fig-title">端点工作台 · 点 endpoint 看响应(模拟)</span></div>
+    <div class="stage ac-wrap" id="d-act">
+      <div class="ac-eps" id="ac-eps"></div>
+      <pre class="ac-res" id="ac-res"># 左侧点一个端点</pre>
+    </div>
+    <div class="dctrl"><button class="btn solid" id="ac-harden">🔒 生产收口:只暴露 health,info,metrics + 独立管理端口</button></div>
+    <div class="say" id="ac-say" style="padding:4px 14px"></div>
+    <p class="caption">先点裸奔态的 /env、/heapdump 感受一下"内网也别这么干",再点 🔒——列表变灰、危险端点关闭。/loggers 那栏试试改级别:<b>不重启热改日志</b>是它最香的生产用法。</p>
+  </div>
+</section>
+
+<!-- 第8讲 -->
+<section class="ch" id="ch-starter">
+  <p class="kicker">第 八 讲</p>
+  <h2>自研 Starter 工坊:把公司的轮子做成"引一下就能用"</h2>
+  <p class="lead">写一个 <code class="k">acme-sms-spring-boot-starter</code> 只要四步(Boot 2.7/3 规范):① 两个约定模块——<code class="k">acme-sms-spring-boot-autoconfigure</code>(装配逻辑)+ <code class="k">acme-sms-spring-boot-starter</code>(空壳 pom 只聚合依赖,官方命名:第三方不要以 spring-boot 开头);② <code class="k">@ConfigurationProperties(prefix="acme.sms")</code> 收配置;③ 自动配置类:候选 Bean + <mark>@ConditionalOnClass/@ConditionalOnMissingBean</mark>(用户自定义优先);④ 注册到 <code class="k">META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</code>。完事——别的项目引 GAV、yml 配两行,<code class="k">@Autowired SmsService</code> 即来。</p>
+  <p>这套骨架和 Boot 官方 starter 完全同构——你现在回头看第 3 讲的漏斗,就能明白每一个官方自动配置类就是这么写的。<mark>工坊里五步走完,右侧同步"消费方视角"验收。</mark></p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 8</span><span class="fig-title">Starter 流水线 · 左边五步,右边消费方验收</span></div>
+    <div class="stage stp" id="d-starter"></div>
+    <div class="dctrl"><button class="btn solid" id="st-next">下一步 ▸</button><button class="btn" id="st-reset">重置</button><button class="btn" id="st-auto">▶▶ 连播</button></div>
+    <p class="caption">第 4 步那个"一行注册文件"是新手最常漏的——没有它,自动配置类只是个普通类,漏斗根本看不见它。Boot 2.x 对应写 spring.factories 的 EnableAutoConfiguration key,3.x 换 imports 文件(2.7 已双轨)。</p>
+  </div>
+</section>
+
+<!-- 第9讲 -->
+<section class="ch" id="ch-slice">
+  <p class="kicker">第 九 讲</p>
+  <h2>测试切片:别为一行 Controller 起整座城</h2>
+  <p class="lead"><code class="k">@SpringBootTest</code> 把整个应用上下文拉起来——1200 个 Bean、真实数据源、内嵌 Tomcat,测一个 URL 路由要 40 秒;而且<mark>测试环境里那个"能启动"的假数据库还会污染结论</mark>。切片测试按层裁剪:<code class="k">@WebMvcTest</code> 只装 web 层(Controller/Converter/Interceptor/Filter),Service 用 @MockitoBean(3.4+;旧 @MockBean)顶掉;<code class="k">@DataJpaTest</code> 只装 JPA+数据源(默认换嵌入式库,<b>且默认事务回滚不脏库</b>);<code class="k">@JsonTest</code> 只验序列化;要全链路再用 @SpringBootTest 点名几个场景。</p>
+  <p>常见报错一步定位:<b>@WebMvcTest 里 @Autowired Repository 报 NoSuchBean</b>——切片压根不装它;把被测链路上的下游一律 Mock。CI 账本:切片 4s/类 vs 全量 40s/类,乘以 300 个测试文件就是每天多睡 3 小时。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 9</span><span class="fig-title">加载量赛跑 · 点任意一条看"装了什么"</span></div>
+    <div class="stage" id="d-slice">
+      <div class="sl-lanes" id="sl-lanes"></div>
+      <div class="sl-info" id="sl-info">点 ▶ 开跑。</div>
+    </div>
+    <div class="dctrl"><button class="btn solid" id="sl-play">▶ 开跑</button></div>
+    <p class="caption">条形=启动耗时(示意),点卡片看装载清单。记忆锚:WebMvc 切片<b>没有</b> Service/Repository;DataJpa 切片<b>没有</b> Controller 和自定义 @Component;都"没有"正是它们快的原因。</p>
+  </div>
+</section>
+
+<!-- 第10讲 -->
+<section class="ch" id="ch-boot3">
+  <p class="kicker">第 十 讲</p>
+  <h2>Boot 3 的门面换了什么</h2>
+  <p class="lead">3.x 四件大事:<mark>Jakarta EE 9+</mark>(javax.servlet→jakarta.*,所有依赖它的库都要重适配——升级卡半路多半卡在这)、<b>Java 17 起步</b>、<mark>可观测性统一</mark>(Micrometer Observation 一个 API 同时产指标+链路,Actuator Tracing 内置)、<b>原生镜像 GraalVM</b>(AOT 提前分析,启动毫秒级、内存砍半——代价是反射/代理要登记 reflect-config,框架"运行期魔法"受约束)。另外 2.7→3.0 迁移点:自动配置清单换 imports 文件、@MockBean→@MockitoBean、spring.factories 各 SPI 迁到 <code class="k">.imports</code>/spring.<em>子文件。</em></p>
+  <p>AOT/native 对"老 Java 程序员"最扎心的推论:<mark>凡是运行期动态字节码(CGLIB、动态代理、Class.forName 配置加载)在 native 里都要提前登记</mark>——Spring 6 为此把大量运行期逻辑改成构建期生成代码。"Spring 魔法变少了"不是错觉,是工程化方向。</p>
+</section>
+
+<!-- 第11讲 -->
+<section class="ch" id="ch-fix">
+  <p class="kicker">第 十一 讲</p>
+  <h2>启动失败排障室:四类常客</h2>
+  <p class="lead">Boot 的 FailureAnalyzer 把高频死因翻译成人话(日志末尾"APPLICATION FAILED TO START"那块红字)。这间排障室挂四张常见病卡——每张:现场堆栈 → 病根 → 修法。点开看,都是别人的工单。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 10</span><span class="fig-title">常见病卡 · 点卡片展开"病根与处方"</span></div>
+    <div class="stage fs-cards" id="d-fix"></div>
+    <p class="caption">共同心法:<b>先读最后一屏红字</b>(Analyzer 已翻译),再沿"Caused by"向下追到第一现场;90% 的"BeanCreationException 套娃"病根都在最底下那层。</p>
+  </div>
+</section>
+
+<!-- 附录 -->
+<section class="ch" id="ch-cards">
+  <p class="kicker">附 录</p>
+  <h2>面试速查卡</h2>
+  <div class="cards" id="card-grid"></div>
+</section>
+
+<footer>
+  Spring Boot 图解讲义 · 系列第四册 · 手写 vanilla JS/SVG 无依赖离线开 · 口径 Boot 3.x(2.x 差异均已标注)。
+</footer>
+</main>
+</div>
+
+<script>
+/* ============ 工具 ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function h(tag,attrs){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k==='text')e.textContent=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)));}return e;}
+function runGuard(){let id=0;return{next(){return++id},alive(my){return my===id}};}
+const safe=(name,fn)=>{try{fn();}catch(e){console.error('[demo:'+name+']',e);}};
+function stepper(stage,data){
+  const listEl=h('div',{class:'stp-list'});const card=h('div',{class:'stp-card'});
+  stage.append(listEl,card);
+  let idx=-1;
+  const items=data.map((d,i)=>{
+    const it=h('div',{class:'stp-item'},h('i',null,d.n||String(i+1)),h('span',null,d.t));
+    it.onclick=()=>go(i);listEl.append(it);return it;
+  });
+  function go(i){
+    idx=i;
+    items.forEach((el,j)=>{el.classList.toggle('cur',j===i);el.classList.toggle('done',j<i);});
+    const d=data[i];
+    card.innerHTML='<b>'+(d.n?d.n+' ':'')+d.h+'</b><br>'+d.d+(d.tags?'<div style="margin-top:6px">'+d.tags.map(t=>'<span class="tag">'+t+'</span>').join('')+'</div>':'');
+  }
+  go(0);
+  return {next(){if(idx<data.length-1){go(idx+1);return true}return false},prev(){if(idx>0)go(idx-1)},go,restart(){go(0)},cur(){return idx},count(){return data.length}};
+}
+
+/* ============ hero starter 顾问 ============ */
+function initAdvisor(){
+  const chipsEl=$('#ad-chips'),dDeps=$('#ad-deps'),dAuto=$('#ad-auto'),dProps=$('#ad-props');
+  const DATA={
+    web:{label:'web',deps:['spring-boot-starter','tomcat-embed-core','spring-web / spring-webmvc','jackson-databind'],auto:['DispatcherServletAutoConfiguration','ServletWebServerAutoConfiguration(Tomcat)','HttpMessageConvertersAutoConfiguration','ErrorMvcAutoConfiguration(白标错误页)'],props:['server.port=8080','server.tomcat.threads.max=200','spring.mvc.static-path-pattern=/**']},
+    'data-jpa':{label:'data-jpa',deps:['starter-data-jpa','hibernate-core','spring-orm','jakarta.persistence-api'],auto:['HibernateJpaAutoConfiguration','JpaRepositoriesAutoConfiguration','DataSourceAutoConfiguration(需连接信息)'],props:['spring.jpa.ddl-auto=none(生产!)','open-in-view=false 建议显式关']},
+    security:{label:'security',deps:['starter-security','spring-security-web/core'],auto:['SecurityAutoConfiguration','UserDetailsServiceAutoConfiguration(无用户源→生成随机密码,日志可见)'],props:['默认:<b style="color:var(--warn)">全部路径拦截</b>','security.user.password=随机 UUID(开发提示)']},
+    actuator:{label:'actuator',deps:['starter-actuator','micrometer-core'],auto:['EndpointWebExtension 家族','MetricsAutoConfiguration'],props:['暴露=health,info(最小安全默认)','/metrics → Prometheus registry']},
+    'data-redis':{label:'data-redis',deps:['starter-data-redis','lettuce-core','spring-data-redis'],auto:['RedisAutoConfiguration(LettuceConnectionFactory + StringRedisTemplate)'],props:['spring.data.redis.host=localhost:6379','默认 key/value 都是 String 序列化(自己配 JSON 序列化器!)']},
+    validation:{label:'validation',deps:['starter-validation','hibernate-validator'],auto:['ValidationAutoConfiguration(Validator bean)'],props:['@Validated 即开即用']},
+  };
+  const sel=new Set(['web']);
+  function render(){
+    const uniq=(arr)=>[...new Set(arr)];
+    const D=[...sel].flatMap(k=>DATA[k].deps),A=[...sel].flatMap(k=>DATA[k].auto),P=[...sel].flatMap(k=>DATA[k].props);
+    dDeps.innerHTML='';dAuto.innerHTML='';dProps.innerHTML='';
+    D.forEach(x=>dDeps.append(h('li',null,x)));
+    A.forEach(x=>dAuto.append(h('li',null,x)));
+    P.forEach(x=>dProps.append(h('li',{html:x},)));
+  }
+  Object.keys(DATA).forEach(k=>{
+    const b=h('button',{class:'ad-chip'+(sel.has(k)?' on':'')},'spring-boot-starter-'+DATA[k].label);
+    b.onclick=()=>{if(sel.has(k))sel.delete(k);else sel.add(k);b.classList.toggle('on',sel.has(k));render();};
+    chipsEl.append(b);
+  });
+  render();
+}
+
+/* ============ 图2 run 流程 ============ */
+function initRun(){
+  const stage=$('#d-run');
+  const DATA=[
+    {n:'①',t:'构造 SpringApplication',h:'推断类型 + 加载 SPI',d:'WebApplicationType 探测(classpath 有 Servlet+WebFlux? 谁优先)、从 <code class="k">META-INF/spring.factories</code> 读出全部 ApplicationContextInitializer 与 ApplicationListener(此刻监听器已就位,连 starting 都不错过)、定位主类。',tags:['AOT 时代:构造期也读静态化的 .info']},
+    {n:'②',t:'Initializer 就位',h:'BootstrapContext 与注册钩子',d:'ConfigDataEnvironmentPostProcessor(负责 yml/profile 全家)等 PostProcessor 都注册进上下文,<b>还没执行</b>。你想"在所有 Bean 之前动上下文"的钩子挂这。',tags:['ApplicationContextInitializer']},
+    {n:'③',t:'listeners.starting()',h:'广播 ApplicationStartingEvent',d:'DebugFailureAnalyzer 收集器、重启监听(devtools)在这开始计时。',tags:[]},
+    {n:'④',t:'准备 Environment',h:'配置源汇聚',d:'命令行 args → SPRING_APPLICATION_JSON → 环境变量 → profile yml → application.yml…(第 5 讲水塔在这灌水!)。profiles.active 解析也在此。',tags:['PropertySource 链成型']},
+    {n:'⑤',t:'创建上下文',h:'AnnotationConfigServletWebServerApplicationContext',d:'按应用类型 new 出对的上下文;主配置类此时只登记成<b>定义</b>,还没实例化。',tags:[]},
+    {n:'⑥',t:'refresh() 开始',h:'Spring 全流程开跑',d:'这就是第 3 册的十二讲内容:BFPP(@Import 解析、自动配置筛选就在这)→ BPP 注册 → 组件扫描 → 逐 Bean 生命周期…',tags:['重头戏']},
+    {n:'⑦',t:'onRefresh:内嵌 Tomcat',h:'WebServer 起来了',d:'ServletWebServerApplicationContext.onRefresh → createWebServer → Tomcat 启动、端口 listen。<b>端口占用异常在这爆</b>。Filter 注册也在这阶段(经 ServletContextInitializer)。',tags:['WebServerStartStopLifecycle']},
+    {n:'⑧',t:'finishRefresh',h:'广播 ContextRefreshedEvent',d:'所有单例就绪,@EventListener(ContextRefreshedEvent) 的预热在这跑;Lifecycle processor 开始。',tags:['预热位']},
+    {n:'⑨',t:'Runner 家族',h:'CommandLineRunner / ApplicationRunner',d:'容器 READY 之后、对外服务前后:注册任务(xxl-job 接入常在这)、缓存预热、发 started 前的最后业务。多个用 @Order 排。',tags:['启动完成后跑']},
+    {n:'⑩',t:'started/ready 事件',h:'Actuator 探针绿了',d:'ApplicationStartedEvent → ⑨ 之后 ApplicationReadyEvent。K8s readiness 语义的 probes 端点在这条线上给答案。失败则走 FailureAnalyzers 出红字。',tags:['可观测起点']},
+  ];
+  const sp=stepper(stage,DATA);
+  const g=runGuard();
+  $('#run-next').onclick=()=>{g.next();sp.next();};
+  $('#run-reset').onclick=()=>{g.next();sp.restart();};
+  $('#run-auto').onclick=async()=>{const my=g.next();sp.restart();for(let i=0;i<sp.count()-1;i++){await sleep(1400);if(!g.alive(my))return;sp.next();}};
+}
+
+/* ============ 图3 自动配置漏斗 ============ */
+function initFunnel(){
+  const swEl=$('#fn-sw'),rowsEl=$('#fn-rows');
+  const CLS=['web','servlet','javax.sql','h2','data-jpa','data-redis','security','actuator','kafka','mongodb'];
+  const on=new Set(['web','servlet','javax.sql','data-jpa']);
+  const CANDS=[
+    {n:'ServletWebServerAutoConfiguration',req:['servlet'],why:'OnClass Servlet'},
+    {n:'DispatcherServletAutoConfiguration',req:['web','servlet'],why:'OnClass DispatcherServlet'},
+    {n:'HttpMessageConvertersAutoConfiguration',req:['web'],why:'OnClass HttpMessageConverter'},
+    {n:'DataSourceAutoConfiguration',req:['javax.sql'],why:'OnClass DataSource(+无自定义 DataSource 时)'},
+    {n:'SqlInitializationAutoConfiguration',req:['javax.sql','h2'],why:'OnClass EmbeddedDatabase'},
+    {n:'HibernateJpaAutoConfiguration',req:['data-jpa'],why:'OnClass EntityManagerFactory'},
+    {n:'RedisAutoConfiguration',req:['data-redis'],why:'OnClass RedisOperations'},
+    {n:'SecurityAutoConfiguration',req:['security'],why:'OnClass SecurityFilterChain'},
+    {n:'EndpointAutoConfiguration(actuator)',req:['actuator'],why:'OnClass @Endpoint'},
+    {n:'KafkaAutoConfiguration',req:['kafka'],why:'OnClass KafkaTemplate'},
+    {n:'MongoAutoConfiguration',req:['mongodb'],why:'OnClass Mongo'},
+  ];
+  CLS.forEach(c=>{
+    const b=h('button',{class:'btn'+(on.has(c)?' on':'')},c);
+    b.onclick=()=>{if(on.has(c))on.delete(c);else on.add(c);b.classList.toggle('on',on.has(c));};
+    swEl.append(b);
+  });
+  const g=runGuard();
+  async function play(){
+    const my=g.next();rowsEl.innerHTML='';
+    for(const c of CANDS){
+      if(!g.alive(my))return;
+      const pass=c.req.every(r=>on.has(r));
+      const row=h('div',{class:'fn-row'});
+      row.append(h('span',null,c.n));
+      const why=h('span',{class:'why'},'…');
+      row.append(why);
+      rowsEl.append(row);
+      await sleep(170);if(!g.alive(my))return;
+      if(pass){row.classList.add('pass');why.textContent='✓ 匹配:'+c.why;}
+      else{row.classList.add('reject');why.textContent='✗ 缺类:'+(c.req.find(r=>!on.has(r))||'');}
+      if(c.n.startsWith('DataSource')&&pass&&!on.has('h2')){
+        why.textContent='✓ 但无 url 无嵌入式库 → 启动炸 Failed to determine';
+        why.style.color='var(--warn)';why.style.fontWeight='700';
+      }
+      if(!g.alive(my))return;
+    }
+  }
+  $('#fn-play').onclick=play;
+  play();
+}
+
+/* ============ 图4 BOM ============ */
+function initBom(){
+  const B=$('#bom-before'),A=$('#bom-after');
+  const g=runGuard();
+  function fill(el,rows){el.innerHTML='';const H=el.querySelector('h5');el.append(H);rows.forEach(r=>{const d=h('div',null,r);el.append(d);});}
+  const PRE_HEAD=['app','├─ spring-boot-starter-web (声明 6.1)  ← 想要的','│   └─ spring-web:6.1.2 (depth 2)','└─ com.oldshop:myutils:2.0 (先声明!)','    └─ spring-core:<b>5.3.29</b> (depth 2,先声明赢)'];
+  $('#bom-play').onclick=async()=>{
+    const my=g.next();
+    fill(B,['app','…评估中']);fill(A,['app','…等待家长令']);
+    await sleep(500);if(!g.alive(my))return;
+    fill(B,PRE_HEAD.map(s=>s.startsWith('    └─')?h('span',{class:'bom-win'},'    └─ '+s.trim().replace('└─ ','')):s));
+    B.innerHTML='<h5 style="color:var(--warn)">没有 BOM(Maven 原生仲裁)</h5>'
+      +'<div class="bom-node" style="padding-left:0"><b>app</b></div>'
+      +'<div class="bom-node bom-lose">starter-web → spring-web <b>6.1.2</b> 被压掉</div>'
+      +'<div class="bom-node bom-win">myutils → spring-core <b>5.3.29</b> 胜(同深度先声明)</div>'
+      +'<div class="bom-node">结果:Boot 调新 API → <b style="color:var(--warn)">NoSuchMethodError</b> 🎃</div>';
+    fill(A,['app','…仲裁中,家长令覆盖一切']);
+    await sleep(1200);if(!g.alive(my))return;
+    A.innerHTML='<h5 style="color:var(--teal)">继承 spring-boot-starter-parent(BOM 生效)</h5>'
+      +'<div class="bom-node" style="padding-left:0"><b>app</b></div>'
+      +'<div class="bom-node bom-win">spring-core → <b>6.1.2</b> 家长钉版</div>'
+      +'<div class="bom-node bom-lose">myutils 的 5.3.29 → omitted for conflict(managed)</div>'
+      +'<div class="bom-node bom-win">spring-web → <b>6.1.2</b> ✓ 全家齐步走</div>'
+      +'<div class="bom-edict">📜 spring-boot-dependencies 声明了 ~1100 个"官方搭配版本"</div>';
+  };
+}
+
+/* ============ 图5 水塔 ============ */
+function initWtower(){
+  const LAYS=[
+    ['命令行参数','--server.port=…,对任何环境都可救火'],
+    ['SPRING_APPLICATION_JSON','内联 JSON,配容器平台注入常用'],
+    ['java 系统属性','-Dserver.port'],
+    ['OS 环境变量','SERVER_PORT(宽松绑定识别)'],
+    ['profile yml(后声明优先)','application-prod.yml'],
+    ['主 yml','application.yml'],
+    ['@PropertySource','类上显式引入,优先级最低的非默认层'],
+    ['DefaultProperties','代码里的兜底值'],
+  ];
+  const layersEl=$('#wt-lays'),valsEl=$('#wt-vals'),say=$('#wt-say');
+  const V=['9090','8443','8081','8080'];let cur=null;
+  const state=LAYS.map(()=>null);
+  LAYS.forEach(([t,d],i)=>{
+    const el=h('div',{class:'wt-lay',id:'wt-l'+i},h('span',null,t+' <small>'+d+'</small>'),h('span',{class:'v'},'—'));
+    el.style.cursor='pointer';
+    el.onclick=()=>{if(!cur){say.innerHTML='先点一个<b>值</b>(右下),再点层"倒水"。';return;}state[i]=cur;refresh();};
+    layersEl.append(el);
+  });
+  V.forEach(v=>{const b=h('button',{class:'btn',style:'width:52px'},v);b.onclick=()=>{cur=v;$$('.wt-val .btn',valsEl).forEach(x=>x.classList.toggle('on',x===b));say.innerHTML='选中值 <b>'+v+'</b>:现在点任意层倒水 ↑';};valsEl.append(b);});
+  const clr=h('button',{class:'btn'},'清空值');clr.onclick=()=>{cur=null;$$('.wt-val .btn',valsEl).forEach(x=>x.classList.remove('on'));};valsEl.append(clr);
+  function refresh(){
+    let win=-1;
+    state.forEach((v,i)=>{
+      const el=$('#wt-l'+i);
+      el.querySelector('.v').textContent=v||'—';
+      el.classList.toggle('filled',!!v);
+      if(v&&win<0)win=i;
+    });
+    LAYS.forEach((_,i)=>$('#wt-l'+i).classList.toggle('winner',i===win));
+    if(win<0)say.innerHTML='没有一层有水:用内嵌默认(比如 Tomcat 的 8080)。';
+    else say.innerHTML='生效值:<b>server.port = '+state[win]+'</b> ← 来自「'+LAYS[win][0]+'」层'+(win<LAYS.length-1?',下面的水全被无视':'');
+  }
+  // 修复中文全角括号笔误的兜底:用安全字符串
+  say.innerHTML='先点一个值,再点层倒水;或直接看生产发布剧本。';
+  $('#wt-scenario').onclick=()=>{state[0]='9090';state[3]='8081';state[4]='8080';state[5]='8080';refresh();say.innerHTML='剧本:SRE 在 K8s 塞了 SERVER_PORT=8081、prod profile 写了 8080、但发布单里命令行 <b>--server.port=9090</b> → 谁赢?';};
+  $('#wt-clear').onclick=()=>{state.fill(null);refresh();};
+  refresh();
+}
+
+/* ============ 图6 jar 解剖 ============ */
+function initJar(){
+  const laysEl=$('#jar-lays'),desc=$('#jar-desc');
+  const L=[
+    ['META-INF/MANIFEST.MF','Main-Class=JarLauncher · Start-Class=你的 App','启动剧本第一页:JVM 只认 Main-Class——所以 java -jar 先进 Launcher 的手,它读完 Start-Class 才反射进你的 main()。'],
+    ['BOOT-INF/classes/','你写的代码','Controller/Service/yml 全在这;打包顺序保证"你的规则"最先被看见(同名资源你赢)。'],
+    ['BOOT-INF/lib/','100+ 个嵌套 jar(tomcat-embed 也在)','jar in jar 不展平:LaunchedURLClassLoader 以 jar:file:/…!/… 的嵌套 URL 直读——这就是"不用装 Tomcat"的行李舱。'],
+    ['org/springframework/boot/loader/','Launcher 家族源码级在场','JarLauncher/WarLauncher/LaunchedURLClassLoader… 魔术本体。exploded 目录跑(-Dloader.path 外置 jar)也是它。'],
+  ];
+  const els=L.map((l,i)=>{
+    const el=h('div',{class:'jar-lay',id:'jar-l'+i},h('b',null,l[0]),' ',h('small',null,l[1]));
+    el.onclick=()=>desc.innerHTML='<b>'+l[0]+'</b> —— '+l[2];
+    laysEl.append(el);return el;
+  });
+  let open=false;
+  function place(){
+    els.forEach((el,i)=>{el.style.top=open?(10+i*70)+'px':(92+i*22)+'px';el.classList.toggle('on',open);});
+    laysEl.parentElement.style.height=open?'300px':'auto';
+  }
+  place();
+  $('#jar-explode').onclick=()=>{open=!open;place();desc.innerHTML=open?'从上往下读=启动顺序。点任意层看职责。':'合体:磁盘上它就长这样一层压一层。';};
+}
+
+/* ============ 图7 actuator ============ */
+function initAct(){
+  const EPS=[
+    ['/health','{\n  "status": "UP",\n  "components": {\n    "db":      { "status": "UP", "details": { "database": "MySQL" } },\n    "redis":   { "status": "UP" },\n    "diskSpace": { "status": "UP", "free": "12.4 GB" }\n  }\n}\n<span class="cm"># K8s liveness/readiness 直接 wget 这个;自定义健康:实现 HealthIndicator</span>',false],
+    ['/info','{\n  "app": { "name": "orders", "version": "1.4.2" },\n  "java": { "version": "17.0.11" }\n}\n<span class="cm"># 来自 build-info / info.* 配置</span>',false],
+    ['/metrics','[ "jvm.memory.used", "http.server.requests", "hikaricp.connections", … ]\n\nGET /metrics/http.server.requests?tag=uri:/api/order/{id}\n→ count=12004, p99=38ms\n<span class="hl"># Micrometer 统一门面,Prometheus 抓取即图</span>',false],
+    ['/loggers','GET  → 全部 logger 与级别\nPOST /loggers/root {"configuredLevel":"DEBUG"}\n<span class="hl"># ★ 不重启热改日志级别!排查完记得改回去</span>',false],
+    ['/env','{ "configService": …, 全部 PropertySource 与值 }\n<span class="er">⚠ 泄漏数据源 url、密码占位符、第三方 key —— 生产别裸暴露</span>',true],
+    ['/heapdump','→ 下载 app-heap.hprof(与堆等大,可能几百 MB)\n<span class="er">⚠ OOM 前现场拍片神器,裸暴露=自 DoS(带宽+磁盘)</span>',true],
+    ['/shutdown','POST → 优雅停机(需显式开启)\n<span class="er">⚠ 能关你服务的端点,想都别想开公网</span>',true],
+  ];
+  const epsEl=$('#ac-eps'),res=$('#ac-res'),say=$('#ac-say');
+  EPS.forEach(([n,body,danger])=>{
+    const b=h('button',{class:'btn'+(danger?' warn-o':'')},n);
+    b.onclick=()=>{res.innerHTML='<span class="sql-prompt">GET :8080'+n+'</span>\n\n'+body;
+      if(danger)say.innerHTML='<b>⚠ '+n+'</b> 在生产必须:不暴露(exposure.include 白名单)+ 管理端口隔离 + 鉴权。';
+      else say.innerHTML=n+' 是合规公民,常规暴露即可。';};
+    epsEl.append(b);
+  });
+  $('#ac-harden').onclick=()=>{
+    $$('#ac-eps .btn',epsEl).forEach(b=>{const t=b.textContent;const safeEp=['/health','/info','/metrics'].includes(t);b.disabled=!safeEp;b.classList.toggle('on',safeEp);});
+    say.innerHTML='<b>收口完成:</b>management.endpoints.web.exposure.include=health,info,metrics;management.server.port=9091(内网)。/env /heapdump /shutdown 已灰——点灰按钮会提示 404。';
+    res.innerHTML='<span class="er">404  Whitelabel: endpoint not exposed</span>';
+    setTimeout(()=>{res.innerHTML='';EPS.forEach(([n])=>{if(['/health','/info','/metrics'].includes(n))$('#ac-eps').querySelector('[class]').textContent=n;});},100);
+  };
+}
+
+/* ============ 图8 starter 工坊 ============ */
+function initStarter(){
+  const stage=$('#d-starter');
+  const DATA=[
+    {n:'①',t:'建两个模块',h:'autoconfigure + starter 两件套',d:'<span class="cm">// 官方约定(第三方命名别以 spring-boot 开头)</span>\nacme-sms-<span class="an">spring-boot-autoconfigure</span>  <span class="cm">← 逻辑全在这</span>\nacme-sms-<span class="an">spring-boot-starter</span>      <span class="cm">← 空壳 pom:只依赖 autoconfigure</span>\n<span class="cm">// 消费方只需要 GAV 一行</span>',tags:['Maven multi-module']},
+    {n:'②',t:'配置类',h:'@ConfigurationProperties 收配置',d:'<span class="an">@ConfigurationProperties</span>(prefix=<span class="st">"acme.sms"</span>)\n<span class="kw">public class</span> SmsProperties {\n  <span class="kw">private</span> String accessKey;   <span class="cm">// acme.sms.access-key 宽松绑定</span>\n  <span class="kw">private</span> boolean enabled = <span class="an">true</span>;\n}',tags:['校验可加 @NotBlank']},
+    {n:'③',t:'自动配置类',h:'条件装配 + 用户优先',d:'<span class="an">@AutoConfiguration</span>\n<span class="an">@EnableConfigurationProperties</span>(SmsProperties.<span class="kw">class</span>)\n<span class="an">@ConditionalOnClass</span>(SmsClient.<span class="kw">class</span>)\n<span class="kw">class</span> SmsAutoConfiguration {\n  <span class="an">@Bean</span> <span class="an">@ConditionalOnMissingBean</span>          <span class="cm">// ★ 用户自定义 → 我让位</span>\n  SmsService smsService(SmsProperties p){ ... }\n}',tags:['OnMissingBean=可覆盖底座']},
+    {n:'④',t:'注册进漏斗',h:'imports 一行字,万事俱备',d:'<span class="cm">// META-INF/spring/org.springframework.boot.autoconfigure.</span>\n<span class="an">AutoConfiguration.imports</span>\ncom.acme.sms.SmsAutoConfiguration\n<span class="cm">// Boot 2.x: spring.factories 的 EnableAutoConfiguration key</span>\n<span class="cm">// 漏了这行 = 第③步白写,自动配置类没人认识</span>',tags:['Boot 3 换 imports 文件']},
+    {n:'⑤',t:'消费方验收',h:'引依赖 → 配两行 → 用',d:'<span class="cm">// 消费方 application.yml</span>\nacme.sms.access-key: <span class="st">AK-xxxx</span>\n<span class="cm">// 启动日志 --debug</span>\n<span class="hl">Positive matches: SmsAutoConfiguration matched</span>\n<span class="cm">// 业务代码</span>\n<span class="an">@Autowired</span> SmsService sms;\nsms.send(<span class="st">"138…"</span>, <span class="st">"发货了"</span>);  <span class="kw">→</span> <span class="hl">OK 127ms</span>',tags:['工坊验收通过 ✓']},
+  ];
+  const sp=stepper(stage,DATA);
+  const g=runGuard();
+  $('#st-next').onclick=()=>{g.next();sp.next();};
+  $('#st-reset').onclick=()=>{g.next();sp.restart();};
+  $('#st-auto').onclick=async()=>{const my=g.next();sp.restart();for(let i=0;i<sp.count()-1;i++){await sleep(1700);if(!g.alive(my))return;sp.next();}};
+}
+
+/* ============ 图9 切片 ============ */
+function initSlice(){
+  const lanesEl=$('#sl-lanes'),info=$('#sl-info');
+  const L=[
+    ['@SpringBootTest','全量上下文',40,40,'<b>装所有</b>:1200+ Bean、内嵌 Tomcat、真数据源。适合端到端冒烟,不适合当单元测试底座——300 个文件都这么写,CI 每天白烧 3 小时。'],
+    ['@WebMvcTest','web 层切片',4,40,'<b>只装 web 层</b>:Controller/Converter/拦截器/Filter。Service 一律 @MockitoBean;注入 Repository?没有,报错合理。测 URL 路由与入参校验的最优解。'],
+    ['@DataJpaTest','JPA 切片',6,40,'<b>只装 JPA+数据源</b>:Entity/Repository;默认事务回滚(不脏库)、可换 H2。自定义 @Component 不在场。'],
+    ['@JsonTest','序列化切片',2,40,'<b>只装 ObjectMapper 家族</b>:字段命名/@JsonFormat/混入配置回归的显微镜。'],
+  ];
+  L.forEach(([name,sub,sec,max,desc],i)=>{
+    const lane=h('div',{class:'sl-lane'});
+    lane.append(h('span',{html:'<b>'+name+'</b><br><small style="color:var(--ink2)">'+sub+'</small>'}));
+    const track=h('div',{class:'sl-track'},h('span',{class:'sl-bar'}));
+    lane.append(track,h('span',{style:'font-family:var(--mono);font-size:12px',class:'sl-t'},'—'));
+    lane.onclick=()=>{$$('.sl-lane',lanesEl).forEach(x=>x.classList.remove('sel'));lane.classList.add('sel');info.innerHTML=desc;}
+    lanesEl.append(lane);
+  });
+  $('#sl-play').onclick=async()=>{
+    const g=runGuard();const my=g.next();
+    for(let i=0;i<L.length;i++){
+      const lane=$$('.sl-lane',lanesEl)[i],bar=$('.sl-bar',lane),t=$('.sl-t',lane);
+      const secs=L[i][2];
+      bar.style.width=(secs/L[0][2]*96)+'%';
+      t.textContent=secs+'s · '+(i===0?'1284':secs===4?'~90':secs===6?'~140':'~15')+' beans';
+      await sleep(350);if(!g.alive(my))return;
+    }
+  };
+  info.innerHTML='点 ▶ 开跑,再点任意一条看装载清单。';
+}
+
+/* ============ 图11 排障室 ============ */
+function initFix(){
+  const stage=$('#d-fix');
+  const CASES=[
+    ['Port 8080 already occupied',
+     'Web server failed to start. Port 8080 was already in use.\nAction: Identify and stop the process…',
+     '<b>病根:</b>上一个实例没停干净 / 同事也起了同一个 demo。<br><b>处方:</b>lsof/ netstat 揪进程,<code class="k">--server.port=0</code> 随机端口跑集成测试,或本地改用 <code class="k">SERVER_PORT</code> 环境变量。'],
+    ['Failed to determine a suitable driver class',
+     'APPLICATION FAILED TO START\n... DataSourceAutoConfiguration ... url: null, driver-class: null',
+     '<b>病根:</b>classpath 有 javax.sql 触发 DataSource 自动配置,但你既没给 url 也没有嵌入式库(图 3 漏斗的"通过≠能活")。<br><b>处方:</b>真的不要 DB → exclude DataSourceAutoConfiguration;要 DB → spring.datasource.url 补上。'],
+    ['Circular reference involving ... BeanCurrentlyInCreation',
+     'The dependencies of some of the beans form a cycle: aService → bService → aService\nRelying upon circular references is discouraged…',
+     '<b>病根:</b>Boot 2.6+ 默认禁环(spring.main.allow-circular-references=false)。<br><b>处方:</b>拆类/重设计职责边界(正解);应急 @Lazy;实在不行再开全局开关(治标)。'],
+    ['Field xxxMapper required a bean that could not be found',
+     'Consider defining a bean of type \'com.acme.repo.UserMapper\' in your configuration.',
+     '<b>病根:</b>@MapperScan 没扫到/主类不在包根/依赖没引入(切片测试里则是"这层压根没装"——第 9 讲)。<br><b>处方:</b>对齐 basePackages、检查 starter 依赖、WebMvcTest 场景改 @MockitoBean。'],
+  ];
+  CASES.forEach(([t,log,fix])=>{
+    const c=h('div',{class:'fs-card'});
+    c.append(h('h5',null,t),h('pre',null,log),h('div',{class:'fix',html:fix}));
+    c.onclick=()=>{$$('.fs-card',stage).forEach(x=>{if(x!==c)x.classList.remove('open')});c.classList.toggle('open');};
+    stage.append(c);
+  });
+}
+
+/* ============ 附录 ============ */
+function initCards(){
+  const grid=$('#card-grid');
+  const data=[
+    ['Boot 和 Spring 什么关系?','Boot=Spring 的预装配:起步依赖+自动配置+内嵌容器+可执行 jar;容器/生命周期/AOP 全是上一册的 Spring。','ch-era'],
+    ['自动配置原理一句话?','读 AutoConfiguration.imports 拿候选 → 每个类的 @Conditional 按 classpath/已有Bean/配置逐项评估 → 匹配者进容器。','ch-auto'],
+    ['怎么关闭某个自动配置?','@SpringBootApplication(exclude=XxxAutoConfiguration.class) 或 spring.autoconfigure.exclude;先 --debug 看报告再决定。','ch-auto'],
+    ['starter 命名规范?','官方 spring-boot-starter-xxx;第三方 xxx-spring-boot-starter(禁止 spring-boot 开头);autoconfigure 与 starter 分模块。','ch-starter'],
+    ['BOM 解决什么?','Maven"最短路径+先声明"仲裁会压掉 Boot 想要的版本;spring-boot-dependencies 以 dependencyManagement 统一钉版。','ch-bom'],
+    ['配置优先级最高是谁?','命令行参数;往下 SPRING_APPLICATION_JSON→环境变量→profile yml→主 yml→@PropertySource→默认。宽松绑定认变体。','ch-cfg'],
+    ['fat jar 为什么能独立跑?','JarLauncher+嵌套类加载器直读 BOOT-INF/lib 的 jar in jar;Tomcat 以 embed 库形式在代码里启动。','ch-jar'],
+    ['actuator 要注意什么?','危险端点(env/heapdump/shutdown)白名单暴露、管理端口隔离、鉴权;自定义用 HealthIndicator/Micrometer。','ch-act'],
+    ['@WebMvcTest 为什么注不进 Service?','切片只装 web 层——Service 用 @MockitoBean;这不是 bug,是切片"快"的原因。','ch-slice'],
+    ['Boot 3 升级最大的坎?','javax→jakarta(牵连所有第三方库)、Java17 起步、@MockBean→@MockitoBean、spring.factories→.imports。','ch-boot3'],
+    ['启动 300 行堆栈先看哪?','最后一屏 APPLICATION FAILED TO START(FailureAnalyzer 人话版),再顺 Caused by 到最底层。','ch-fix'],
+    ['怎么在启动完成后干点事?','ApplicationReadyEvent/Runner 家族优于散落 @PostConstruct——前者在"一切就绪"的安全点。','ch-run'],
+  ];
+  data.forEach(([q,a,id])=>{grid.append(h('div',{class:'card'},h('b',null,q),a+' ',h('a',{href:'#'+id},'▸ 回看')));});
+}
+
+/* ============ 装配 ============ */
+function initSpy(){
+  const links=$$('.toc a');
+  const secs=links.map(a=>$(a.getAttribute('href'))).filter(Boolean);
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-18% 0px -72% 0px'});
+  secs.forEach(s=>io.observe(s));
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  safe('advisor',initAdvisor);
+  safe('run',initRun);
+  safe('funnel',initFunnel);
+  safe('bom',initBom);
+  safe('wtower',initWtower);
+  safe('jar',initJar);
+  safe('act',initAct);
+  safe('starter',initStarter);
+  safe('slice',initSlice);
+  safe('fix',initFix);
+  safe('cards',initCards);
+  initSpy();
+});
+</script>
+</body>
+</html>

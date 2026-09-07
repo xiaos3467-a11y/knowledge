@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>后端架构师 图解讲义 · 决策地图十二讲</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F6F2; --card:#FFFFFF; --stage:#FAFBF7;
+  --ink:#1E232B; --ink2:#59616E; --line:#DDE0D8;
+  --pen:#6B3FA0; --pen-bg:#F0EAF8; --pen-line:#D2C3E9;
+  --warn:#C2571A; --warn-bg:#FBEDE2; --warn-line:#E7C4A6;
+  --teal:#0E7C6B; --teal-bg:#E8F4F1;
+  --red:#CE3B24; --red-bg:#FBEFEC;
+  --amber:#A9750A; --amber-bg:#FAF2DE;
+  --gray:#7A828C;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --serif:"Noto Serif SC","Source Han Serif SC","STZhongsong","SimSun",serif;
+  --sans:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+  --kai:"KaiTi","STKaiti","Kaiti SC",var(--serif);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(30,35,43,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,35,43,.04) 1px,transparent 1px);
+  background-size:28px 28px}
+::selection{background:rgba(107,63,160,.18)}
+a{color:var(--pen);text-decoration:none}
+.wrap{display:grid;grid-template-columns:224px minmax(0,832px);gap:52px;max-width:1180px;margin:0 auto;padding:0 24px}
+main{min-width:0;padding-bottom:96px}
+section.ch{margin-top:96px;scroll-margin-top:24px}
+.kicker{font-family:var(--serif);color:var(--pen);font-weight:600;font-size:14px;letter-spacing:.12em;margin-bottom:6px}
+h1,h2{font-family:var(--serif);font-weight:900;line-height:1.3}
+h2{font-size:32px;margin-bottom:18px}
+h3{font-size:18px;margin:30px 0 10px;font-weight:700}
+p{margin:12px 0;max-width:76ch}
+p.lead{font-size:17px;color:var(--ink2)}
+ul.tight{margin:8px 0 8px 1.4em}
+ul.tight li{margin:6px 0}
+code.k{font-family:var(--mono);font-size:.86em;background:#EBEDE6;border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+mark{background:none;color:var(--pen);font-weight:700}
+mark.w{color:var(--warn)}
+.think{font-family:var(--kai);color:var(--pen);background:var(--pen-bg);border:1px dashed var(--pen-line);border-radius:8px;padding:8px 14px;font-size:15px;margin:18px 0}
+.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pen);border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;font-size:15px}
+.note b.tag{color:var(--pen);font-weight:700;margin-right:6px}
+aside.toc{position:sticky;align-self:start;top:24px;height:calc(100vh - 48px);overflow:auto;padding:28px 0;scrollbar-width:thin}
+.toc-brand{font-family:var(--serif);font-weight:900;font-size:19px;line-height:1.4;margin-bottom:14px}
+.toc-brand small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--pen);letter-spacing:.18em;font-weight:600}
+.toc ol{list-style:none}
+.toc li a{display:flex;gap:10px;align-items:baseline;padding:5.5px 10px;border-radius:6px;font-size:13.5px;color:var(--ink2);border-left:2px solid transparent}
+.toc li a i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--gray);width:20px;flex:none}
+.toc li a:hover{background:#ECEEE6;color:var(--ink)}
+.toc li a.active{color:var(--pen);font-weight:700;border-left-color:var(--pen);background:rgba(107,63,160,.06)}
+.toc li a.active i{color:var(--pen)}
+.hero{padding-top:48px}
+.hero-title{font-size:clamp(40px,6vw,66px);line-height:1.14}
+.hero-title .stroke{position:relative;display:inline-block}
+.hero-title .stroke svg{position:absolute;left:-4px;right:-4px;bottom:-8px;width:calc(100% + 8px);height:16px;overflow:visible}
+.hero-title .stroke svg path{stroke:var(--pen);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:420;stroke-dashoffset:420;animation:wipe 1s .5s ease-out forwards}
+@keyframes wipe{to{stroke-dashoffset:0}}
+.hero-sub{margin-top:16px;font-size:15.5px;color:var(--ink2);max-width:70ch}
+.hero-kicker{font-family:var(--serif);letter-spacing:.3em;color:var(--pen);font-size:14px;font-weight:600;margin-bottom:10px}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+.caret{display:inline-block;width:9px;height:1.05em;background:var(--pen);vertical-align:-2px;animation:blink 1.1s infinite}
+.reveal{opacity:0;transform:translateY(14px);animation:rv .7s ease-out forwards}
+.reveal.d1{animation-delay:.1s}.reveal.d2{animation-delay:.25s}.reveal.d3{animation-delay:.45s}
+@keyframes rv{to{opacity:1;transform:none}}
+/* 参考架构地图 */
+.map{margin-top:34px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 44px rgba(30,35,43,.12);overflow:hidden}
+.map-body{padding:18px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px}
+.map-rows{display:grid;gap:9px}
+.map-row{display:flex;gap:9px;align-items:stretch}
+.map-box{border:1.5px solid var(--line);border-radius:9px;background:var(--stage);padding:7px 12px;font-size:12.5px;text-align:center;flex:1;cursor:pointer;transition:all .18s;min-width:0}
+.map-box:hover{border-color:var(--pen);background:var(--pen-bg)}
+.map-box b{display:block;font-size:12.5px}
+.map-box small{color:var(--ink2);font-size:10.5px}
+.map-box.sel{border-color:var(--pen);box-shadow:0 0 0 3px rgba(107,63,160,.15);background:var(--pen-bg)}
+.map-side{border:1px solid var(--line);border-radius:10px;background:var(--stage);padding:10px 13px;font-size:13px;line-height:1.8;align-self:start}
+.map-side b{color:var(--pen)}
+.map-side .to{display:inline-block;margin-top:6px;font-weight:700}
+.map-flow{display:grid;place-items:center;color:var(--gray);font-size:14px;height:8px}
+/* 插图框(系列统一) */
+.demo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin:26px 0;box-shadow:0 2px 0 rgba(30,35,43,.03)}
+.fig-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.fig-no{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--pen);border-radius:4px;padding:2px 8px;flex:none}
+.fig-title{font-family:var(--serif);font-size:17px;font-weight:600}
+.caption{font-family:var(--kai);color:var(--ink2);font-size:14px;line-height:1.7;margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
+.caption::before{content:"图注 · ";color:var(--pen)}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:14px}
+.dctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.dctrl .gap{flex:1}
+.btn{font-family:var(--sans);font-size:13px;color:var(--ink);background:#fff;border:1px solid #C7CCC0;border-radius:7px;padding:5px 14px;cursor:pointer;line-height:1.6;transition:border-color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--pen);color:var(--pen)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.solid:hover:not(:disabled){background:var(--pen);border-color:var(--pen);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{border-color:var(--pen);color:var(--pen);background:var(--pen-bg);font-weight:700}
+.btn.warn-o{border-color:var(--warn);color:var(--warn)}
+.btn.warn-o.on{background:var(--warn-bg)}
+.btn:focus-visible,a:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+.hint{font-size:13px;color:var(--ink2);margin-top:10px}
+.hint b{color:var(--pen)}
+.say{font-size:13.5px;min-height:2.2em;padding:6px 2px;color:var(--ink2);line-height:1.8}
+.say b{color:var(--pen)}
+.say.bad b{color:var(--warn)}
+.pill{display:inline-block;font-size:12px;font-family:var(--mono);border-radius:99px;padding:1px 10px;border:1px solid var(--line);background:#fff}
+.pill.pen{color:var(--pen);border-color:var(--pen-line);background:var(--pen-bg)}
+.pill.teal{color:var(--teal);border-color:#BFDDD5;background:var(--teal-bg)}
+.pill.warn{color:var(--warn);border-color:var(--warn-line);background:var(--warn-bg)}
+svg text{font-family:var(--sans)}
+table.tb{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;background:var(--card)}
+table.tb th,table.tb td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top}
+table.tb th{background:#ECEEE6;font-weight:700;font-size:13px}
+table.tb td.m{font-family:var(--mono);font-size:12.5px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:13.5px;line-height:1.7}
+.card b{display:block;font-family:var(--serif);font-size:14.5px;margin-bottom:4px}
+.card b::before{content:"问 ";color:var(--pen)}
+.card a{font-family:var(--mono);font-size:11px;color:var(--gray)}
+footer{margin-top:88px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2);font-family:var(--kai);line-height:1.9}
+/* CAP */
+.cap-nodes{display:flex;gap:26px;align-items:center;justify-content:center;padding:10px 0 4px;flex-wrap:wrap}
+.cap-node{width:120px;border:2px solid var(--ink);border-radius:12px;padding:8px;text-align:center;font-size:12px;background:var(--card);transition:all .3s}
+.cap-node small{display:block;font-family:var(--mono);color:var(--teal);font-weight:700}
+.cap-node.off{border-color:var(--red);border-style:dashed;opacity:.55}
+.cap-node.lead{border-color:var(--pen)}
+.cap-ops{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.cap-res{font-family:var(--mono);font-size:12px;background:#1E232B;color:#C9D0DA;border-radius:8px;padding:10px 14px;margin-top:10px;min-height:88px;line-height:1.8;max-height:170px;overflow:auto}
+.cap-res .ok{color:#6FC2AE}.cap-res .er{color:#F08A72}.cap-res .st{color:#E8B54A}
+/* 一致性哈希 */
+.ring-wrap{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:12px;align-items:center}
+.ring-stats{font-size:12.5px;display:grid;gap:6px;align-content:start}
+.ring-stats b{font-family:var(--mono);color:var(--pen);font-size:15px}
+/* 限流 */
+.rl-lane{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;font-family:var(--mono)}
+.rl-track{flex:1;position:relative;height:30px;background:#EDEFEA;border:1px solid var(--line);border-radius:15px;overflow:hidden}
+.rl-dot{position:absolute;width:12px;height:12px;border-radius:50%;top:8px;left:-14px;background:var(--pen);transition:left 1.2s linear,opacity .4s,background .3s}
+.rl-dot.out{background:var(--warn)}
+.rl-dot.die{opacity:0;background:var(--red)}
+.rl-box{font-size:11.5px;color:var(--ink2);width:118px;flex:none}
+.rl-meter{width:74px;flex:none;text-align:right}
+/* 熔断 */
+.br-fig{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;font-size:12.5px}
+.br-state{border:2px solid var(--line);border-radius:12px;padding:8px 18px;text-align:center;transition:all .3s;min-width:130px}
+.br-state small{display:block;color:var(--ink2);font-size:10.5px}
+.br-state.act{border-color:var(--pen);background:var(--pen-bg);font-weight:700}
+.br-state.open-act{border-color:var(--red);background:var(--red-bg);font-weight:700}
+/* 雪花 */
+.sf-cells{display:flex;gap:2px;margin:10px 0;flex-wrap:wrap}
+.sf-cell{width:9px;height:34px;border-radius:2px;background:#E3E5DE}
+.sf-cell.t{background:var(--pen)}.sf-cell.w{background:var(--teal)}.sf-cell.s{background:var(--amber)}
+.sf-sliders{display:grid;gap:8px;font-size:13px}
+.sf-sliders label{display:grid;grid-template-columns:130px 1fr 44px;gap:10px;align-items:center}
+.sf-out{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px;font-size:12.5px}
+.sf-out>div{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--card)}
+.sf-out b{display:block;font-family:var(--mono);color:var(--pen);font-size:15px}
+/* MQ */
+.mq-pipe{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px}
+.mq-box{border:1.5px solid var(--line);border-radius:9px;background:var(--card);padding:6px 10px;text-align:center;min-width:98px;transition:all .3s}
+.mq-box.hit{border-color:var(--pen);background:var(--pen-bg)}
+.mq-arrow{color:var(--gray)}
+.mq-msg{display:inline-block;width:14px;height:14px;border-radius:4px;background:var(--teal);transition:all .5s}
+.mq-msg.dup{background:var(--red)}
+.mq-msg.gone{opacity:0}
+.mq-ledger{margin-top:8px;font-family:var(--mono);font-size:11.5px;line-height:1.75;background:#1E232B;color:#C9D0DA;border-radius:8px;padding:8px 12px;min-height:74px;max-height:150px;overflow:auto}
+.mq-ledger .er{color:#F08A72}.mq-ledger .ok{color:#6FC2AE}
+/* 多层缓存 */
+.mc-lanes{display:grid;gap:8px}
+.mc-lane{display:grid;grid-template-columns:110px 1fr 92px;gap:8px;align-items:center;font-size:12px}
+.mc-track{position:relative;height:24px;background:#EDEFEA;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.mc-bar{position:absolute;left:3px;top:3px;height:16px;border-radius:8px;background:var(--pen);width:0;transition:width 1.2s}
+/* 分库分表 */
+.sh-bars{display:flex;gap:12px;align-items:flex-end;height:130px;padding:6px 8px 0}
+.sh-bar{width:52px;background:var(--pen);border-radius:5px 5px 0 0;position:relative;transition:height .8s}
+.sh-bar.hot{background:var(--red)}
+.sh-bar span{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:10.5px;font-family:var(--mono);color:var(--ink2)}
+.sh-bar label{position:absolute;bottom:-22px;width:100%;text-align:center;left:0;font-size:11px;color:var(--ink2)}
+.gene{font-family:var(--mono);font-size:12.5px;background:#22262D;color:#C9D0DA;border-radius:8px;padding:8px 12px;margin-top:12px;line-height:2;min-height:60px}
+.gene .hl{color:#8CC63F;font-weight:700}
+/* 分布式事务 */
+.dt-parts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.dt-p{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:7px 10px;font-size:12px;text-align:center;transition:all .3s}
+.dt-p b{font-family:var(--mono)}
+.dt-st{margin-top:4px;font-family:var(--mono);font-size:11px;color:var(--gray)}
+.dt-p.ok{border-color:var(--teal)}.dt-p.ok .dt-st{color:var(--teal)}
+.dt-p.try{border-color:var(--amber)}.dt-p.try .dt-st{color:var(--amber)}
+.dt-p.bad{border-color:var(--red)}.dt-p.bad .dt-st{color:var(--red)}
+.dt-co{border:1.5px dashed var(--pen);border-radius:10px;padding:5px 10px;font-size:12px;display:inline-block;margin-bottom:10px;transition:all .3s}
+.dt-co.dead{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+/* 机房 */
+.idc{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.idc-col{border:1.5px solid var(--line);border-radius:10px;padding:8px;font-size:11.5px;text-align:center;background:var(--card);transition:all .3s}
+.idc-col.fire{border-color:var(--red);background:var(--red-bg);animation:pulse .7s infinite alternate}
+@keyframes pulse{from{opacity:.7}to{opacity:1}}
+.idc-col .dc{font-size:20px}
+.idc-kv{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px;font-size:11.5px;text-align:center}
+.idc-kv b{font-family:var(--mono);color:var(--pen);display:block;font-size:13px}
+/* trace */
+.tr-waterfall{font-family:var(--mono);font-size:11px;line-height:2.15}
+.tr-row{display:flex;align-items:center;gap:8px}
+.tr-name{width:170px;flex:none;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr-t{flex:1;position:relative;height:15px}
+.tr-bar{position:absolute;top:1px;height:13px;border-radius:4px;background:var(--pen);width:0;transition:width .8s .1s;color:#fff;font-size:9px;padding-left:5px;white-space:nowrap;overflow:hidden}
+/* 估算器 */
+.est{display:grid;grid-template-columns:1fr 1.1fr;gap:14px}
+.est label{display:grid;grid-template-columns:120px 1fr 66px;gap:8px;align-items:center;font-size:12.5px;margin-bottom:9px}
+.est label output{font-family:var(--mono);color:var(--pen);text-align:right;font-weight:700}
+.est-res{display:grid;gap:8px;align-content:start;font-size:13px}
+.est-res>div{border:1px solid var(--line);border-radius:9px;background:var(--card);padding:7px 11px}
+.est-res b{font-family:var(--mono);color:var(--pen);font-size:15.5px;margin-right:6px}
+.est-cheats{font-size:12px;color:var(--ink2);margin-top:10px;line-height:2}
+.est-cheats code{font-family:var(--mono);color:var(--ink)}
+/* 决策 */
+.dec-rows{display:grid;gap:10px;font-size:13px}
+.dec-card{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:9px 13px;cursor:pointer;transition:all .2s}
+.dec-card.on{border-color:var(--pen);box-shadow:0 0 0 3px rgba(107,63,160,.12)}
+.dec-card h5{font-family:var(--serif);font-size:14.5px}
+.dec-card .radar{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.dec-bar{flex:1;min-width:120px;font-size:10.5px;font-family:var(--mono);color:var(--ink2)}
+.dec-bar i{display:block;height:8px;border-radius:5px;background:#E4E6DE;position:relative;overflow:hidden}
+.dec-bar i>em{position:absolute;left:0;top:0;bottom:0;background:var(--pen);display:block;width:0;transition:width .7s}
+@media (max-width:1120px){
+  .wrap{grid-template-columns:minmax(0,860px);justify-content:center}
+  aside.toc{position:static;height:auto;order:-1;padding:12px 0 0}
+  .toc ol{display:flex;overflow-x:auto;gap:4px;padding-bottom:8px;scrollbar-width:thin}
+  .toc li a{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;border-radius:4px}
+  .toc li a.active{border-bottom-color:var(--pen);background:none}
+  .toc-brand{padding-left:10px}
+}
+@media (max-width:820px){
+  .map-body,.ring-wrap,.est{grid-template-columns:1fr}
+  .idc,.dt-parts{grid-template-columns:1fr 1fr}
+  h2{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+  .reveal{opacity:1;transform:none}
+  .hero-title .stroke svg path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<aside class="toc" aria-label="目录">
+  <div class="toc-brand"><small>ARCHITECT · ILLUSTRATED</small>后端架构师 图解讲义</div>
+  <nav><ol>
+    <li><a href="#hero"><i>00</i>开篇 · 架构地图</a></li>
+    <li><a href="#ch-cap"><i>01</i>CAP:分区那天的选择</a></li>
+    <li><a href="#ch-lb"><i>02</i>入口与一致性哈希</a></li>
+    <li><a href="#ch-rl"><i>03</i>限流:四种算法</a></li>
+    <li><a href="#ch-br"><i>04</i>熔断降级隔离</a></li>
+    <li><a href="#ch-sf"><i>05</i>分布式 ID · 雪花</a></li>
+    <li><a href="#ch-mq"><i>06</i>MQ 可靠性账本</a></li>
+    <li><a href="#ch-cache"><i>07</i>多级缓存与一致性</a></li>
+    <li><a href="#ch-shard"><i>08</i>分库分表与基因</a></li>
+    <li><a href="#ch-txn"><i>09</i>分布式事务四方案</a></li>
+    <li><a href="#ch-idc"><i>10</i>高可用:从单机房到单元化</a></li>
+    <li><a href="#ch-trace"><i>11</i>可观测性 · Trace</a></li>
+    <li><a href="#ch-est"><i>12</i>背封装订与容量估算</a></li>
+    <li><a href="#ch-dec"><i>13</i>决策:没有银弹</a></li>
+    <li><a href="#ch-cards"><i>附</i>架构速查卡</a></li>
+  </ol></nav>
+</aside>
+
+<main>
+
+<section id="hero" class="hero">
+  <p class="hero-kicker reveal d1">决策地图 · 十三讲</p>
+  <h1 class="hero-title reveal d1">后端架构师<br><span class="stroke">图解讲义<svg viewBox="0 0 200 12" aria-hidden="true"><path d="M3 8 C 40 2, 70 11, 105 6 S 170 3, 197 7"/></svg></span></h1>
+  <p class="hero-sub reveal d2">架构图不是名词清单,是<b>一串权衡决策</b>。这张参考架构里每一块都点开看:它在解决什么问题、代价是什么、对应本讲义哪一讲。从"分区来了你选什么"到"给 DAU 一千万的直播系统估一版容量"。</p>
+  <div class="map reveal d2">
+    <div class="map-body">
+      <div class="map-rows">
+        <div class="map-row"><div class="map-box" data-c="user"><b>用户 / 客户端</b><small>App · Web · 开放 API</small></div></div>
+        <div class="map-flow">▼</div>
+        <div class="map-row">
+          <div class="map-box" data-c="cdn"><b>DNS + CDN</b><small>就近 · 静态缓存 · WAF</small></div>
+          <div class="map-box" data-c="lb"><b>负载均衡</b><small>L4/L7 · 一致性哈希 · 服务发现</small></div>
+          <div class="map-box" data-c="gw"><b>网关</b><small>鉴权 · 限流 · 灰度 · 熔断</small></div>
+        </div>
+        <div class="map-flow">▼</div>
+        <div class="map-row">
+          <div class="map-box" data-c="svc"><b>业务服务集群</b><small>无状态 · 水平扩容 · 单元化</small></div>
+          <div class="map-box" data-c="async"><b>异步化</b><small>MQ 削峰 · 事件驱动 · 最终一致</small></div>
+        </div>
+        <div class="map-flow">▼</div>
+        <div class="map-row">
+          <div class="map-box" data-c="cache"><b>缓存</b><small>本地 L1 · Redis L2 · 一致性</small></div>
+          <div class="map-box" data-c="db"><b>数据库</b><small>分库分表 · 主从 · 读写分离</small></div>
+          <div class="map-box" data-c="id"><b>基础设施</b><small>分布式 ID · 配置中心 · 注册中心</small></div>
+        </div>
+        <div class="map-flow">▼</div>
+        <div class="map-row">
+          <div class="map-box" data-c="obs" style="border-color:var(--pen)"><b>可观测性(贯穿所有层)</b><small>Logs · Metrics · Traces —— 出问题的眼睛都在这</small></div>
+        </div>
+      </div>
+      <div class="map-side" id="map-side">点左侧任意方块。</div>
+    </div>
+  </div>
+</section>
+
+<!-- 1 CAP -->
+<section class="ch" id="ch-cap">
+  <p class="kicker">第 一 讲</p>
+  <h2>CAP:分区来临那天,你早就选好了</h2>
+  <p class="lead">CAP 常被念歪。它的真身:<mark>C 一致性、A 可用性、P 分区容错——三者中 P 不是选择项,网络会坏是现实</mark>。所以你实际要做的只有 CP/AP:<b>分区发生时,你要多数派拒绝服务保一致(CP),还是各写各的留可用性(CA 之实)</b>。而且分区只影响被切断的那部分节点,没分区时系统仍可"又 C 又 A";粒度也可以拆——同一系统里,库存走 CP、朋友圈点赞走 AP。BASE(基本可用+软状态+最终一致)是 AP 阵营的工程纲领。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 1</span><span class="fig-title">三体集群 · 拉下"分区"闸刀,读一个刚被多数派改过的值</span></div>
+    <div class="stage" id="d-cap">
+      <div class="cap-nodes" id="cap-nodes"></div>
+      <div class="cap-ops">
+        <button class="btn solid" id="cap-write">✎ 客户端 X 在左组写入 v=7</button>
+        <button class="btn" id="cap-read">👁 客户端 Y 在右组读取</button>
+        <button class="btn warn-o" id="cap-partition">⚡ 拉下分区闸刀</button>
+        <div class="gap"></div>
+        <button class="btn on" data-m="cp" style="border-color:var(--pen)">CP 多数派</button>
+        <button class="btn" data-m="ap">AP 各写各的</button>
+      </div>
+      <div class="cap-res" id="cap-res"></div>
+    </div>
+    <p class="caption">先写一笔再拉闸,Y 去读:<b>CP 模式</b>少数派侧直接拒绝并报 NoQuorum(你不在多数派里,不配回答);<b>AP 模式</b>愉快返回旧值 v=5 并标注"分区的另一侧也接受了写入 v=8,冲突等收敛"。ZK/etcd 站 CP,Eureka/Dynamo/Cassandra 站 AP;Quorum 的 W+R&gt;N 就是"多数派"的连续旋钮。</p>
+  </div>
+  <div class="note"><b class="tag">要点</b>追问"Redis 主从是 CP 还是 AP?"——异步复制天然偏 AP(主挂瞬间可能丢写);哨兵/Cluster 故障切换期间也不保证不丢——所以 Redis 做"效率锁"、做缓存,别做账本。能问出这句,CAP 这关算过了。</div>
+</section>
+
+<!-- 2 一致性哈希 -->
+<section class="ch" id="ch-lb">
+  <p class="kicker">第 二 讲</p>
+  <h2>入口层:哈希取模之痛,一致性哈希之解</h2>
+  <p class="lead">无状态服务水平扩容随便加,但<b>有状态的路由</b>(本地缓存、连接粘滞、Redis Cluster 分片)遇到"加一台机器"就翻车:<code class="k">hash(key)%N</code> 在 N 变成 N+1 时<mark>几乎所有键的归属都洗牌</mark>——缓存雪崩级打击。一致性哈希把键与节点都掷到同一个 0~360° 环上,<mark>键顺时针找最近节点</mark>:加节点只从它的"后继"手里接走一小段弧,删节点只交还自己那段——扰动从 100% 降到 1/N。<mark>虚拟节点</mark>(每物理点撒几十个小圆点)解决随机落点造成的负载不均,也让迁移更碎更平。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 2</span><span class="fig-title">哈希环 · 加一个节点 D,看有多少键被迫搬家</span></div>
+    <div class="stage ring-wrap" id="d-ring">
+      <div id="ring-svg"></div>
+      <div class="ring-stats">
+        <div>节点:<b id="rs-n">3</b> · 虚拟节点:<span class="pill pen" id="rs-v">关</span></div>
+        <div>键总数 <b id="rs-k">24</b>,加节点后迁移:</div>
+        <div style="font-size:22px;font-family:var(--mono);font-weight:900;color:var(--pen)" id="rs-mig">—</div>
+        <div style="font-size:12px;color:var(--ink2)">理想迁移 ≈ 1/(N+1) = <b id="rs-theory">25%</b></div>
+        <div style="display:grid;gap:6px;margin-top:8px">
+          <button class="btn solid" id="rs-add">+ 添加节点 D</button>
+          <button class="btn" id="rs-vnodes">切换虚拟节点(每节点 24 个)</button>
+          <button class="btn" id="rs-reset">重置</button>
+        </div>
+        <div class="hint" id="rs-say">红圈键 = 因新节点搬家;绿弧 = D 新接管的地盘。</div>
+      </div>
+    </div>
+    <p class="caption">先"添加节点 D"看真实迁移率(纯哈希取模是 100% 洗牌,这里 3~7/24),再开虚拟节点对比——<b>迁移被切得又碎又匀,机器负载也齐了</b>。代价:每个键顺时针找邻居 O(logN),以及节点全挂时环上"无主之地"要兜底策略。</p>
+  </div>
+</section>
+
+<!-- 3 限流 -->
+<section class="ch" id="ch-rl">
+  <p class="kicker">第 三 讲</p>
+  <h2>限流:四种算法,一张流量对比图</h2>
+  <p class="lead">限流是入口层的自保术:<mark>宁可拒掉 1%,也不能全服务 120% 累死</mark>。四代武功:固定窗口计数(实现 5 行,卡在<b>窗口边界双峰</b>:前一窗末+后一窗初,两倍流量穿透);滑动窗口(把窗口切成小格滚动,边界平滑,内存×格数);漏桶(请求进桶排队匀速漏出——<b>强制恒速</b>,想突发都不许);令牌桶(系统匀速造令牌,请求拿令牌走——<b>允许攒着的突发</b>,生产默认首选)。分布式限流再往上一层:中心化 Redis 计数器(精确但多一跳)vs 本地令牌桶+定期配额下发(高吞吐略糙,Sentinel 路子)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 3</span><span class="fig-title">同一段突发流量,四种算法的放行成绩单</span></div>
+    <div class="stage" id="d-rl">
+      <div id="rl-lanes"></div>
+      <div class="say" id="rl-say">点播放:同一段流量(平稳期 + 两波尖峰)同时喂给四种算法,配额都是 10/s。</div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="rl-play">▶ 回放这段流量</button>
+      <button class="btn" id="rl-reset">重置</button>
+    </div>
+    <p class="caption">尖峰①正好跨窗口边界:固定窗口放进 <b>17</b> 个(超配!),滑动窗口按小格滚动挡住;尖峰②持续短促:令牌桶靠攒的令牌放行一波(允许合理突发),漏桶把超出速率的一律滴掉(强制平滑)。没有最好的算法,只有你要的语义:<b>保护下游用漏桶,容忍业务波峰用令牌桶</b>。</p>
+  </div>
+</section>
+
+<!-- 4 熔断 -->
+<section class="ch" id="ch-br">
+  <p class="kicker">第 四 讲</p>
+  <h2>熔断、降级、隔离:让故障停在门外</h2>
+  <p class="lead">限流防"量",熔断防"病":下游已经半死不活(超时/异常率飙升),还一个个请求送人头,会把线程池拖垮引发<b>雪崩</b>。熔断器就是保险丝:<mark>错误率过阈值 → OPEN 直接失败快速返回;冷却期后 HALF-OPEN 放几个探测请求;成功率达标才 CLOSED</mark>。降级是熔断后的"活法":缓存兜底、默认值、静态页、砍非核心功能(大促时关掉"猜你想看")。隔离是不让一锅烂:线程池/连接池按依赖分舱(舱壁模式)、队列分离、核心链路与非核心链路分集群。再往深一层是<b>超时预算</b>:整条调用链的超时逐跳递减,任何一跳不许吃掉全部时间——这比任何熔断器都更早救命。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 4</span><span class="fig-title">保险丝的一生 · 把下游拨坏,看状态机转一圈</span></div>
+    <div class="stage">
+      <div class="br-fig">
+        <div class="br-state act" id="br-c">CLOSED<small>正常通行 · 统计错误率</small></div>
+        <div class="br-state" id="br-o">OPEN<small>快速失败 · 冷却计时</small></div>
+        <div class="br-state" id="br-h">HALF-OPEN<small>放行探测 · 决定回归</small></div>
+      </div>
+      <div class="dctrl">
+        <button class="btn warn-o" id="br-fail">💣 下游开始大面积超时</button>
+        <button class="btn" id="br-heal">🩹 悄悄把下游修好</button>
+        <button class="btn" id="br-req">→ 打 10 个请求</button>
+      </div>
+      <div class="cap-res" id="br-log"></div>
+    </div>
+    <p class="caption">操作剧本:先💣再连打几轮请求→熔断跳闸 OPEN;再🩹(但别告诉熔断器!)→冷却期后 HALF-OPEN 放探测→成功→CLOSED 合闸。追问必答:<mark>熔断的是"对某个依赖的调用"不是自己</mark>;Resilience4j/Sentinel 实现;降级预案要演练,没演练过的降级等于没有。</p>
+  </div>
+</section>
+
+<!-- 5 雪花 -->
+<section class="ch" id="ch-sf">
+  <p class="kicker">第 五 讲</p>
+  <h2>分布式 ID:雪花算法的 63 个格子</h2>
+  <p class="lead">分库分表后要全局唯一 ID,UUID 无序(第 4 册 MySQL 见过它的页分裂惨状)、DB 自增撑不住。雪花(<b>Snowflake</b>)把 64 bit 切成四段:<mark>符号位 1 | 毫秒时间戳 41 | 机器号 10 | 序列号 12</mark>——时间打高位所以趋势递增,同毫秒内用序列号自增补足,41 bit 管 69 年、10 bit 管 1024 台、12 bit 单机每毫秒 4096 个。三大软肋:<b>时钟回拨</b>(NTP 校时可能让时间倒退,要拒发/等待/借用备段位)、机器号要注册中心协调别撞、位段是<b>零和分配</b>——机器位多给一位,每毫秒容量就少一半。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 5</span><span class="fig-title">位段挪挪看 · 63 个格子,三重权衡一眼见底</span></div>
+    <div class="stage">
+      <div class="sf-cells" id="sf-cells"></div>
+      <div class="sf-sliders">
+        <label>时间戳位<input type="range" min="20" max="46" value="41" id="sf-ts"><output id="sf-tsv">41</output></label>
+        <label>机器号位<input type="range" min="0" max="20" value="10" id="sf-w"><output id="sf-wv">10</output></label>
+        <label>序列号位(自动)<output id="sf-sv" style="grid-column:2/4">12</output></label>
+      </div>
+      <div class="sf-out">
+        <div>可用年限<b id="sf-years">69 年</b></div>
+        <div>最大节点数<b id="sf-nodes">1024</b></div>
+        <div>单机每毫秒容量<b id="sf-cap">4096</b></div>
+        <div>全局每毫秒<b id="sf-gcap">419 万</b></div>
+      </div>
+      <div class="say" id="sf-say">拖动滑块:总位数固定 63,时间戳每挪走一位,另两头就得还回来。</div>
+    </div>
+    <p class="caption">把时间戳砍到 30 位→年限只剩 3 年,但换来机器位 16 位(6.5 万节点)——<b>这就是架构的"处处让渡"</b>。工业变体:百度 UidGenerator(RingBuffer 预生成,解时钟问题)、美团 Leaf-segment(号段模式:DB 批量发号,服务内存消费,时钟回拨免疫)。</p>
+  </div>
+</section>
+
+<!-- 6 MQ -->
+<section class="ch" id="ch-mq">
+  <p class="kicker">第 六 讲</p>
+  <h2>MQ 可靠性账本:不丢、不重、防堆积</h2>
+  <p class="lead">消息队列的三本账:<b>不丢</b>——生产端(本地消息表/事务消息把"落库"和"发消息"绑成同一原子)→ broker(副本+acks=all+刷盘策略)→ 消费端(<mark>先处理业务、后 ack</mark>,顺序反了等于用"丢消息"换"重复消息");<b>不重</b>——重试+网络抖动注定 at-least-once,幂等是消费端的天职(业务唯一键+去重表/Redis SETNX/数据库唯一索引);<b>不堆积</b>——消费者扩容、批量消费、堆积告警转储、最后的死信队列(DLQ)给人工兜底。顺序性:同一业务键路由同一队列(partition key),全局顺序基本是伪需求。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 6</span><span class="fig-title">一条加余额消息的生死簿 · 开关每个环节的保险,看丢不丢、重不重</span></div>
+    <div class="stage">
+      <div class="mq-pipe">
+        <div class="mq-box" id="mq-p"><b>生产者</b><br>扣款业务</div><span class="mq-arrow">→<span class="mq-msg" id="mq-m1"></span>→</span>
+        <div class="mq-box" id="mq-t"><b>本地消息表</b><br><span id="mq-t-txt">关</span></div><span class="mq-arrow"></span>
+        <div class="mq-box" id="mq-b"><b>Broker</b><br>acks=all</div><span class="mq-arrow">→<span class="mq-msg" id="mq-m2"></span>→</span>
+        <div class="mq-box" id="mq-c"><b>消费者</b><br>加余额</div>
+        <div class="mq-box" id="mq-d"><b>去重表</b><br><span id="mq-d-txt">关</span></div>
+      </div>
+      <div class="dctrl">
+        <button class="btn" id="mq-toggle-outbox">切换本地消息表</button>
+        <button class="btn" id="mq-toggle-dedup">切换消费幂等</button>
+        <button class="btn solid" id="mq-happy">▶ 正常走完这一单</button>
+        <button class="btn warn-o" id="mq-crash1">💥 业务成功、消息未发出时断电</button>
+        <button class="btn warn-o" id="mq-crash2">💥 消费成功、ack 前崩溃</button>
+      </div>
+      <div class="mq-ledger" id="mq-log">— 生死簿 —</div>
+    </div>
+    <p class="caption">四个剧本各演一遍:<b>不开本地表</b>时"业务成功消息未发"= 永久丢单;<b>开了</b>则定时任务补发。<b>不开幂等</b>时"ack 前崩溃重投"= 余额加两次(客诉工单+1);开了则重投命中去重表直接跳过。账本会替你说结论。</p>
+  </div>
+</section>
+
+<!-- 7 多级缓存 -->
+<section class="ch" id="ch-cache">
+  <p class="kicker">第 七 讲</p>
+  <h2>多级缓存与一致性:快是真快,脏也是真脏</h2>
+  <p class="lead">一台 Nginx/本地 Caffeine 的命中只需 <b>百纳秒</b>,Redis 一跳 <b>约 0.5ms</b>,回源 DB <b>5-20ms</b>——把请求"层层截流",数据库才活得下去。但多一级缓存就多一个"数据副本"要过期:<mark>Cache Aside(旁路:读时回填,写时先落库再删缓存)</mark>是基线姿势;"先删再写"和"写库后不删"都会脏;<b>延迟双删</b>(写后延迟几百 ms 再补删一次)挡并发回填的旧值;终极正规军是 <b>binlog 订阅(Canal)异步失效</b>——把"删缓存"变成数据库变更的确定性下游,业务代码零侵入。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 7</span><span class="fig-title">一万次读的截流瀑布 · 顺便演一次"并发回填把旧值塞回去"</span></div>
+    <div class="stage">
+      <div class="mc-lanes">
+        <div class="mc-lane"><span>L1 本地缓存</span><div class="mc-track"><div class="mc-bar" id="mc-b1"></div></div><span id="mc-t1">—</span></div>
+        <div class="mc-lane"><span>L2 Redis</span><div class="mc-track"><div class="mc-bar" id="mc-b2" style="background:var(--teal)"></div></div><span id="mc-t2">—</span></div>
+        <div class="mc-lane"><span>回源 MySQL</span><div class="mc-track"><div class="mc-bar" id="mc-b3" style="background:var(--red)"></div></div><span id="mc-t3">—</span></div>
+      </div>
+      <div class="say" id="mc-say">L1 命中率 70%、L2 再截 28% → DB 只挨 2% 的请求(但每台机器都有自己的 L1,失效要广播——用 MQ 通知各节点)。</div>
+      <div class="dctrl">
+        <button class="btn solid" id="mc-flow">▶ 跑一万次读</button>
+        <button class="btn warn-o" id="mc-race"> 演一次"删缓存后被旧读回填"脏写</button>
+        <button class="btn" id="mc-fix">💊 延迟双删救场,重演</button>
+      </div>
+    </div>
+    <p class="caption">脏写时序:写者"删缓存"→ 慢读者早已拿着<b>旧库值</b>在路上了 → 写库完成 → 慢读者把旧值回填进缓存 → 脏到下次删除为止。延迟双删用时间换概率,Canal 用 binlog 换确定性——<b>对一致性较真的场景(价格、库存),选后者。</b></p>
+  </div>
+</section>
+
+<!-- 8 分库分表 -->
+<section class="ch" id="ch-shard">
+  <p class="kicker">第 八 讲</p>
+  <h2>分库分表:分片键的选择,和"基因"的补救</h2>
+  <p class="lead">单表千万级、单库 IOPS 顶,就得上水平拆。<mark>分片键决定一切查询的形状</mark>:按 uid 哈希——用户维度丝滑,商家/时间维度变广播查询;按时间——写入均匀变热点写(当月分表独扛所有流量),老数据冷得快。常用折中:<b>主路由按 uid 分库分表,异构一份按 merchant_id/时间 的索引表(或 ES/宽表)</b>扛其余维度。分页是深坑:<code class="k">LIMIT 500,10</code> 每个分片都要捞前 510 条再归并——N 个分片放大 N 倍。<mark>基因法(Gene)</mark>优雅补刀:订单号生成时把分库分表位"织"进末尾,拿订单号查详情不用知道 uid——路由信息自携带。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 8</span><span class="fig-title">两种分片键的流量形状 + 一个订单号的基因解码</span></div>
+    <div class="stage">
+      <div class="dctrl" style="margin-top:0">
+        <button class="btn on" data-sh="uid">分片键 = uid 哈希</button>
+        <button class="btn" data-sh="time">分片键 = 月份</button>
+        <span class="gap"></span>
+        <span class="hint" id="sh-say">四个分库,一年 12 个月</span>
+      </div>
+      <div class="sh-bars" id="sh-bars" style="margin-bottom:30px"></div>
+      <div class="gene" id="gene-box">订单号 <b>20260904173118<b style="color:#8CC63F">03</b></b>(末两位是分表基因)→ 点下方"解码":直接路由,无需广播。</div>
+      <div class="dctrl">
+        <button class="btn solid" id="gene-decode">🧬 基因路由:查这笔订单</button>
+        <button class="btn warn-o" id="gene-scan">✗ 关掉基因,按订单号查(广播 4 库)</button>
+      </div>
+    </div>
+    <p class="caption">按月份分:写入全砸在"当月"这一根柱子上(热点+容量规划噩梦);按 uid 哈希:四库齐平,但商家维度查询要"扫全库"或异构索引。<b>基因法</b>让按订单号的路由 O(1) 直达分表 03——号段/雪花时代,把路由信息编码进主键已是标配。</p>
+  </div>
+</section>
+
+<!-- 9 分布式事务 -->
+<section class="ch" id="ch-txn">
+  <p class="kicker">第 九 讲</p>
+  <h2>分布式事务:2PC、TCC、Saga、本地消息表</h2>
+  <p class="lead">一单跨三个服务,ACID 的 A 出了进程就没了。四件武器:<b>2PC/XA</b>——协调者两阶段(prepare 锁资源→commit),强一致但<b>同步阻塞+协调者单点</b>,prepare 后崩了参与者锁资源干等,微服务里基本判了缓刑;<b>TCC</b>——业务层的 Try(预留:冻结库存/额度)→ Confirm/Cancel 两刀,<b>快且不锁 DB 连接</b>,代价是三个服务要写三套接口,还要处理幂等/空回滚/悬挂;<b>Saga</b>——长事务拆成一串本地事务,失败就<b>逆序执行补偿动作</b>(退款、还库存):无资源预留、吞吐高,隔离性弱(中途别人能看到"半成品"状态);<b>本地消息表/事务消息</b>——不追求原子、只保证最终到达,MQ 扛重试,业务幂等收口——互联网量级的默认选择。口诀:<mark>能异步就消息表,要预留上 TCC,长流程用 Saga,2PC 留给真强一致的存量场景。</mark></p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 9</span><span class="fig-title">下单扣款发货三方联动 · 四种协议各演一遍"第三家失败"</span></div>
+    <div class="stage">
+      <div class="dt-co" id="dt-co">协调者 / 编排器:待命</div>
+      <div class="dt-parts">
+        <div class="dt-p" id="dt-A"><b>下单服务 A</b><div class="dt-st">idle</div></div>
+        <div class="dt-p" id="dt-B"><b>库存服务 B</b><div class="dt-st">idle</div></div>
+        <div class="dt-p" id="dt-C"><b>物流服务 C<small>  ← 这家的接口会失败</small></b><div class="dt-st">idle</div></div>
+      </div>
+      <div class="say" id="dt-say">选一种协议开演(第三步失败场景),看三种"烂摊子"处理方式。</div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" data-dt="2pc">2PC/XA</button>
+      <button class="btn solid" data-dt="tcc">TCC</button>
+      <button class="btn solid" data-dt="saga">Saga</button>
+      <button class="btn solid" data-dt="msg">本地消息表</button>
+    </div>
+    <p class="caption">2PC:C prepare 失败 → 全体回滚但全程锁着资源等表决;TCC:C 的 Try 失败 → A、B 各自 Cancel 释放冻结;Saga:C 执行失败 → 逆序补偿 B、A(已发货就得"召回");消息表:C 失败不拦头单——消息躺表里重试到成功,<mark>A/B 的本地事务从始至终没为 C 多锁一秒</mark>。</p>
+  </div>
+</section>
+
+<!-- 10 高可用 -->
+<section class="ch" id="ch-idc">
+  <p class="kicker">第 十 讲</p>
+  <h2>高可用:从单机房到异地多活、单元化</h2>
+  <p class="lead">故障是概率,架构是赔率:<mark>多副本消灭单点 → 同机房多可用区 → 同城双活(RPO≈0)→ 异地(延迟 30ms+ 写不过去,只能读扩散/单元化)。</mark>衡量标尺 RTO(业务能忍多久的不可用)/RPO(能忍丢多久的数据),它们直接换算预算。热切换的四大名捕:VIP/DNS 切流(GSLB)、数据同步延迟追平(DTS/DRC)、流量灰度回切、以及<b>演练</b>——没做过故障注入的"多活"只是 PPT 多活。单元化(Settlement)是终局思路:<mark>按 uid 尾号把"存储+计算+缓存"封成一个自给自足的单元</mark>,单元间不依赖,炸一个单元切 1/N 流量,故障域天然收敛。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 10</span><span class="fig-title">四级架构对比 · 按下"杭州机房起火"</span></div>
+    <div class="stage">
+      <div class="idc" id="idc-cols"></div>
+      <div class="idc-kv" id="idc-kv"></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn on" data-i="0">单机房</button>
+      <button class="btn" data-i="1">同城双中心</button>
+      <button class="btn" data-i="2">异地灾备</button>
+      <button class="btn" data-i="3">三地五单元(单元化)</button>
+      <span class="gap"></span>
+      <button class="btn warn-o" id="idc-fire">🔥 制造故障</button>
+    </div>
+    <div class="cap-res" id="idc-res" style="max-height:120px"></div>
+    <p class="caption">同一个"起火了"按钮,四种架构四种剧本:单机房全黑 RTO 小时级;同城双活分钟级切流 RPO=0;异地灾备看同步延迟丢一段增量;单元化只损失一个单元的流量+对应数据分片,<b>爆炸半径 = 1/5</b>。追问"为什么异地不直接双写?"——30ms 往返 × 强一致 = 写延迟翻几十倍,鱼与熊掌。</p>
+  </div>
+</section>
+
+<!-- 11 可观测 -->
+<section class="ch" id="ch-trace">
+  <p class="kicker">第 十一 讲</p>
+  <h2>可观测性:一次请求的 CT 片</h2>
+  <p class="lead">Metrics(聚合的病历:错误率 0.4%、P99 800ms)、Logs(细节的切片,查单条用)、<b>Traces(把一次请求跨 N 个服务的因果链缝起来)</b>——三支柱由浅入深。Trace 三要素:<code class="k">traceId</code> 全局唯一贯穿始终,<code class="k">spanId+parentSpanId</code> 拼出调用树,<code class="k">W3C traceparent</code> header 让网关/服务/MQ 消息都带着它走。采样别只抽 1%:全量保留<b>错误与慢请求</b>,正常流量才降采样。OpenTelemetry 已经是事实标准:一个 SDK 同时喂 trace、metric、log 三张嘴,且用<b>关联 id</b> 把三者钉在一起——从告警点进 trace,从 span 跳到日志,这叫可观测,否则只是三堆监控数据。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 11</span><span class="fig-title">Trace 瀑布图 · 生成一次下单请求的调用树</span></div>
+    <div class="stage tr-waterfall" id="tr-wf"></div>
+    <div class="dctrl">
+      <button class="btn solid" id="tr-gen">▶ 发一次下单请求</button>
+      <button class="btn warn-o" id="tr-slow">▶ 再发一次,这次支付下游变慢</button>
+      <span class="hint" id="tr-say">横条长度 = 耗时;缩进 = 父子;红字 = 异常 span</span>
+    </div>
+    <p class="caption">读法:<code class="k">POST /order → gateway → order-svc → { inventory / mysql / MQ → pay-worker → alipay-api }</code>。慢剧本里一眼看出 860ms 卡在 alipay-api 的 span 上——<mark>瓶颈定位从"翻 7 个服务的日志"变成"看一张图"</mark>,这就是 trace 的全部意义。</p>
+  </div>
+</section>
+
+<!-- 12 估算 -->
+<section class="ch" id="ch-est">
+  <p class="kicker">第 十二 讲</p>
+  <h2>背封装订:两分钟给一个系统估出机器数</h2>
+  <p class="lead">架构师面试与工作的基本功——<b>数量级估算</b>。规则常数先钉牢:内存访问 ~100ns / SSD 随机读 ~100µs / 磁盘寻道 ~10ms / 内网 RTT ~0.5ms / <b>同区域跨可用区 RTT ~1ms / 跨国 RTT ~150ms</b>;单核简单请求 ~10k QPS;日志/详情按 DAU × 人均次数 × 条大小 × 留存期三行算完。流程:DAU → QPS(均值=日请求/86400,<mark>峰值×2~3 倍</mark>)→ 读写比 → 存储 → 实例数(向上取整+冗余 2 台起)。<b>估的是数量级,不是报价</b>;把每张假设摆出来,评审才有靶子可打。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 12</span><span class="fig-title">交互式估算器 · 拖三个滑块,看要多少台机器</span></div>
+    <div class="stage est">
+      <div>
+        <label>日活 DAU<input type="range" min="5" max="100" value="50" id="e-dau"><output id="e-dauv">500 万</output></label>
+        <label>人均请求/日<input type="range" min="5" max="200" value="60" id="e-req"><output id="e-reqv">60</output></label>
+        <label>峰值/均值 倍率<input type="range" min="10" max="60" value="30" id="e-pk"><output id="e-pkv">3.0×</output></label>
+        <label>写占比<input type="range" min="1" max="50" value="10" id="e-wr"><output id="e-wrv">10%</output></label>
+        <label>单写平均大小<input type="range" min="1" max="50" value="4" id="e-sz"><output id="e-szv">4 KB</output></label>
+        <label>留存(年)<input type="range" min="1" max="10" value="3" id="e-y"><output id="e-yv">3</output></label>
+        <div class="est-cheats">常数速查:内存 <code>100ns</code> · SSD <code>100µs</code> · 磁盘寻道 <code>10ms</code> · 内网 RTT <code>0.5ms</code> · 跨区 <code>1ms</code> · 跨国 <code>150ms</code> · 单机 16 核≈<code>1.5 万简单请求 QPS</code></div>
+      </div>
+      <div class="est-res">
+        <div>均值 QPS<b id="e-qps">—</b>条请求/日 ÷ 86400</div>
+        <div>峰值 QPS<b id="e-pqps">—</b>×倍率,容量按这个做</div>
+        <div>写入 TPS / 日增量<b id="e-tps">—</b><span id="e-daily"></span></div>
+        <div>存储总量<b id="e-store">—</b>含 3 副本与索引膨胀 ×2</div>
+        <div>Web 层实例<b id="e-web">—</b>按 8C16G 单机 1.5 万 QPS</div>
+        <div>DB 主实例<b id="e-db">—</b>写 TPS ÷ 3000,读另算只读库</div>
+      </div>
+    </div>
+    <p class="caption">典型输出感受:500 万 DAU、60 请求/日 ≈ 均值 <b>3500 QPS</b>、峰值 <b>1 万</b> → Web 层两台就够;350 写 TPS × 4KB 一年 <b>~45TB 原始、备 90TB</b> → 该分表了。<b>每个数字后面挂一个"为什么",这份估算才立得住。</b></p>
+  </div>
+</section>
+
+<!-- 13 决策 -->
+<section class="ch" id="ch-dec">
+  <p class="kicker">第 十三 讲(终)</p>
+  <h2>架构是权衡,不是清单</h2>
+  <p class="lead">同一个"订单系统",金融、社交、秒杀会给出三套几乎不相交的架构:<mark>一致性、可用性、性能、成本是互相挤压的四角</mark>,业务定位决定谁让路。工程判断的通用姿势:① 先定义<b>不可妥协项</b>(资损=0 还是 3 个 9?);② 从最简方案起步,拿<b>度量数据</b>说话再复杂化("需要上 MQ 吗"→ 先看下游是不是秒级消费就够);③ 每个选择写 ADR:场景、选项、决定、代价;④ 演进式设计——<b>为明天的规模设计,为今天的复杂度买单</b>。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 13</span><span class="fig-title">三个业务,三张取舍表 · 点卡片看四角怎么让位</span></div>
+    <div class="stage dec-rows" id="dec-rows"></div>
+    <p class="caption">核心差异记三句:<b>支付选 C 舍 A</b>(宁可超时不可错账),<b>信息流选 A 舍 C</b>(少刷一条比刷不出强),<b>秒杀本质是"用入口截流保住后端,把一致性推迟到异步"</b>(库存预扣 Redis 原子 + MQ 落库 + 支付超时释放)。架构面试终极模板:先摆约束,再列选项与代价,最后给"我选什么+为什么"。</p>
+  </div>
+</section>
+
+<!-- 附录 -->
+<section class="ch" id="ch-cards">
+  <p class="kicker">附 录</p>
+  <h2>架构速查卡</h2>
+  <div class="cards" id="card-grid"></div>
+</section>
+
+<footer>
+  后端架构师 图解讲义 · 系列第五册 · 手写 vanilla JS/SVG 无依赖 · 数字口径取工程经验中位,面试可用、报价勿用。
+</footer>
+</main>
+</div>
+
+<script>
+/* ============ 工具 ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+function h(tag,attrs){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k==='text')e.textContent=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)));}return e;}
+const svgNS='http://www.w3.org/2000/svg';
+function S(tag,attrs){const e=document.createElementNS(svgNS,tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='text')e.textContent=v;else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c)e.append(c);}return e;}
+function runGuard(){let id=0;return{next(){return++id},alive(my){return my===id}};}
+const safe=(name,fn)=>{try{fn();}catch(e){console.error('[demo:'+name+']',e);}};
+function shash(s){let h=0;for(let i=0;i<s.length;i++)h=(h<<5)-h+s.charCodeAt(i)|0;return Math.abs(h);}
+
+/* ============ hero 架构地图 ============ */
+function initMap(){
+  const side=$('#map-side');
+  const INFO={
+    user:['用户与客户端','端上做缓存/防抖/请求合并,是"最便宜的第一级缓存"。弱网重试要带幂等键,否则一次断网重连=两次下单。','ch-sf'],
+    cdn:['DNS + CDN','静态资源就近;边缘可跑函数做 A/B、鉴权片段;WAF/DDoS 清洗在这一层解决,别让攻击流量看到源站。','ch-lb'],
+    lb:['负载均衡','L4 看连接(性能高、看不见内容),L7 看 HTTP(灰度、路由、TLS 卸载)。有状态集群用一致性哈希把扰动压到 1/N。','ch-lb'],
+    gw:['API 网关','统一鉴权、限流、熔断、灰度分流——把横切能力从 N 个服务收进一处。<b>注意它自己也必须高可用</b>(集群化+无状态)。','ch-rl'],
+    svc:['业务服务','无状态化是水平扩容的前提;会话外置(Redis/JWT);优雅停机(摘流→等在途→再死);单元化见第 10 讲。','ch-idc'],
+    async:['异步化与 MQ','削峰填谷、解耦、最终一致。三本账:不丢(本地消息表)、不重(幂等)、不堆积(扩容+死信)。','ch-mq'],
+    cache:['多级缓存','L1 纳秒 L2 毫秒 DB 十毫秒,层层截流;每多一级,一致性就欠一份债——延迟双删/Canal。','ch-cache'],
+    db:['数据库','读写分离扛读,分库分表扛写与容量;分片键决定查询形状,异构索引/基因法补其余维度。','ch-shard'],
+    id:['基础设施','分布式 ID(雪花/号段)、注册中心(健康视图)、配置中心(热更新+版本灰度回滚)。','ch-sf'],
+    obs:['可观测性','Metrics 告诉你"病了",Trace 告诉你"病灶在哪条链",Log 告诉你"具体什么值";三者关联才算可观测。','ch-trace'],
+  };
+  $$('.map-box').forEach(b=>{
+    b.onclick=()=>{
+      $$('.map-box').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+      const i=INFO[b.dataset.c];
+      side.innerHTML='<b>'+i[0]+'</b><br>'+i[1]+'<br><a class="to" href="#'+i[2]+'">→ 深入这一讲</a>';
+    };
+  });
+}
+
+/* ============ 图1 CAP ============ */
+function initCap(){
+  const nodesEl=$('#cap-nodes'),res=$('#cap-res');
+  let mode='cp',parted=false,val={l:5,r:5},lead='A';
+  const N=[{id:'A',grp:'L'},{id:'B',grp:'L'},{id:'C',grp:'R'}];
+  function draw(){
+    nodesEl.innerHTML='';
+    N.forEach(n=>{
+      const el=h('div',{class:'cap-node'+(parted&&n.grp==='R'?' off':'')+(n.id===lead?' lead':'')});
+      el.innerHTML='<b>'+n.id+(n.id===lead?' (主)':'')+'</b><small>v='+val[n.grp]+'</small>'+(n.grp==='L'?'左组':'右组');
+      nodesEl.append(el);
+    });
+  }
+  function log(t,c){const l=h('div',{class:c||''},t);res.append(l);res.scrollTop=res.scrollHeight;}
+  $('#cap-write').onclick=()=>{
+    const left=confirm?null:null;
+    val.L=7;val.R=7;log('> X: 在左组(A,B) 写入 v=7 → 多数派写成功 ✓','ok');draw();
+  };
+  $('#cap-read').onclick=()=>{
+    if(parted){
+      if(mode==='cp')log('> Y: 右组(C) 读取 → C 发现自己孤少派,拒绝服务: <b style="color:#F08A72">NoQuorumAvailableException</b>(一致优先,宁死不答)','er');
+      else {log('> Y: 右组(C) 读取 → 愉快返回 <b>v=5</b> —— 可用,但这是分区期间的旧值;此刻左组已写 v=7,另一路径写 v=8… 冲突留给反熵收敛','st');}
+    }else{log('> Y: 任意节点读取 → v=7 ✓(无分区时 C、A 兼得——CAP 只在分区时刻做选择)','ok');}
+  };
+  $('#cap-partition').onclick=function(){
+    if(this.dataset.on){this.dataset.on='';this.textContent='⚡ 拉下分区闸刀';parted=false;log('> 分区恢复,左右组开始反熵/同步','ok');}
+    else{this.dataset.on='1';this.textContent='🔧 合上闸刀(分区修复)';parted=true;log('> ⚡ 分区!C 与 A/B 失联。C 仍持有本地值,左组构成多数派','er');}
+    draw();
+  };
+  $$('[data-m]').forEach(b=>{b.onclick=()=>{mode=b.dataset.m;$$('[data-m]').forEach(x=>x.classList.toggle('on',x===b));log('> 切换策略:'+mode.toUpperCase());};});
+  draw();
+}
+
+/* ============ 图2 一致性哈希 ============ */
+function initRing(){
+  const box=$('#ring-svg');
+  const KEYS=Array.from({length:24},(_,i)=>i); // 键均匀落在 i*15°
+  let vnodes=false,added=false;
+  function hpos(s){return shash(s)%360;}
+  function owning(){
+    const base=[{name:'A',pos:35},{name:'B',pos:150},{name:'C',pos:260}];
+    if(added)base.push({name:'D',pos:95});
+    if(!vnodes)return base.map(n=>({name:n.name,pos:n.pos}));
+    const out=[];base.forEach(n=>{for(let i=0;i<24;i++)out.push({name:n.name,pos:hpos(n.name+'#'+i)});});
+    return out;
+  }
+  function owner(k){
+    const p=k*15;let best=null;
+    for(const n of owning()){const d=(n.pos-p+360)%360;if(best===null||d<best.d)best={n,d};}
+    return best.n.name;
+  }
+  const COL={A:'#6B3FA0',B:'#0E7C6B',C:'#C2571A',D:'#A9750A'};
+  function draw(before){
+    const cx=210,cy=190,R=150;
+    const svg=S('svg',{viewBox:'0 0 420 380',width:'100%'});
+    svg.append(S('circle',{cx,cy,r:R,fill:'none',stroke:'#C7CCC0','stroke-width':2}));
+    const nodes=owning().slice().sort((a,b)=>a.pos-b.pos);
+    if(added){ // D 的每段弧(前驱 vnode → 本 vnode)染紫
+      nodes.forEach((n,i)=>{
+        if(n.name!=='D')return;
+        const prev=nodes[(i-1+nodes.length)%nodes.length];
+        let from=prev.pos,to=n.pos;if(to<=from)to+=360;
+        const a0=from/180*Math.PI-Math.PI/2,a1=to/180*Math.PI-Math.PI/2;
+        const large=(to-from)>180?1:0;
+        svg.append(S('path',{d:'M '+cx+' '+cy+' L '+(cx+R*Math.cos(a0))+' '+(cy+R*Math.sin(a0))+' A '+R+' '+R+' 0 '+large+' 1 '+(cx+R*Math.cos(a1))+' '+(cy+R*Math.sin(a1))+' Z',fill:'rgba(107,63,160,.12)'}));
+      });
+    }
+    if(vnodes)nodes.forEach(n=>{const a=n.pos/180*Math.PI-Math.PI/2;svg.append(S('circle',{cx:cx+R*Math.cos(a),cy:cy+R*Math.sin(a),r:2.8,fill:COL[n.name]}));});
+    const basePos=[{name:'A',pos:35},{name:'B',pos:150},{name:'C',pos:260}].concat(added?[{name:'D',pos:95}]:[]);
+    basePos.forEach(n=>{
+      const a=n.pos/180*Math.PI-Math.PI/2,x=cx+(R+24)*Math.cos(a),y=cy+(R+24)*Math.sin(a);
+      svg.append(S('circle',{cx:x,cy:y,r:12,fill:'#fff',stroke:COL[n.name],'stroke-width':2.5}));
+      svg.append(S('text',{x,y:y+4,'text-anchor':'middle','font-size':12,'font-weight':700,fill:COL[n.name],text:n.name}));
+    });
+    KEYS.forEach(k=>{
+      const a=k*15/180*Math.PI-Math.PI/2,r2=R-40;
+      const x=cx+r2*Math.cos(a),y=cy+r2*Math.sin(a);
+      const now=owner(k),was=before?before[k]:null;
+      svg.append(S('circle',{cx:x,cy:y,r:was&&was!==now?6:4.5,fill:COL[now],stroke:was&&was!==now?'#CE3B24':'none','stroke-width':2.5}));
+    });
+    box.innerHTML='';box.append(svg);
+    $('#rs-n').textContent=3+(added?1:0);
+    $('#rs-v').textContent=vnodes?'开(每节点 24 个)':'关';
+    $('#rs-v').className='pill '+(vnodes?'teal':'pen');
+    $('#rs-theory').textContent=Math.round(1/((3+(added?1:0))+1)*100)+'%(=1/(N+1))';
+  }
+  draw();
+  function statAdd(){
+    const before=KEYS.map(owner);
+    added=true;
+    const after=KEYS.map(owner);
+    const n=after.filter((o,i)=>o!==before[i]).length;
+    draw(before);
+    $('#rs-mig').textContent=n+' / 24 ≈ '+Math.round(n/24*100)+'%';
+    $('#rs-say').innerHTML=vnodes?'虚拟节点生效:迁移被切成小段,落点均匀(负载也匀)。':'真实落点有偏——开虚拟节点再演一次,对比迁移率与弧的"碎度"。';
+  }
+  $('#rs-add').onclick=()=>{if(!added)statAdd();};
+  $('#rs-vnodes').onclick=()=>{
+    if(added){added=false;vnodes=!vnodes;draw();statAdd();}
+    else{vnodes=!vnodes;draw();$('#rs-mig').textContent='—';$('#rs-say').textContent=vnodes?'已切到虚拟节点:点 + 添加节点 D 重演。':'虚拟节点关闭:经典三点的"整块弧"迁移。';}
+  };
+  $('#rs-reset').onclick=()=>{vnodes=false;added=false;$('#rs-mig').textContent='—';$('#rs-say').textContent='红圈键 = 因新节点搬家;紫弧 = D 新接管的地盘。';draw();};
+}
+
+/* ============ 图3 限流 ============ */
+function initRl(){
+  const lanesEl=$('#rl-lanes');
+  const PATTERN=[3,3,3,3,3,15,2,3,3,3,3,3,16,3,3,3,3];
+  const NAMES=['固定窗口 1s·配10','滑动窗口 5格滚动','漏桶 · 恒速 2/tick','令牌桶 容量10·回充2/tick'];
+  const g=runGuard();
+  function reset(){
+    lanesEl.innerHTML='';
+    NAMES.forEach((n,i)=>{
+      const row=h('div',{class:'rl-lane'});
+      row.append(h('span',{class:'rl-box'},n));
+      row.append(h('div',{class:'rl-track',id:'rl-t'+i}));
+      row.append(h('span',{class:'rl-meter',id:'rl-m'+i},'0/0'));
+      lanesEl.append(row);
+    });
+  }
+  function dots(laneIdx,burst,passed){
+    const track=$('#rl-t'+laneIdx);
+    for(let k=0;k<burst;k++){
+      const ok=k<passed;
+      const dot=h('span',{class:'rl-dot'+(ok?'':' out')});
+      dot.style.top=(3+(k%9)*2.6)+'px';dot.style.left='-14px';
+      track.append(dot);
+      requestAnimationFrame(()=>{dot.style.left=(78+Math.random()*14)+'%';});
+      setTimeout(()=>{if(!ok)dot.classList.add('die');setTimeout(()=>dot.remove(),550)},1250);
+    }
+  }
+  reset();
+  $('#rl-play').onclick=async()=>{
+    const my=g.next();reset();
+    const st=[{win:-1,c:0},{hist:[0,0,0,0,0]},{},{tk:10}];
+    const pass=[0,0,0,0],tot=[0,0,0,0];
+    for(let t=0;t<PATTERN.length;t++){
+      if(!g.alive(my))return;
+      const burst=PATTERN[t];
+      // 固定窗口:1s(5 tick)一窗,窗内计数 ≤10
+      const w=Math.floor(t/5);if(st[0].win!==w){st[0].win=w;st[0].c=0;}
+      let p0=Math.max(0,Math.min(burst,10-st[0].c));st[0].c+=p0;
+      // 滑动窗口:最近 5 tick 滚动计数 ≤10
+      const free=10-st[1].hist.reduce((a,b)=>a+b,0);
+      let p1=Math.max(0,Math.min(burst,free));st[1].hist.unshift(p1);st[1].hist.pop();
+      // 漏桶:恒速,每 tick 最多漏 2
+      let p2=Math.min(burst,2);
+      // 令牌桶:每 tick 回充 2,桶满 10
+      st[3].tk=Math.min(10,st[3].tk+2);
+      let p3=Math.min(burst,st[3].tk);st[3].tk-=p3;
+      [p0,p1,p2,p3].forEach((p,i)=>{pass[i]+=p;tot[i]+=burst;dots(i,burst,p);$('#rl-m'+i).textContent=pass[i]+'/'+tot[i];});
+      await sleep(1150);
+    }
+    if(!g.alive(my))return;
+    $('#rl-say').innerHTML='成绩:<b>固定 '+pass[0]+'/'+tot[0]+'</b> · <b>滑动 '+pass[1]+'/'+tot[1]+'</b> · <b>漏桶 '+pass[2]+'/'+tot[2]+'</b> · <b>令牌桶 '+pass[3]+'/'+tot[3]+'</b> —— 尖峰①让固定窗口"两窗各满配额"式超配,滑动窗口按滚动轴挡住;尖峰②令牌桶吃攒下的桶放行合理突发,漏桶铁面恒速。没有最好的算法,只有你要的语义:<b>护下游用漏桶,容波峰用令牌桶</b>。';
+  };
+  $('#rl-reset').onclick=()=>{g.next();reset();};
+}
+
+/* ============ 图4 熔断 ============ */
+function initBr(){
+  const logEl=$('#br-log');
+  let state='closed',bad=false,fails=0,total=0,cool=0;
+  function log(t,c){logEl.append(h('div',{class:c||''},t));logEl.scrollTop=logEl.scrollHeight;}
+  function setState(s){
+    state=s;
+    $('#br-c').className='br-state'+(s==='closed'?' act':'');
+    $('#br-o').className='br-state'+(s==='open'?' open-act':'');
+    $('#br-h').className='br-state'+(s==='half'?' act':'');
+  }
+  $('#br-fail').onclick=()=>{bad=true;log('> 运维悄悄把下游 A 打挂了(变慢+超时)','st');};
+  $('#br-heal').onclick=()=>{bad=false;log('> 下游被(悄悄)修好了','ok');};
+  $('#br-req').onclick=()=>{
+    if(state==='open'){log('> ×10 全部快速失败 "circuit open"(降级兜底上场),0 打到下游','er');return;}
+    for(let i=0;i<10;i++){
+      const fail=bad&&(Math.random()<0.7);
+      total++;if(fail)fails++;
+    }
+    const rate=fails/Math.max(1,total);
+    if(state==='half'&&rate<0.4){setState('closed');log('> HALF-OPEN 探测通过 → <b>合闸 CLOSED</b>,恢复通行','ok');fails=0;total=0;}
+    else if(state==='half'){setState('open');log('> HALF-OPEN 仍失败 → 再次 OPEN,继续冷却','er');}
+    else if(rate>0.5){setState('open');log('> 错误率 '+Math.round(rate*100)+'% 超阈值 → <b>跳闸 OPEN</b>,熔断 +1 分钟冷却','er');fails=0;total=0;}
+    else log('> 10 个请求完成,累计错误率 '+Math.round(rate*100)+'% — CLOSED 保持','ok');
+  };
+  log('> 保险丝待命。剧本:💣打坏下游 → 连打几轮请求(跳闸)→ 🩹修好 → 再打请求(冷却结束进 HALF-OPEN)→ 探测合闸。','st');
+}
+
+/* ============ 图5 雪花 ============ */
+function initSf(){
+  const cellsEl=$('#sf-cells');
+  const ts=$('#sf-ts'),w=$('#sf-w');
+  function draw(){
+    let t=+ts.value,wm=+w.value,s=63-t-wm;
+    if(s<0){s=0;wm=63-t;}
+    w.value=wm;
+    cellsEl.innerHTML='';
+    cellsEl.append(h('span',{class:'sf-cell',style:'background:#C7CCC0'}));
+    for(let i=0;i<t;i++)cellsEl.append(h('span',{class:'sf-cell t'}));
+    for(let i=0;i<wm;i++)cellsEl.append(h('span',{class:'sf-cell w'}));
+    for(let i=0;i<s;i++)cellsEl.append(h('span',{class:'sf-cell s'}));
+    $('#sf-tsv').textContent=t;$('#sf-wv').textContent=wm;$('#sf-sv').textContent=s+' bit';
+    const secs=Math.pow(2,t)/1000;const years=secs/31536000;
+    $('#sf-years').textContent=years>=1?years.toFixed(years<10?1:0)+' 年':Math.round(years*365)+' 天 ⚠';
+    $('#sf-nodes').textContent=wm===0?'—':Math.pow(2,wm).toLocaleString();
+    $('#sf-cap').textContent=s===0?'同 ms 只能 1 个 ⚠':Math.pow(2,s).toLocaleString();
+    $('#sf-gcap').textContent=(Math.pow(2,s)*Math.pow(2,wm)/1e4).toFixed(0)+' 万';
+    const say=[];
+    if(t<32)say.push('<b>时间戳 '+t+' 位:</b>几年就耗尽,回拨容错也几乎为零——除非你只发"短期任务号";');
+    if(wm>16)say.push('机器位 '+wm+' 位撑 6 万+ 节点——集群没那么大,这些位是浪费的;');
+    if(s<8&&s>=0)say.push('<b>序列号只剩 '+s+' bit</b>:单机每毫秒 '+Math.pow(2,s)+' 个,一次大促就见底(抛异常或自旋等下一毫秒)。');
+    if(!say.length)say.push('41/10/12 经典配比:69 年、千台、单机每毫秒 4096——三个数都背下来。');
+    $('#sf-say').innerHTML=say.join(' ');
+  }
+  ts.oninput=draw;w.oninput=draw;draw();
+}
+
+/* ============ 图6 MQ ============ */
+function initMq(){
+  let outbox=false,dedup=false;
+  $('#mq-t-txt').textContent='关';$('#mq-d-txt').textContent='关';
+  const logEl=$('#mq-log');
+  function log(t,c){logEl.append(h('div',{class:c||''},t));logEl.scrollTop=logEl.scrollHeight;}
+  function msg(id){const m=$('#mq-'+id);return m;}
+  async function flow(step1){
+    const a=msg('m1'),b=msg('m2');a.classList.remove('gone','dup');b.classList.remove('gone','dup');
+    $('#mq-p').classList.add('hit');log('> 生产者:本地事务"扣款"…');
+    await sleep(600);$('#mq-p').classList.remove('hit');a.style.left='0';
+    if(outbox){log('> 同事务里写一条"本地消息表"记录(status=待投)✓ 与扣款原子');$('#mq-t').classList.add('hit');}
+    else log('> (未开本地表)直接发 MQ…消息在飞');
+    await sleep(500);
+    $('#mq-b').classList.add('hit');a.classList.add('gone');b.style.left='0';log('> Broker 收到(acks=all, ISR 全落盘)✓');
+    await sleep(500);
+    $('#mq-c').classList.add('hit');log('> 消费者:取出消息,执行"加余额 100"');
+    await sleep(500);
+  }
+  $('#mq-happy').onclick=async()=>{
+    await flow();
+    $('#mq-c').classList.remove('hit');$('#mq-b').classList.remove('hit');log('> 处理成功 → <b>先处理后 ack</b> ✓ 账两清','ok');b2gone();
+  };
+  function b2gone(){$('#mq-m2').classList.add('gone');}
+  $('#mq-crash1').onclick=async()=>{
+    await flow();
+    if(outbox){log('> 💥 此刻断电:消息表里那条 status=待投 还在!<span class="ok">定时任务补投 → 最终一致,没丢单 ✓</span>','ok');}
+    else{log('> 💥 此刻断电:扣款已提交、消息从没发出过。<span class="er">永久丢单 —— 用户钱扣了会员没到账,工单 +1</span>','er');}
+    $('#mq-p').classList.remove('hit');$('#mq-b').classList.remove('hit');
+  };
+  $('#mq-crash2').onclick=async()=>{
+    await flow();
+    log('> 💥 加完余额、ack 前崩溃 → 重投同一条消息');
+    if(dedup){log('> 去重表命中 msgId=8848:<span class="ok">直接跳过,不再加钱 ✓(幂等安全)</span>','ok');}
+    else{log('<span class="er">> 无去重:再加一次 100!用户余额多了 100,对账发现时已发了 300 单…</span>','er');
+      $('#mq-m2').classList.add('dup');}
+    $('#mq-c').classList.remove('hit');$('#mq-b').classList.remove('hit');
+  };
+  $('#mq-toggle-outbox').onclick=function(){outbox=!outbox;$('#mq-t-txt').textContent=outbox?'开':'关';this.classList.toggle('on',outbox);log('> 本地消息表 → '+(outbox?'开':'关'),'st');};
+  $('#mq-toggle-dedup').onclick=function(){dedup=!dedup;$('#mq-d-txt').textContent=dedup?'开':'关';this.classList.toggle('on',dedup);log('> 消费幂等去重 → '+(dedup?'开':'关'),'st');};
+}
+
+/* ============ 图7 多级缓存 ============ */
+function initMc(){
+  const g=runGuard();
+  $('#mc-flow').onclick=async()=>{
+    const my=g.next();
+    $('#mc-b1').style.width='0';$('#mc-b2').style.width='0';$('#mc-b3').style.width='0';
+    await sleep(50);
+    $('#mc-b1').style.width='70%';$('#mc-t1').textContent='命中 7000 · ~100ns';
+    await sleep(500);if(!g.alive(my))return;
+    $('#mc-b2').style.width='28%';$('#mc-t2').textContent='命中 2800 · ~0.5ms';
+    await sleep(500);if(!g.alive(my))return;
+    $('#mc-b3').style.width='2%';$('#mc-t3').textContent='回源 200 · 5-20ms';
+    $('#mc-say').innerHTML='一万次读,DB 只挨 200 次——<b>这就是"截流瀑布"</b>。但每台机器 L1 都是一份独立副本:更新后要广播失效(MQ/Redis pubsub),否则各节点各脏各的。';
+  };
+  const say=$('#mc-say');
+  $('#mc-race').onclick=async()=>{
+    const my=g.next();
+    say.innerHTML='T1 写者:删缓存 ✓ → T2 写库…<br>';
+    await sleep(900);if(!g.alive(my))return;
+    say.innerHTML+='T1 删缓存 → T2(更早的慢读,库里还是旧值)回填缓存 <b style="color:var(--warn)">旧值</b> → T2 写库完成新值。<b>缓存=旧,库=新,脏到下次删除</b>。';
+    await sleep(900);if(!g.alive(my))return;
+    say.innerHTML+='<b style="color:var(--warn)">脏写完成。</b>根因:删与写之间,有读线程拿着旧库值穿越进来。开💊。';
+  };
+  $('#mc-fix').onclick=()=>{
+    say.innerHTML='延迟双删剧本:删缓存 → 写库 → <b>sleep(主从同步+回填耗时)</b> → 再删一次——把 T2 回填的旧值补刀删掉,时间窗从"永久"压到"百毫秒级"。<b>更彻底:写库后发 binlog 给 Canal,异步删+广播各 L1</b>——一致性挂在数据库上而不是睡梦里。';
+  };
+}
+
+/* ============ 图8 分库分表 ============ */
+function initSh(){
+  const barsEl=$('#sh-bars');
+  let mode='uid';
+  function draw(){
+    barsEl.innerHTML='';
+    const data=mode==='uid'?[25,25,25,25]:[3,4,8,10,12,14,22,28,34,38,44,52];
+    data.forEach((v,i)=>{
+      const b=h('div',{class:'sh-bar'+(mode==='uid'&&v>38||mode==='time'&&i>=9?' hot':'')},h('span',null,v+'%'),h('label',null,mode==='uid'?'DB'+i:'M'+(i+1)));
+      b.style.height='0px';barsEl.append(b);
+      requestAnimationFrame(()=>b.style.height=(v*2)+'px');
+    });
+    $('#sh-say').innerHTML=mode==='uid'?'哈希均匀,四库齐平。<b>但"按商家查订单"="广播查询×4 库"。</b>':'写入全在最新月表——<b>单点热 + 冷热不均</b>;"按商家查"还是广播。';
+  }
+  $$('[data-sh]').forEach(b=>{b.onclick=()=>{mode=b.dataset.sh;$$('[data-sh]').forEach(x=>x.classList.toggle('on',x===b));draw();};});
+  draw();
+  $('#gene-decode').onclick=()=>{
+    $('#gene-box').innerHTML='订单号 20260904173118<span class="hl">03</span> → 读基因 <span class="hl">03</span> → db_'+(3%4)+' / order_03 直达 ✓ <b>0 广播,一次路由,连 uid 都不用问</b>';
+  };
+  $('#gene-scan').onclick=()=>{
+    $('#gene-box').innerHTML='订单号末两位被无视 → 按订单号查 = <b style="color:var(--red)">扫 4 个库×N 张表归并</b>…分片键不是订单号,只能广播。<b style="color:var(--pen)">基因法:发号时把 db/table 位写进尾数,查询自路由。</b>';
+  };
+}
+
+/* ============ 图9 分布式事务 ============ */
+function initDt(){
+  const P=id=>$('#dt-'+id);
+  function set(id,st,cls){P(id).querySelector('.dt-st').textContent=st;P(id).className='dt-p'+(cls?' '+cls:'');}
+  function reset(){['A','B','C'].forEach(i=>set(i,'idle',''));$('#dt-co').className='dt-co';$('#dt-co').textContent='协调者 / 编排器:待命';$('#dt-say').innerHTML='选一种协议开演(第三家会失败)。';}
+  const g=runGuard();
+  async function run(mode){
+    const my=g.next();reset();
+    const co=$('#dt-co');
+    if(mode==='2pc'){
+      co.textContent='协调者:进入 PREPARE 阶段';
+      for(const p of ['A','B']){set(p,'已锁资源 ✓ prepared','try');co.textContent='协调者:A✓ B✓ 问 C…';await sleep(600);}
+      set('C','✗ 锁等待超时,prepare 失败','bad');
+      co.textContent='协调者:决定 → 全员 ROLLBACK';await sleep(800);
+      ['A','B'].forEach(p=>set(p,'回滚(全程锁着)',''));
+      $('#dt-say').innerHTML='<b>2PC:</b>强一致到手,代价是<b>三家的数据库连接被全程锁住</b>;协调者若在 commit 阶段崩溃,参与者抱着锁干等——同步阻塞 + 单点,微服务不推荐。';
+    }
+    if(mode==='tcc'){
+      co.textContent='编排器:Try 阶段';
+      set('A','余额冻结 100','try');set('B','库存冻结 1','try');await sleep(900);
+      set('C','Try(预约运力)✗ 失败','bad');await sleep(600);
+      co.textContent='编排器:Cancel 阶段';
+      set('A','解冻(空回滚防护✓)','');set('B','解冻 ✓','ok');
+      $('#dt-say').innerHTML='<b>TCC:</b>Try 预留→Cancel 释放,没有长事务锁;但要写三套接口,还要处理<b>空回滚、悬挂、幂等</b>——业务代码最重的方案,换的是不锁资源。';
+    }
+    if(mode==='saga'){
+      co.textContent='编排器:正向链 A→B→C';
+      set('A','本地事务 ✓ 订单创建','ok');await sleep(700);
+      set('B','本地事务 ✓ 库存扣减','ok');await sleep(700);
+      set('C','✗ 失败','bad');await sleep(600);
+      co.textContent='编排器:补偿链 B←A';
+      set('B','补偿:还库存 ✓','ok');await sleep(700);
+      set('A','补偿:关单 ✓','ok');
+      $('#dt-say').innerHTML='<b>Saga:</b>每步都是独立本地事务(无锁!),失败逆序执行"业务补偿"(还库存、关单)。注意:<b>别人可能看到"已扣库存"的中间态</b>——隔离性弱,适合长流程、可补偿业务。';
+    }
+    if(mode==='msg'){
+      set('A','本地事务 ✓(订单 + 消息表)','ok');co.textContent='MQ:投递给 B / C(重试中…)';
+      await sleep(900);set('B','消费 ✓ 扣库存','ok');set('C','消费失败…<b>重试 #3 / 稍后 DLQ</b>','try');
+      await sleep(900);set('C','重试成功 ✓ 幂等收口','ok');
+      $('#dt-say').innerHTML='<b>本地消息表/事务消息:</b>A 从不为别人锁自己;B、C 最终收到、最终一致,失败进死信人工兜底。<b>互联网量级默认解</b>——放弃"同时",接受"最终"。';
+    }
+  }
+  $$('[data-dt]').forEach(b=>b.onclick=()=>run(b.dataset.dt));
+}
+
+/* ============ 图10 高可用 ============ */
+function initIdc(){
+  const RES={
+    0:{cols:['杭州 <span style="color:var(--gray)">全量</span>'],kv:['小时~天','分钟~小时','丢盘概率低','单点'],fire:[0],msg:'🔥 机房级故障 = 全站不可用,RTO 从小时起步;盘坏还可能丢数据(异步副本在同城?)。所有"多活"都是对这张图的改进。'},
+    1:{cols:['杭州 A 机房','杭州 B 机房','—','—'],kv:['秒~分钟','≈ 0','3-10ms','同城双活'],fire:[0,1],msg:'🔥 整个城市光缆被挖断才见天花板:同城双活也一起没。城市级灾害(断电/洪水)是这一档的盲区——所以才要异地。'},
+    2:{cols:['杭州 主','上海 备','—','—'],kv:['小时(需切换)','秒~分钟(异步延迟)','30ms ⚠','异地灾备'],fire:[0],msg:'🔥 杭州挂:切到上海要人肉/半自动 DNS+VIP 切换,RTO 小时级;异步复制延迟窗口内的写<b>丢了</b>(RPO>0)。为什么不双写两地?30ms RTT 让每笔写慢 30 倍,且两地脑裂最难修。'},
+    3:{cols:['单元①','单元②','单元③','单元④'],kv:['分钟(自动切','RPO≈0 单元内','就近','三地五中心·单元化'],fire:[0],msg:'🔥 只炸一个单元:它承载的 1/4 流量按 uid 段整体切到邻近单元,<b>爆炸半径=1/N</b>,其余单元无感。代价:数据/路由/运维复杂度全上来了——为规模付账。'},
+  };
+  const colsEl=$('#idc-cols'),kvEl=$('#idc-kv'),res=$('#idc-res');
+  let cur=0;
+  function draw(fire){
+    const d=RES[cur];
+    colsEl.innerHTML='';
+    d.cols.forEach((c,i)=>{
+      const el=h('div',{class:'idc-col'+(fire&&d.fire.includes(i)?' fire':'')});
+      el.innerHTML='<div class="dc">'+(fire&&d.fire.includes(i)?'🔥':'🏢')+'</div>'+c;
+      colsEl.append(el);
+    });
+    while(colsEl.children.length<4){const el=h('div',{class:'idc-col',style:'opacity:.25'},'—');colsEl.append(el);}
+    kvEl.innerHTML='';
+    ['RTO','RPO','跨地域延迟','架构档位'].forEach((k,i)=>{kvEl.append(h('div',null,k+'<b>'+d.kv[i]+'</b>'));});
+    res.innerHTML=fire?'<span class="st">'+d.msg+'</span>':'<span class="st">选个档位,再按 🔥 演习。</span>';
+    res.scrollTop=0;
+  }
+  $$('[data-i]').forEach(b=>{b.onclick=()=>{cur=+b.dataset.i;$$('[data-i]').forEach(x=>x.classList.toggle('on',x===b));draw(false);};});
+  $('#idc-fire').onclick=()=>draw(true);
+  draw(false);
+}
+
+/* ============ 图11 Trace ============ */
+function initTr(){
+  const wf=$('#tr-wf');
+  const SPANS=[
+    {n:'POST /order (gateway)',d:860,s:0,lvl:0,c:'var(--pen)'},
+    {n:'└ order-svc.create',d:820,s:8,lvl:1,c:'var(--pen)'},
+    {n:'  ├ inventory.check',d:120,s:20,lvl:2,c:'var(--teal)'},
+    {n:'  ├ mysql: insert',d:60,s:150,lvl:2,c:'var(--teal)'},
+    {n:'  ├ MQ.publish OrderCreated',d:25,s:220,lvl:2,c:'var(--amber)'},
+    {n:'  └ pay-worker(异步)→alipay-api',d:520,s:260,lvl:2,c:'var(--amber)'},
+  ];
+  const SPANS_SLOW=SPANS.map(s=>s.n.includes('alipay')?{...s,d:1350,lvl:s.lvl}:s);
+  function render(spans,slow){
+    wf.innerHTML='';
+    const total=slow?1650:900;
+    spans.forEach((s,i)=>{
+      const row=h('div',{class:'tr-row'});
+      row.append(h('span',{class:'tr-name'},s.n));
+      const t=h('div',{class:'tr-t'});
+      const bar=h('div',{class:'tr-bar'},(s.d)+'ms');
+      bar.style.left=(s.s/total*100)+'%';
+      bar.style.background=s.c;
+      if(slow&&s.n.includes('alipay')){bar.style.background='var(--red)';bar.textContent=s.d+'ms ⚠ 慢';}
+      bar.style.width='0';
+      t.append(bar);row.append(t);wf.append(row);
+      requestAnimationFrame(()=>setTimeout(()=>bar.style.width=(s.d/total*100)+'%',60*i));
+    });
+    const foot=h('div',{class:'tr-row'});
+    foot.append(h('span',{class:'tr-name'},'traceId=7f3a…c1 · traceparent 沿 HTTP header + MQ 属性透传'));
+    wf.append(foot);
+  }
+  $('#tr-gen').onclick=()=>{render(SPANS,false);$('#tr-say').textContent='正常:860ms 里大头是等支付渠道(260ms 开始 520ms)。';};
+  $('#tr-slow').onclick=()=>{render(SPANS_SLOW,true);$('#tr-say').innerHTML='<b style="color:var(--red)">alipay-api 1350ms</b>:瓶颈秒定位,无需翻日志;若它是根因且超时,上游熔断该跳——三讲连环。';};
+  render(SPANS,false);
+}
+
+/* ============ 图12 估算 ============ */
+function initEst(){
+  const I=['e-dau','e-req','e-pk','e-wr','e-sz','e-y'].map(id=>$('#'+id));
+  function fmt(n){
+    if(n>=1e8)return (n/1e8).toFixed(1)+' 亿';
+    if(n>=1e4)return (n/1e4).toFixed(1)+' 万';
+    if(n>=1e3)return (n/1e3).toFixed(1)+'K';
+    return Math.round(n);
+  }
+  function calc(){
+    const dau=+I[0].value*10*10000, rpd=+I[1].value, pk=+I[2].value/10, wr=+I[3].value/100, sz=+I[4].value, yrs=+I[5].value;
+    $('#e-dauv').textContent=fmt(dau);$('#e-reqv').textContent=rpd;$('#e-pkv').textContent=pk.toFixed(1)+'×';
+    $('#e-wrv').textContent=Math.round(wr*100)+'%';$('#e-szv').textContent=sz+' KB';$('#e-yv').textContent=yrs;
+    const total=dau*rpd;
+    const qps=total/86400;
+    const pqps=qps*pk;
+    const wtps=pqps*wr;
+    const daily=wtps*86400*sz/1024/1024/1024; // GB/日(写流量摊到秒不准,用日均)
+    const dailyGB=(dau*rpd*wr*sz)/1024/1024; // 日请求量×写占比×大小
+    const store=dailyGB*365*yrs*3*2;
+    $('#e-qps').textContent=fmt(qps);
+    $('#e-pqps').textContent=fmt(pqps);
+    $('#e-tps').textContent=fmt(wtps)+' / s';
+    $('#e-daily').textContent='日增 ≈ '+(dailyGB>=1024?(dailyGB/1024).toFixed(1)+' TB':Math.round(dailyGB)+' GB');
+    $('#e-store').textContent=store>=1024?(store/1024).toFixed(1)+' TB':Math.round(store)+' GB';
+    $('#e-web').textContent=Math.ceil(pqps/15000)+'~'+Math.ceil(pqps/10000)+' 台';
+    const dbs=Math.max(2,Math.ceil(wtps/3000));
+    $('#e-db').textContent=dbs+' 主 + '+Math.max(1,Math.ceil(pqps*(1-wr)/8000))+' 只读';
+  }
+  I.forEach(i=>i.oninput=calc);calc();
+}
+
+/* ============ 图13 决策 ============ */
+function initDec(){
+  const grid=$('#dec-rows');
+  const D=[
+    ['支付/交易','钱的事,<mark>一致性压倒一切</mark>',[98,55,40,70],'强一致(CP):多副本 Paxos/单机事务能上就上;宁可"处理中"超时不可"失败但扣了钱";对账体系是最后防线。可用性用"快速失败+状态可查"来保。'],
+    ['信息流/Feed','少刷一条没人投诉,<mark>刷不出才投诉</mark>',[60,96,50,85],'AP:多地域最终一致、写扩散/读扩散选型看粉丝分布;降级链:实时→缓存→静态封面。'],
+    ['秒杀','本质不是"扛住峰值",是<mark>把峰值改造成能扛的形状</mark>',[90,80,88,60],'入口截流(答题/限流/令牌)+ 库存 Redis 预扣(Lua 原子)+ MQ 异步落单 + 支付超时回补——把一致性和写压力都推到异步时间线里。'],
+  ];
+  const names=['一致性','可用性','性能余量','成本友好'];
+  D.forEach(([t,sub,bars,desc],i)=>{
+    const c=h('div',{class:'dec-card'});
+    c.innerHTML='<h5>'+t+'</h5><div style="color:var(--ink2);font-size:12.5px">'+sub+'</div><div class="radar"></div><div class="fix" style="display:none;font-size:13px;margin-top:8px;color:var(--ink2)">'+desc+'</div>';
+    const r=c.querySelector('.radar');
+    bars.forEach((b,j)=>{
+      const el=h('div',{class:'dec-bar'},names[j]+'('+b+')');
+      const bar=h('i',null,h('em',{style:'width:0'}));
+      el.append(bar);r.append(el);
+    });
+    c.onclick=()=>{$$('.dec-card').forEach(x=>{x.classList.remove('on');x.querySelector('.fix').style.display='none';$$('.dec-bar i>em',x).forEach(e=>e.style.width='0');});
+      c.classList.add('on');c.querySelector('.fix').style.display='block';
+      $$('.dec-bar i>em',c).forEach((e,j)=>setTimeout(()=>e.style.width=bars[j]+'%',50*j));}
+    ;
+    grid.append(c);
+  });
+}
+
+/* ============ 附录 ============ */
+function initCards(){
+  const grid=$('#card-grid');
+  const data=[
+    ['CAP 到底在选什么?','P 是现实不是选项;分区时刻在 C 与 A 间选,且可按被分区节点、按业务域分粒度。'],
+    ['为什么一致性哈希?','hash%N 加机器全洗牌;环上顺时针找最近,迁移≈1/N;虚拟节点解决落点不均。'],
+    ['令牌桶 vs 漏桶?','令牌桶允许突发(攒令牌),漏桶强制恒速(护下游)。要"像水龙头"用漏桶,要"像高速收费站"用令牌桶。'],
+    ['熔断限流降级区别?','限流防量(入口配额),熔断防病(对坏依赖快速失败),降级是熔断后的活法(兜底内容/砍功能)。'],
+    ['雪花 ID 三大坑?','时钟回拨、机器号分配、位段零和(41/10/12:69 年/1024 台/4096 每毫秒)。'],
+    ['MQ 怎么不丢消息?','生产端本地消息表/事务消息 + broker 副本 acks=all + 消费端处理完再 ack——三个环节三把锁。'],
+    ['消息重复哪来的?','ack 丢失/网络抖动的 at-least-once 必然;消费端幂等收口(去重表/唯一键/SETNX)。'],
+    ['先删缓存还是先更库?','Cache Aside:更新库后删缓存;"先删后写"必脏;"删了又被旧读回填"→延迟双删/Canal binlog。'],
+    ['分片键怎么选?','按最高频维度(常是 uid);其余维度异构索引表/ES;深分页用基因法或游标;时间分片小心热点。'],
+    ['2PC 为什么少用?','同步阻塞+协调者单点;TCC 无锁但三套接口;Saga 补偿但隔离弱;互联网默认本地消息表/事务消息。'],
+    ['RTO/RPO 是什么?','能忍多久不可用/能忍丢多少数据;同城双活 RPO≈0,异地异步复制 RPO>0,单元化收敛爆炸半径。'],
+    ['trace 怎么串起来?','traceId 生成于入口,经 HTTP/MQ 头透传(W3C traceparent);错误与慢请求全采样,正常流量降采样。'],
+  ];
+  data.forEach(([q,a])=>{grid.append(h('div',{class:'card'},h('b',null,q),a));});
+}
+
+/* ============ 装配 ============ */
+function initSpy(){
+  const links=$$('.toc a');
+  const secs=links.map(a=>$(a.getAttribute('href'))).filter(Boolean);
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-18% 0px -72% 0px'});
+  secs.forEach(s=>io.observe(s));
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  safe('map',initMap);
+  safe('cap',initCap);
+  safe('ring',initRing);
+  safe('rl',initRl);
+  safe('br',initBr);
+  safe('sf',initSf);
+  safe('mq',initMq);
+  safe('mc',initMc);
+  safe('sh',initSh);
+  safe('dt',initDt);
+  safe('idc',initIdc);
+  safe('tr',initTr);
+  safe('est',initEst);
+  safe('dec',initDec);
+  safe('cards',initCards);
+  initSpy();
+});
+</script>
+</body>
+</html>

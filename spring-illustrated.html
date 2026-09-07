@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spring 图解讲义 · IoC 与 AOP 十二讲</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F6F2; --card:#FFFFFF; --stage:#FAFBF7;
+  --ink:#1E232B; --ink2:#59616E; --line:#DDE0D8;
+  --pen:#3D7A2C; --pen-bg:#EDF4E7; --pen-line:#C9DFBD;
+  --warn:#C2571A; --warn-bg:#FBEDE2; --warn-line:#E7C4A6;
+  --teal:#0E7C6B; --teal-bg:#E8F4F1;
+  --grape:#5B4A96; --grape-bg:#EEEAF8;
+  --amber:#A9750A; --amber-bg:#FAF2DE;
+  --gray:#7A828C;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --serif:"Noto Serif SC","Source Han Serif SC","STZhongsong","SimSun",serif;
+  --sans:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+  --kai:"KaiTi","STKaiti","Kaiti SC",var(--serif);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(30,35,43,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,35,43,.04) 1px,transparent 1px);
+  background-size:28px 28px}
+::selection{background:rgba(61,122,44,.2)}
+a{color:var(--pen);text-decoration:none}
+.wrap{display:grid;grid-template-columns:224px minmax(0,832px);gap:52px;max-width:1180px;margin:0 auto;padding:0 24px}
+main{min-width:0;padding-bottom:96px}
+section.ch{margin-top:96px;scroll-margin-top:24px}
+.kicker{font-family:var(--serif);color:var(--pen);font-weight:600;font-size:14px;letter-spacing:.12em;margin-bottom:6px}
+h1,h2{font-family:var(--serif);font-weight:900;line-height:1.3}
+h2{font-size:32px;margin-bottom:18px}
+h3{font-size:18px;margin:30px 0 10px;font-weight:700}
+p{margin:12px 0;max-width:76ch}
+p.lead{font-size:17px;color:var(--ink2)}
+ul.tight{margin:8px 0 8px 1.4em}
+ul.tight li{margin:6px 0}
+code.k{font-family:var(--mono);font-size:.86em;background:#EBEDE6;border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+mark{background:none;color:var(--pen);font-weight:700}
+mark.w{color:var(--warn)}
+.think{font-family:var(--kai);color:var(--pen);background:var(--pen-bg);border:1px dashed var(--pen-line);border-radius:8px;padding:8px 14px;font-size:15px;margin:18px 0}
+.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pen);border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;font-size:15px}
+.note b.tag{color:var(--pen);font-weight:700;margin-right:6px}
+aside.toc{position:sticky;align-self:start;top:24px;height:calc(100vh - 48px);overflow:auto;padding:28px 0;scrollbar-width:thin}
+.toc-brand{font-family:var(--serif);font-weight:900;font-size:19px;line-height:1.4;margin-bottom:14px}
+.toc-brand small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--pen);letter-spacing:.18em;font-weight:600}
+.toc ol{list-style:none}
+.toc li a{display:flex;gap:10px;align-items:baseline;padding:5.5px 10px;border-radius:6px;font-size:13.5px;color:var(--ink2);border-left:2px solid transparent}
+.toc li a i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--gray);width:20px;flex:none}
+.toc li a:hover{background:#ECEEE6;color:var(--ink)}
+.toc li a.active{color:var(--pen);font-weight:700;border-left-color:var(--pen);background:rgba(61,122,44,.07)}
+.toc li a.active i{color:var(--pen)}
+.hero{padding-top:48px}
+.hero-top{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:40px;align-items:end}
+.hero-title{font-size:clamp(42px,6.2vw,70px);line-height:1.14}
+.hero-title .stroke{position:relative;display:inline-block}
+.hero-title .stroke svg{position:absolute;left:-4px;right:-4px;bottom:-8px;width:calc(100% + 8px);height:16px;overflow:visible}
+.hero-title .stroke svg path{stroke:var(--pen);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:420;stroke-dashoffset:420;animation:wipe 1s .5s ease-out forwards}
+@keyframes wipe{to{stroke-dashoffset:0}}
+.hero-sub{margin-top:16px;font-size:15.5px;color:var(--ink2)}
+.hero-kicker{font-family:var(--serif);letter-spacing:.3em;color:var(--pen);font-size:14px;font-weight:600;margin-bottom:10px}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+.caret{display:inline-block;width:9px;height:1.05em;background:var(--pen);vertical-align:-2px;animation:blink 1.1s infinite}
+.reveal{opacity:0;transform:translateY(14px);animation:rv .7s ease-out forwards}
+.reveal.d1{animation-delay:.1s}.reveal.d2{animation-delay:.25s}.reveal.d3{animation-delay:.45s}
+@keyframes rv{to{opacity:1;transform:none}}
+.terminal{grid-column:1/-1;margin-top:34px;background:#161A20;border-radius:14px;overflow:hidden;box-shadow:0 18px 44px rgba(30,35,43,.22)}
+.term-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#1E242C;border-bottom:1px solid #2A313B}
+.term-bar .dot{width:11px;height:11px;border-radius:50%}
+.term-bar .t{font-family:var(--mono);font-size:12px;color:#8E97A5;margin-left:6px}
+.term-body{padding:14px 18px 16px;font-family:var(--mono);font-size:13px;line-height:1.7}
+#cli-out{max-height:320px;overflow:auto;scrollbar-width:thin}
+#cli-out .ln{white-space:pre-wrap;word-break:break-all}
+.cli-prompt{color:#8CC63F;font-weight:600}
+.cli-cmd{color:#F2F4F0}.cli-ok{color:#67B7A3}.cli-warn{color:#E8B54A}.cli-err{color:#F08A72}.cli-dim{color:#7A8283}.cli-note{color:#9DBF8E}
+.cli-inputline{display:flex;align-items:center;gap:8px;margin-top:4px}
+#cli-input{flex:1;background:transparent;border:none;outline:none;color:#F2F4F0;font:inherit;caret-color:#8CC63F}
+.cli-chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 16px}
+.cli-chip{font-family:var(--mono);font-size:11px;color:#B9C2CF;background:#232A33;border:1px solid #303945;border-radius:99px;padding:3px 12px;cursor:pointer;transition:border-color .15s,color .15s}
+.cli-chip:hover{border-color:#8CC63F;color:#fff}
+.demo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin:26px 0;box-shadow:0 2px 0 rgba(30,35,43,.03)}
+.fig-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.fig-no{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--pen);border-radius:4px;padding:2px 8px;flex:none}
+.fig-title{font-family:var(--serif);font-size:17px;font-weight:600}
+.caption{font-family:var(--kai);color:var(--ink2);font-size:14px;line-height:1.7;margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
+.caption::before{content:"图注 · ";color:var(--pen)}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.dctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.dctrl .gap{flex:1}
+.btn{font-family:var(--sans);font-size:13px;color:var(--ink);background:#fff;border:1px solid #C7CCC0;border-radius:7px;padding:5px 14px;cursor:pointer;line-height:1.6;transition:border-color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--pen);color:var(--pen)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.solid:hover:not(:disabled){background:var(--pen);border-color:var(--pen);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{border-color:var(--pen);color:var(--pen);background:var(--pen-bg);font-weight:700}
+.btn.warn-o{border-color:var(--warn);color:var(--warn)}
+.btn.warn-o.on{background:var(--warn-bg)}
+.btn:focus-visible,.cli-chip:focus-visible,a:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+.hint{font-size:13px;color:var(--ink2);margin-top:10px}
+.hint b{color:var(--pen)}
+.dlog{font-family:var(--mono);font-size:12.5px;line-height:1.7;background:#1E232B;color:#C9D0DA;border-radius:8px;padding:10px 14px;margin-top:12px;max-height:160px;overflow:auto;scrollbar-width:thin}
+.dlog .ln-ok{color:#6FC2AE}.dlog .ln-err{color:#F08A72}.dlog .ln-warn{color:#E8B54A}.dlog .ln-dim{color:#7A828C}
+.pill{display:inline-block;font-size:12px;font-family:var(--mono);border-radius:99px;padding:1px 10px;border:1px solid var(--line);background:#fff}
+.pill.pen{color:var(--pen);border-color:var(--pen-line);background:var(--pen-bg)}
+.pill.warn{color:var(--warn);border-color:var(--warn-line);background:var(--warn-bg)}
+.pill.teal{color:var(--teal);border-color:#BFDDD5;background:var(--teal-bg)}
+.say{font-size:13.5px;min-height:2.4em;padding:8px 14px;color:var(--ink2);line-height:1.8}
+.say b{color:var(--pen)}
+.say.bad b{color:var(--warn)}
+/* 图1 IoC 对比 */
+.ioc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+.ioc-col{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:10px 12px;font-size:12.5px;min-height:250px}
+.ioc-col h4{font-family:var(--mono);font-size:12.5px;margin-bottom:8px}
+.ioc-card{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:4px 9px;margin:6px 0;background:#F4F5F0;animation:pop .25s;position:relative}
+.ioc-card .who{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--gray)}
+.ioc-card.mock{border-color:var(--teal);background:var(--teal-bg);color:var(--teal)}
+.ioc-card.bad{border-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+/* 图2/通用 stepper */
+.stp{display:grid;grid-template-columns:1fr 280px;gap:12px;padding:14px}
+.stp-list{display:grid;gap:3px;align-content:start}
+.stp-item{display:flex;gap:10px;align-items:baseline;font-size:12.5px;border:1px solid transparent;border-radius:7px;padding:4px 10px;color:var(--ink2);cursor:pointer}
+.stp-item i{font-style:normal;font-family:var(--mono);font-size:10.5px;width:22px;flex:none;color:var(--gray)}
+.stp-item.cur{background:var(--pen-bg);border-color:var(--pen-line);color:var(--ink);font-weight:700}
+.stp-item.cur i{color:var(--pen)}
+.stp-item.done{color:var(--teal)}
+.stp-item.done i::after{content:" ✓"}
+.stp-card{background:var(--stage);border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:12.5px;align-self:start;line-height:1.8}
+.stp-card b{color:var(--pen)}
+.stp-card .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;border-radius:4px;padding:1px 7px;margin:2px 4px 2px 0;background:#ECEEE6;color:var(--ink2)}
+/* 图3 三级缓存 */
+.cyc-pools{padding:14px;display:grid;gap:8px}
+.cyc-row{display:grid;grid-template-columns:190px 1fr;gap:10px;align-items:center;font-size:12.5px;min-height:40px}
+.cyc-row label{font-family:var(--mono);font-size:11.5px;color:var(--ink2)}
+.cyc-slot{display:flex;gap:6px;flex-wrap:wrap;min-height:30px;border:1px dashed var(--line);border-radius:7px;padding:3px 8px;background:var(--card)}
+.cyc-chip{font-family:var(--mono);font-size:11.5px;border-radius:6px;padding:2px 10px;animation:pop .25s}
+.cyc-chip.a{background:var(--pen);color:#fff}
+.cyc-chip.b{background:var(--teal);color:#fff}
+.cyc-chip.ghost{background:#fff;border:1.5px dashed var(--gray);color:var(--gray)}
+.cyc-chip.prox{outline:2px solid var(--warn);outline-offset:1px}
+.cyc-note{padding:0 14px 12px;font-size:12px;color:var(--gray)}
+/* 图4 AOP 栈 */
+.ao-stack{padding:14px;display:grid;gap:4px}
+.ao-frame{font-family:var(--mono);font-size:12px;border:1.5px solid var(--line);border-left-width:6px;border-radius:7px;padding:5px 10px;background:var(--card);animation:slidein .3s;transition:background .25s}
+.ao-frame.proxy{border-left-color:var(--warn)}
+.ao-frame.aspect{border-left-color:var(--amber)}
+.ao-frame.target{border-left-color:var(--pen)}
+.ao-frame.hot{background:var(--pen-bg)}
+.ao-frame.ret{background:var(--teal-bg)}
+@keyframes slidein{from{transform:translateX(-14px);opacity:0}}
+.ao-mode{display:flex;gap:10px;flex-wrap:wrap;padding:0 14px 12px}
+.ao-mcard{flex:1;min-width:220px;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-family:var(--mono);font-size:11px;line-height:1.8;color:var(--ink2);background:var(--card)}
+.ao-mcard b{color:var(--ink)}
+.ao-mcard.on{border-color:var(--pen)}
+/* 图5 自调用 */
+.pit-wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px;padding:14px}
+.pit-code{position:relative;background:#1E232B;color:#C9D0DA;border-radius:10px;padding:10px 14px;font-family:var(--mono);font-size:12px;line-height:1.95;overflow:visible}
+.pit-code .ln{position:relative;border-radius:4px;padding:0 6px}
+.pit-code .an{color:#8CC63F}
+.pit-code .kw{color:#E8B54A}
+.pit-code .run-hl{background:var(--pen);color:#fff}
+.pit-code .bad-hl{background:var(--warn);color:#fff}
+.pit-proxy{position:absolute;inset:-14px -12px;border:2px dashed var(--teal);border-radius:14px;pointer-events:none;display:grid;align-items:start;justify-items:end;padding:2px 8px}
+.pit-proxy span{font-size:10.5px;color:var(--teal);font-family:var(--mono);background:var(--card);padding:0 6px}
+.pit-dot{position:absolute;width:16px;height:16px;border-radius:50%;background:var(--teal);z-index:9;transition:left .5s,top .5s;box-shadow:0 0 0 4px rgba(14,124,107,.25)}
+.pit-dot.bad{background:var(--warn);box-shadow:0 0 0 4px rgba(194,87,26,.25)}
+.pit-side{display:grid;gap:6px;align-content:start;font-size:12.5px}
+.pit-chip{text-align:left;font-size:12px;font-family:var(--mono)}
+.pit-verdict{grid-column:1/-1;margin-top:4px;padding:8px 12px;border-radius:8px;font-size:13px;background:var(--stage);border:1px solid var(--line);line-height:1.8}
+.pit-verdict.bad{background:var(--warn-bg);border-color:var(--warn-line)}
+.pit-verdict.good{background:var(--teal-bg);border-color:#BFDDD5}
+/* 图6 翻转卡 */
+.anno-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;padding:14px}
+.flip{perspective:900px;height:158px;cursor:pointer}
+.flip-inner{position:relative;width:100%;height:100%;transition:transform .55s;transform-style:preserve-3d}
+.flip.on .flip-inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:10px;padding:10px 13px;font-size:12.5px;line-height:1.65;overflow:auto}
+.face.f{background:var(--card);border:1.5px solid var(--pen-line)}
+.face.f b{font-family:var(--mono);color:var(--pen);font-size:13.5px}
+.face.b{transform:rotateY(180deg);background:var(--pen-bg);border:1.5px solid var(--pen)}
+.face.b em{display:block;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--warn);margin-bottom:4px}
+/* 图7 线程绑定 */
+.txb{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+.txb-frames{display:grid;gap:5px;align-content:start}
+.txb-fr{border:1.5px solid var(--line);border-left:6px solid var(--gray);border-radius:7px;background:var(--card);padding:5px 10px;font-family:var(--mono);font-size:11.5px;transition:all .3s}
+.txb-fr.tx{border-left-color:var(--warn)}
+.txb-fr.act{border-color:var(--pen);background:var(--pen-bg)}
+.tlb{border:1.5px dashed var(--amber);border-radius:10px;padding:7px 11px;font-family:var(--mono);font-size:11.5px;background:var(--card);min-height:80px;line-height:1.9}
+.tlb b{color:var(--amber)}
+.tlb .kv{color:var(--teal)}
+.conn{display:inline-block;border:1.5px solid var(--pen);border-radius:6px;padding:2px 9px;font-family:var(--mono);font-size:11px;margin:3px 4px 0 0;background:var(--pen-bg);color:var(--pen);transition:all .3s}
+.conn.busy{background:var(--pen);color:#fff}
+.conn.out{opacity:.35;border-style:dashed}
+/* 图8 传播 */
+.pr-lanes{padding:14px;display:grid;gap:10px}
+.pr-lane{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;font-size:12.5px}
+.pr-track{position:relative;height:34px;background:#EDEFEA;border:1px solid var(--line);border-radius:8px}
+.pr-bar{position:absolute;top:6px;height:20px;border-radius:5px;font-size:10px;color:#fff;font-family:var(--mono);display:grid;place-items:center;width:0;transition:width .6s,background .4s,opacity .4s;white-space:nowrap;overflow:hidden}
+.pr-bar.g{background:var(--teal)}
+.pr-bar.gr{background:var(--gray);opacity:.6}
+.pr-bar.rd{background:var(--warn)}
+.pr-mark{position:absolute;top:2px;font-family:var(--mono);font-size:9.5px;color:var(--amber);transition:opacity .3s;opacity:0}
+/* 图9 开关台 */
+.tf-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px}
+.tf-sw{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:8px;background:var(--card);padding:7px 12px;font-size:13px;margin-bottom:7px}
+.tf-sw .tgl{width:52px;height:26px;border-radius:99px;background:#DDE0D8;position:relative;cursor:pointer;border:none;transition:background .25s}
+.tf-sw .tgl::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .25s}
+.tf-sw .tgl.on{background:var(--pen)}
+.tf-sw .tgl.on::after{left:29px}
+.tf-lamps{display:grid;gap:10px;align-content:start}
+.tf-lamp{display:flex;gap:12px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:8px 13px;font-size:13px;background:var(--card)}
+.tf-lamp .bulb{width:18px;height:18px;border-radius:50%;background:#DDE0D8;flex:none;transition:all .3s}
+.tf-lamp.good{border-color:var(--teal)}.tf-lamp.good .bulb{background:var(--teal)}
+.tf-lamp.bad{border-color:var(--warn)}.tf-lamp.bad .bulb{background:var(--warn)}
+.tf-final{font-family:var(--serif);font-size:19px;font-weight:900;border-radius:10px;padding:10px 14px;text-align:center}
+.tf-final.commit{background:var(--warn-bg);color:var(--warn)}
+.tf-final.rollback{background:var(--teal-bg);color:var(--teal)}
+.tf-final.notx{background:var(--warn-bg);color:var(--warn)}
+/* 图10 事件 */
+.ev-bus{position:relative;height:300px}
+.ev-node{position:absolute;border:1.5px solid var(--ink);border-radius:10px;background:var(--card);padding:6px 11px;font-size:12px;min-width:130px;text-align:center;transition:all .3s}
+.ev-node b{display:block;font-family:var(--mono);font-size:12px}
+.ev-node small{color:var(--ink2);font-size:10.5px}
+.ev-node.pub{border-color:var(--pen)}
+.ev-node.main-t{border-color:var(--pen)}
+.ev-node.pool-t{border-color:var(--grape)}
+.ev-node.hot{background:var(--pen-bg);box-shadow:0 0 0 4px rgba(61,122,44,.15)}
+.ev-node.hotp{background:var(--grape-bg);box-shadow:0 0 0 4px rgba(91,74,150,.15)}
+.ev-node.txhot{background:var(--teal-bg);box-shadow:0 0 0 4px rgba(14,124,107,.2)}
+.ev-lane{position:absolute;top:8px;font-size:10.5px;font-family:var(--mono);color:var(--gray)}
+table.tb{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;background:var(--card)}
+table.tb th,table.tb td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top}
+table.tb th{background:#ECEEE6;font-weight:700;font-size:13px}
+table.tb td.m{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:13.5px;line-height:1.7}
+.card b{display:block;font-family:var(--serif);font-size:14.5px;margin-bottom:4px}
+.card b::before{content:"问 ";color:var(--pen)}
+.card a{font-family:var(--mono);font-size:11px;color:var(--gray)}
+footer{margin-top:88px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2);font-family:var(--kai);line-height:1.9}
+@media (max-width:1120px){
+  .wrap{grid-template-columns:minmax(0,860px);justify-content:center}
+  aside.toc{position:static;height:auto;order:-1;padding:12px 0 0}
+  .toc ol{display:flex;overflow-x:auto;gap:4px;padding-bottom:8px;scrollbar-width:thin}
+  .toc li a{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;border-radius:4px}
+  .toc li a.active{border-bottom-color:var(--pen);background:none}
+  .toc-brand{padding-left:10px}
+}
+@media (max-width:820px){
+  .hero-top{grid-template-columns:1fr}
+  .ioc-grid,.stp,.pit-wrap,.txb,.tf-grid{grid-template-columns:1fr}
+  h2{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+  .reveal{opacity:1;transform:none}
+  .hero-title .stroke svg path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<aside class="toc" aria-label="目录">
+  <div class="toc-brand"><small>SPRING · ILLUSTRATED</small>Spring 图解讲义</div>
+  <nav><ol>
+    <li><a href="#hero"><i>00</i>开篇 · bean 工厂</a></li>
+    <li><a href="#ch-ioc"><i>01</i>IoC:交出创建权</a></li>
+    <li><a href="#ch-life"><i>02</i>Bean 生命周期</a></li>
+    <li><a href="#ch-cycle"><i>03</i>循环依赖三级缓存</a></li>
+    <li><a href="#ch-aop"><i>04</i>AOP 与动态代理</a></li>
+    <li><a href="#ch-pit"><i>05</i>代理的禁区</a></li>
+    <li><a href="#ch-anno"><i>06</i>注解背后是谁</a></li>
+    <li><a href="#ch-txbind"><i>07</i>事务的线程绑定</a></li>
+    <li><a href="#ch-prop"><i>08</i>七种传播行为</a></li>
+    <li><a href="#ch-txfail"><i>09</i>事务失效开关台</a></li>
+    <li><a href="#ch-ext"><i>10</i>扩展点管线</a></li>
+    <li><a href="#ch-event"><i>11</i>事件与异步</a></li>
+    <li><a href="#ch-mvc"><i>12</i>Spring MVC 九步</a></li>
+    <li><a href="#ch-cards"><i>附</i>面试速查卡</a></li>
+  </ol></nav>
+</aside>
+
+<main>
+
+<section id="hero" class="hero">
+  <div class="hero-top">
+    <div>
+      <p class="hero-kicker reveal d1">IoC · AOP · 事务 · 十二讲</p>
+      <h1 class="hero-title reveal d1">Spring<br><span class="stroke">图解讲义<svg viewBox="0 0 200 12" aria-hidden="true"><path d="M3 8 C 40 2, 70 11, 105 6 S 170 3, 197 7"/></svg></span></h1>
+      <p class="hero-sub reveal d2">下面是一台迷你 beanFactory:先 <code class="k" style="color:#8CC63F">scan</code> 扫出组件,再 <code class="k" style="color:#8CC63F">getbean userController</code> 看一个 Bean 如何被"造出来";把 cycle-mode 切到 constructor,亲眼撞一次循环依赖。</p>
+    </div>
+    <div class="reveal d3">
+      <p style="font-size:13.5px;color:var(--ink2)">"图解讲义"系列第三册。十二讲、<b style="font-family:var(--mono);color:var(--pen)">12</b> 张交互动画,口径 Spring Framework 6.x(与 Boot 3 同代),注解/类名都是真家伙。</p>
+    </div>
+  </div>
+  <div class="terminal reveal d2">
+    <div class="term-bar">
+      <span class="dot" style="background:#E05C4B"></span><span class="dot" style="background:#E0B13E"></span><span class="dot" style="background:#5FBF77"></span>
+      <span class="t">mini beanFactory — 场景包 com.demo(4 个组件,A/B 字段互相注入)</span>
+    </div>
+    <div class="term-body">
+      <div id="cli-out"></div>
+      <div class="cli-inputline">
+        <span class="cli-prompt">beanFactory&gt;</span>
+        <input id="cli-input" autocomplete="off" spellcheck="false" aria-label="beanFactory 命令输入框">
+      </div>
+    </div>
+    <div class="cli-chips" id="cli-chips"></div>
+  </div>
+</section>
+
+<!-- 第1讲 -->
+<section class="ch" id="ch-ioc">
+  <p class="kicker">第 一 讲</p>
+  <h2>IoC:把"造对象"的权力上交</h2>
+  <p class="lead">没有 Spring 的世界,OrderController 要自己 <code class="k">new</code> OrderService,OrderService 再自己 new Mapper、new DataSource……<mark>依赖关系散落在代码里,对象之间焊死</mark>:换实现要改源码、测一个方法要先养一池子真对象、单例只能人手一份管。Spring 的思路是反过来:<mark>你只声明"我需要什么"(构造器参数/@Autowired 字段),怎么造、何时造、造几个、给谁用,全交给容器</mark>——这就是控制反转(IoC);容器把造好的对象"喂"进来,即依赖注入(DI)。</p>
+  <p>BeanFactory 是地基(延迟初始化、只认依赖),ApplicationContext 在其上加了<mark>资源加载、事件广播、国际化、Environment、且默认预实例化全部单例</mark>——实际开发你面对的永远是后者。"IoC 只是换了个 new 的地方"这句吐槽,漏掉的重点是:<mark>创建权收归容器之后,生命周期管理、代理增强、依赖调度这些横切能力才有插手的机会</mark>——后面十一讲全从这里长出来。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 1</span><span class="fig-title">两条路:自己 new vs 交给容器,再写个单测试试</span></div>
+    <div class="stage" id="d-ioc">
+      <div class="ioc-grid">
+        <div class="ioc-col"><h4 style="color:var(--warn)">手工接线(依赖是"焊"出来的)</h4><div id="ioc-left"></div></div>
+        <div class="ioc-col"><h4 style="color:var(--pen)">容器接线(依赖是"声明"出来的)</h4><div id="ioc-right"></div></div>
+      </div>
+      <div class="say" id="ioc-say"></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="ioc-build">▶ 两条路:搭出 OrderController</button>
+      <button class="btn warn-o" id="ioc-test">✎ 突发任务:单测要把 Cache 换成 Mock</button>
+      <button class="btn" id="ioc-reset">重来</button>
+    </div>
+    <p class="caption">左列的"焊点"每一处都锁死了实现类型,换 Mock 得动源码;右列声明与装配分离,测试容器把 MockBean 塞进单例池就完事——这就是"DIP(依赖倒置)的工程落地"。</p>
+  </div>
+</section>
+
+<!-- 第2讲 -->
+<section class="ch" id="ch-life">
+  <p class="kicker">第 二 讲</p>
+  <h2>Bean 生命周期:一个对象的十五站打卡</h2>
+  <p class="lead">Bean 从"类"变成"池里的单例"要过一长串关卡,而<mark>每个关卡都是 Spring 生态的插座</mark>:实例化(反射调构造器)→ 属性填充(@Autowired 在这里被 AutowiredAnnotationBPP 处理)→ Aware 三连(beanName/BeanFactory/ApplicationContext 送"身份证")→ <b>BPP 前置</b> → @PostConstruct → afterPropertiesSet → init-method → <b>BPP 后置(★代理常在此诞生)</b> → 进单例池服役 → 容器关闭时 @PreDestroy → destroy。</p>
+  <p>两个高频追问先答了:<mark>@PostConstruct 早于 InitializingBean,后者早于 init-method</mark>(注解→接口→配置,侵入度递增);<mark>@Transactional/@Async 的代理是在 BPP 后置做的</mark>——所以它们拿到的方法拦截,发生在你的 init-method 之后:init-method 里调自己带事务的方法,"事务"还不存在(第 5 讲的前奏)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 2</span><span class="fig-title">生命周期打卡台 · 逐站盖章,看每站的"插座"都谁在用</span></div>
+    <div class="stage stp" id="d-life"></div>
+    <div class="dctrl">
+      <button class="btn solid" id="life-next">下一站 ▸</button>
+      <button class="btn" id="life-prev">◂ 上一站</button>
+      <button class="btn" id="life-auto">▶▶ 自动连播</button>
+      <button class="btn" id="life-reset">重置</button>
+    </div>
+    <p class="caption">点左侧任意一站可直接跳转。特别留意 ③④⑤ Aware(自己拿容器)、⑩ BPP 后置——"代理诞生"那一站,第 4、5 讲的演员就是从这儿登场的。</p>
+  </div>
+  <div class="note"><b class="tag">要点</b>Bean 生命周期一句话背诵版:<mark>实例化 → 属性注入 → Aware → BPP前 → 三个 init → BPP后(代理) → 使用 → 两个 destroy</mark>。谁能插进来改 Bean:BPP;谁能改"图纸"(BeanDefinition):BFPP 家族——第 10 讲系统盘点。</div>
+</section>
+
+<!-- 第3讲 -->
+<section class="ch" id="ch-cycle">
+  <p class="kicker">第 三 讲</p>
+  <h2>循环依赖:A 等 B、B 等 A,三级缓存怎么解的</h2>
+  <p class="lead">ServiceA 注入了 ServiceB,ServiceB 又注入 ServiceA——构造互相依赖时死锁无解,但<mark>字段/setter 注入</mark>有救,因为"实例化"和"属性填充"是两步:A 构造完(哪怕属性全空)就能先<mark>曝光一个早期引用</mark>给 B 用。三级缓存各司其职:<code class="k">L1 成品池</code> / <code class="k">L2 半成品池</code>(存曝光出来的早期引用)/ <code class="k">L3 工厂池</code>(存 ObjectFactory,<mark>延迟决定"给你裸对象还是代理"</mark>)。</p>
+  <p>为什么非要三级而不是两级?——如果 A 需要代理,必须保证<mark>所有人拿到的都是同一个代理</mark>。裸对象一旦先发出去就不能再"追认"成代理;L3 存工厂,正是为了在"真有人来要早期引用"的那一刻才执行 getEarlyBeanReference(提前走一遍 BPP 的代理化),然后把结果落进 L2 复用。构造器注入为什么救不了:<mark>A 连"实例化"都没完成,工厂也无从谈起</mark>——直接 BeanCurrentlyInCreationException。@Lazy 能解:先塞一个"用到才找"的占位代理。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 3</span><span class="fig-title">三级缓存棋盘 · 三种注入姿势,三种命运</span></div>
+    <div class="stage" id="d-cycle">
+      <div class="cyc-pools" id="cyc-pools"></div>
+      <div class="say" id="cyc-say"></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="cyc-next">下一步 ▸</button>
+      <button class="btn" id="cyc-prev">◂</button>
+      <button class="btn" id="cyc-auto">▶▶ 连播</button>
+      <span class="gap"></span>
+      <span style="font-size:13px">注入姿势:</span>
+      <button class="btn on" data-m="field">字段注入</button>
+      <button class="btn warn-o" data-m="ctor">构造器注入</button>
+      <button class="btn" data-m="lazy">@Lazy 构造器</button>
+    </div>
+    <div class="cyc-note">A=绿 B=青 · 橙描边 = 已被 BPP 提前代理化 · L3 里的 chip 是"工厂"不是对象</div>
+    <p class="caption">字段版走完八步;切"构造器注入"再连播——第 3 步当场爆红。Boot 2.6 起循环依赖<mark>默认直接报错</mark>(spring.main.allow-circular-references=false),官方态度:三级缓存是补丁不是设计,该拆环拆环。</p>
+  </div>
+  <div class="think">想一想:为什么"原型(prototype)bean 的相互依赖"三级缓存也救不了?——L2/L3 存的早期引用,原型根本不留任何缓存,谁也没法"回头给你"——容器只能如实报 BeanCurrentlyInCreationException。</div>
+</section>
+
+<!-- 第4讲 -->
+<section class="ch" id="ch-aop">
+  <p class="kicker">第 四 讲</p>
+  <h2>AOP:给你的方法穿一层"拦截马甲"</h2>
+  <p class="lead">AOP 把"每个方法都要做但和业务无关"的事(开事务、打日志、鉴权、埋点)抽成切面,在方法调用前后织入。<mark>Spring 的实现不是改字节码织入,而是"造一个替身对象"</mark>:容器里放进单例池的根本不是你的 OrderService,而是它的代理;调用方拿到的引用就是代理,代理先跑通知(advice),再决定调不调真身。</p>
+  <p>两套分身术:<mark>JDK 动态代理</mark>——目标实现了接口,代理类 implements 同一批接口(所以<code class="k">(OrderApi)bean</code> 能转,但 <code class="k">(OrderServiceImpl)bean</code> 会 ClassCastException,经典事故);<mark>CGLIB</mark>——没接口就生成目标类的子类覆写方法(final 类/final 方法因此无法代理)。Spring Boot 默认全用 CGLIB(proxyTargetClass=true),统一行为少踩坑。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 4</span><span class="fig-title">一次调用穿过代理链 · 栈帧展开给你看</span></div>
+    <div class="stage" id="d-aop">
+      <div class="ao-stack" id="ao-stack"></div>
+      <div class="ao-mode">
+        <div class="ao-mcard on" id="ao-jdk"><b>目标类 implements OrderApi ✓ → JDK 代理</b><br>$Proxy17 <span style="color:var(--teal)">implements OrderApi</span><br>方法表 = 接口方法集合<br>(强转目标类 → ClassCastException)</div>
+        <div class="ao-mcard" id="ao-cglib"><b>没有接口 → CGLIB 代理</b><br>OrderService$$SpringCGLIB$$0 <span style="color:var(--teal)">extends OrderService</span><br>覆写非 final 方法<br>(final 方法/类 → 拦不到)</div>
+      </div>
+      <div class="say" id="ao-say">点播放:方法栈一帧帧压下去。</div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="ao-play">▶ orderService.create() 走起</button>
+      <button class="btn warn-o" id="ao-ex">▶ 方法里抛异常版</button>
+      <button class="btn" data-hint="切换:有接口/无接口" id="ao-switch">切换 JDK / CGLIB 对照</button>
+      <button class="btn" id="ao-clear">清空</button>
+    </div>
+    <p class="caption">橙色 = 通知(环绕日志/事务),绿 = 你的真身。异常版里,事务通知那一帧的收场从"commit"变"rollback"——通知链就是 try/catch/finally 的封装。下方两张卡是两种代理的"验身"对照。</p>
+  </div>
+</section>
+
+<!-- 第5讲 -->
+<section class="ch" id="ch-pit">
+  <p class="kicker">第 五 讲</p>
+  <h2>代理的禁区:这四种调用绕过马甲</h2>
+  <p class="lead">理解了"容器给的是替身",事故就都能预判:<mark>代理只在"从外面进来"的调用生效</mark>。① 自调用——a() 里调 b(),走的是 <code class="k">this</code>(真身),不经过替身,b() 上的 @Transactional 形同虚设;② <code class="k">new OrderService()</code> 自己 new 的,根本没有容器参与,裸得彻底;③ 方法/类是 <mark>private、static、final</mark> 的——JDK 代理只认接口方法,CGLIB 子类覆写不到 final/private(跨类可见性都不给);④ 类压根没被组件扫描(漏了 @Service / 包不在扫描路径)——容器里没有它的 Bean。</p>
+  <p>自调用的解法按优雅度排序:把 b() 拆到另一个 Bean(最正);注入自己的代理再调(<code class="k">@Autowired OrderService self</code>);<code class="k">((OrderService)AopContext.currentProxy()).b()</code>(需 exposeProxy=true);或干脆用 AspectJ 编译期织入(不再是"替身"而是"换心")。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 5</span><span class="fig-title">一个绿点子的两世为人 · 走代理 vs 走 this</span></div>
+    <div class="stage pit-wrap" id="d-pit">
+      <div style="position:relative">
+        <div class="pit-proxy"><span>代理替身(容器里存的是它)</span></div>
+        <pre class="pit-code" id="pit-code"><span class="ln" id="pl0"><span class="an">@Service</span></span>
+<span class="ln" id="pl1"><span class="kw">class</span> OrderService {
+<span class="ln" id="pl2">  <span class="an">@Transactional</span>(READ_COMMITTED) <span class="kw">public void</span> a() {</span>
+<span class="ln" id="pl3">     <span class="kw">this</span>.b();   <span style="color:#7A8283">// ← 事故现场</span></span>
+<span class="ln" id="pl4">  }
+<span class="ln" id="pl5">  <span class="an">@Transactional</span> <span class="kw">public void</span> b() { insertLog(); }</span>
+<span class="ln" id="pl6">}</span></span></pre>
+        <div class="pit-dot" id="pit-dot" style="left:-30px;top:10px"></div>
+      </div>
+      <div class="pit-side" id="pit-side"></div>
+    </div>
+    <div class="pit-verdict say" id="pit-vd" style="margin:0 14px 12px">点右侧剧本开演。</div>
+    <p class="caption">剧本一:外部调 a() → a() 里 this.b()——绿点子绕过虚线墙直落真身,事务通知没被触发(单测里"数据没回滚"多半就是它)。右侧禁区 chips 逐条点,每条都是一个真实工单。</p>
+  </div>
+</section>
+
+<!-- 第6讲 -->
+<section class="ch" id="ch-anno">
+  <p class="kicker">第 六 讲</p>
+  <h2>注解背后是谁:Spring 没有魔法,只有扫描器和处理器</h2>
+  <p class="lead">Java 注解本身零行为,<mark>行为全在那个"读注解的人"身上</mark>。这张牌墙每张牌正面是你天天写的注解,背面:谁处理、什么时机处理。把它翻完,你对 Spring 的理解就从"配置玄学"升级为"对象生命周期上的处理器网络"——这也是所有自研 starter、@Enable 全家桶的底层语法。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 6</span><span class="fig-title">注解翻牌墙 · 点任何一张,看它背后的打工人</span></div>
+    <div class="stage anno-grid" id="d-anno"></div>
+    <p class="caption">注意三张"细思恐极"牌:@Configuration 的类会被 ConfigurationClassPostProcessor 用 CGLIB 再包一层——@Bean 方法互相调用拿到的仍是单例(普通类那样调就是 new 两个);@Autowired 找 notQualified 的候选按<b>类型</b>;@Value 的 ${...} 靠 PropertySourcesPlaceholderConfigurer 在 BFPP 阶段替换。</p>
+  </div>
+</section>
+
+<!-- 第7讲 -->
+<section class="ch" id="ch-txbind">
+  <p class="kicker">第 七 讲</p>
+  <h2>事务凭什么跨方法生效:一条和线程绑死的连接</h2>
+  <p class="lead">@Transactional 没有把 Connection 传参传到各层——它干了件更巧的事:开启事务时从连接池借一条连接,<mark>塞进 ThreadLocal(TransactionSynchronizationManager 的 map:{dataSource → ConnectionHolder})</mark>。之后同一线程上无论套多少层 Service、Mapper,MyBatis/JdbcTemplate 拿连接时先查这本"线程账",查到活跃 Holder 就用<mark>同一条连接、同一个事务</mark>;查不到才新借一条自动提交的。</p>
+  <p>所以——事务失效的第 N 个隐藏原因:<mark>方法里开新线程跑 SQL</mark>,新线程的 ThreadLocal 是空的,拿的是另一条连接,主事务回滚管不着它(提交也是)。另一面:传播 REQUIRED"加入"的实质就是"复用这条线程绑定连接";REQUIRES_NEW"挂起"的实质是<mark>把旧 Holder 从 ThreadLocal 解绑暂存,借新连接绑上,完事再换回来</mark>。下一讲用动画拆这两种传播。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 7</span><span class="fig-title">同一线程三次落库:有事务 vs 没事务,连接的账本不一样</span></div>
+    <div class="stage txb" id="d-txb">
+      <div>
+        <div style="font-size:12.5px;margin-bottom:6px"><b>http-nio-8080-exec-1 的调用栈</b></div>
+        <div class="txb-frames" id="txb-frames"></div>
+        <div style="font-size:12.5px;margin:12px 0 4px"><b>连接池</b></div>
+        <div id="txb-conns"></div>
+      </div>
+      <div>
+        <div class="tlb" id="txb-tl"><b>TransactionSynchronizationManager</b>(ThreadLocal)<br>{ }</div>
+        <div class="say" id="txb-say" style="padding:8px 0"></div>
+        <div style="font-size:13px">借还计数:借 <b id="txb-borrow">0</b> 次 · 用 <b id="txb-use">0</b> 次 SQL</div>
+      </div>
+    </div>
+    <div class="dctrl">
+      <button class="btn warn-o" id="txb-notx">▶ 剧本一:三个 Mapper 方法,没有事务</button>
+      <button class="btn solid" id="txb-tx">▶ 剧本二:同样的三句,入口有 @Transactional</button>
+    </div>
+    <p class="caption">没事务:每句 SQL 借一次还一次(3 借 3 还,各自独立提交);有事务:开头借一次绑进 ThreadLocal,三句全走它,commit 后才还——"一个连接管到底"就是 Spring 事务的实体。</p>
+  </div>
+</section>
+
+<!-- 第8讲 -->
+<section class="ch" id="ch-prop">
+  <p class="kicker">第 八 讲</p>
+  <h2>七种传播行为:就记三个主角 + 一条总则</h2>
+  <p class="lead">传播行为回答的问题只有一个:<mark>inner 方法被 outer 方法调用时,"我的事务"怎么算</mark>。总则:<b>有(当前)事务就"用/参合",没有就"造/不造、允许不允许"</b>。REQUIRED(默认):有则加入、无则新建——内外一条命,一起提交一起回滚;<b>REQUIRES_NEW</b>:无论如何新开一个,外层连接被<b>挂起</b>——inner 的生死与 outer 无关;<b>NESTED</b>:有则用<b>同一连接打 savepoint</b>,inner 回滚只回滚到锚点、outer 可继续;没则等价 REQUIRED。剩下的:MANDATORY(必须有,不然 IllegalTransactionStateException)/ NEVER(必须没有)/ NOT_SUPPORTED(有就挂起,清空 ThreadLocal 执行)/ SUPPORTS(随缘)——见名知义,考场外卡。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 8</span><span class="fig-title">双车道账本 · 外方法在上,内方法在下,颜色=各自的事务命运</span></div>
+    <div class="stage" id="d-prop">
+      <div class="pr-lanes">
+        <div class="pr-lane"><span>outer T1</span><div class="pr-track" id="pr-o"></div></div>
+        <div class="pr-lane"><span>inner T2</span><div class="pr-track" id="pr-i"></div></div>
+      </div>
+      <div class="say" id="pr-say"></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="pr-play">▶ 重放一次调用</button>
+      <button class="btn warn-o" id="pr-boom">💥 在 inner 末尾抛异常,outer 捕获后继续</button>
+      <span class="gap"></span>
+      <span style="font-size:13px">inner 的传播:</span>
+      <button class="btn on" data-p="REQUIRED">REQUIRED</button>
+      <button class="btn" data-p="REQUIRES_NEW">REQUIRES_NEW</button>
+      <button class="btn" data-p="NESTED">NESTED</button>
+      <button class="btn" data-p="NOT_SUPPORTED">NOT_SUPPORTED</button>
+    </div>
+    <p class="caption">绿 = 活跃事务,灰 = 挂起,橙 = 回滚销毁。REQUIRED 下 inner 抛异常被 catch 也不安全——<mark>共享事务已被标记 rollback-only</mark>,outer 提交时静默炸 UnexpectedRollbackException(经典血案,记住这条账)。REQUIRES_NEW 里 inner 回滚不影响 outer;NESTED 回滚到 savepoint,outer 继续。</p>
+  </div>
+</section>
+
+<!-- 第9讲 -->
+<section class="ch" id="ch-txfail">
+  <p class="kicker">第 九 讲</p>
+  <h2>事务失效开关台:把死法都拨一遍</h2>
+  <p class="lead">把"代理是否生效 × 异常是否够格触发回滚"两根主线做成开关台:任何一个组合都能拨出来看结局。回滚规则再强调一次默认口径:<mark>RuntimeException 和 Error 回滚,checked 异常不回滚</mark>(rollbackFor = Exception.class 可扩列,写事务注解建议直接标它);而"异常被 catch 吞掉"= 事务拦截器根本没看见异常,自然不滚——吞不吞异常,决定权在<b>方法外的代理</b>,不在你自己。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 9</span><span class="fig-title">开关台 · 拨完六档,看结局灯变不变</span></div>
+    <div class="stage tf-grid" id="d-txfail">
+      <div>
+        <div class="tf-sw"><span>抛的是 RuntimeException(默认口径能滚)</span><button class="tgl on" data-k="rt" aria-label="运行时异常开关"></button></div>
+        <div class="tf-sw"><span>异常被方法内 try-catch 吞掉</span><button class="tgl" data-k="catch" aria-label="吞异常开关"></button></div>
+        <div class="tf-sw"><span>rollbackFor = Exception.class 已声明</span><button class="tgl" data-k="rfe" aria-label="rollbackFor 开关"></button></div>
+        <div class="tf-sw"><span>b() 是被 a() 自调用的</span><button class="tgl" data-k="self" aria-label="自调用开关"></button></div>
+        <div class="tf-sw"><span>b() 是 private 方法</span><button class="tgl" data-k="priv" aria-label="private 开关"></button></div>
+        <div class="tf-sw"><span>调用的是 new 出来的实例</span><button class="tgl" data-k="fresh" aria-label="new 实例开关"></button></div>
+      </div>
+      <div class="tf-lamps">
+        <div class="tf-lamp" id="tf-l1"><span class="bulb"></span><span id="tf-l1t"></span></div>
+        <div class="tf-lamp" id="tf-l2"><span class="bulb"></span><span id="tf-l2t"></span></div>
+        <div class="tf-final" id="tf-final">—</div>
+        <div class="say" id="tf-say" style="padding:0"></div>
+      </div>
+    </div>
+    <p class="caption">前提:方法执行到中途抛了异常(类型看第一档)。三个结论位:代理在不在、拦截器看没看见异常、最终提没提交。全拨一遍,面试那道"事务失效场景"你就有肌肉记忆了。</p>
+  </div>
+</section>
+
+<!-- 第10讲 -->
+<section class="ch" id="ch-ext">
+  <p class="kicker">第 十 讲</p>
+  <h2>扩展点管线:框架把自己的缝留好了</h2>
+  <p class="lead">Spring 的"可插件化"集中在这几道缝,按容器启动顺序站队:<b>BeanDefinitionRegistryPostProcessor</b>(还能<b>注册</b>定义——MyBatis 的 MapperScanner 就是在这站把每个 Mapper 接口注册成 Bean)、<b>BeanFactoryPostProcessor</b>(改现成定义 / 占位符替换,PropertySourcesPlaceholderConfigurer)、<b>BeanPostProcessor</b>(逐个 Bean 出厂前后加工——AOP 代理、Aware 调度、注解注入全在这层)、<b>FactoryBean</b>("造 Bean 的 Bean",getObject() 说了算,getBean("&amp;xx") 拿本体)、<b>ApplicationListener</b> 与三个 *Event。再往上,@EnableXxx 的套路是:<code class="k">@Import</code> 一个 Registrar 或配置类,把一套 Bean 塞进管线。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 10</span><span class="fig-title">管线站点图 · 点任意一站,看"谁来这儿办过事"</span></div>
+    <div class="stage stp" id="d-ext"></div>
+    <p class="caption">顺序记忆:先改"图纸"(定义级:注册→加工),后改"成品"(实例级:前后加工),最后"广播"(事件级)。写中间件/自研 starter 的功课,基本都落在这五站。</p>
+  </div>
+</section>
+
+<!-- 第11讲 -->
+<section class="ch" id="ch-event">
+  <p class="kicker">第 十一 讲</p>
+  <h2>事件与异步:解耦不是 MQ 的专利</h2>
+  <p class="lead">进程内事件总线:<code class="k">applicationEventPublisher.publishEvent(new OrderCreated(...))</code>,订阅方 <code class="k">@EventListener</code>。<mark>默认同步同线程</mark>——发布者按 @Order 挨个调用监听者,异常会传回去(别指望它天然解耦事务)。要异步:<code class="k">@EnableAsync</code> + 监听者标 @Async(扔给线程池,发布即返回)。而真正的大杀器是 <code class="k">@TransactionalEventListener(phase = AFTER_COMMIT)</code>:<mark>业务事务提交成功我才执行,回滚了我根本不出场</mark>——"下单成功后发短信/发积分"这类副作用的正解,免得在业务事务里同步调三方接口,拖长事务还制造"钱扣了短信没发"的不一致。</p>
+  <p>边界也要说清:进程内事件<b>不持久、不重试、不跨进程</b>,单机解耦够用;要可靠投递,那是 MQ + 本地消息表/事务消息的活。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 11</span><span class="fig-title">一颗事件的旅行 · 线程颜色 = 谁在跑</span></div>
+    <div class="stage ev-bus" id="d-event">
+      <div class="ev-lane" style="left:12px">main 线程(exec-1)</div>
+      <div class="ev-lane" style="left:12px;top:196px;color:var(--grape)">task-exec 线程池</div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="ev-play">▶ publisher.publishEvent(OrderCreated)</button>
+      <button class="btn warn-o" id="ev-rollback">▶ 同一次发布,但业务事务回滚</button>
+      <span class="hint">绿 = main 线程执行 · 紫 = 线程池异步 · 青 = 提交后才醒</span>
+    </div>
+    <p class="caption">两个剧本只差一件事:提交 or 回滚。<b>AFTER_COMMIT 监听者在回滚剧本里全程没亮过</b>——副作用与主事务的生死约定,就靠这一个注解,不需要把业务代码搅成一锅。</p>
+  </div>
+</section>
+
+<!-- 第12讲 -->
+<section class="ch" id="ch-mvc">
+  <p class="kicker">第 十二 讲</p>
+  <h2>Spring MVC:DispatcherServlet 的九步工作流</h2>
+  <p class="lead">一个 GET /order/7 的全部历程:请求打到前端控制器 <b>DispatcherServlet</b> → ① <b>HandlerMapping</b> 按 URL+method 匹配到 @GetMapping 方法(带回拦截器链);② <b>HandlerAdapter</b> 适配调用(解耦"怎么调"与"调谁");③ 拦截器 preHandle(返回 false 一路短路,连 Controller 都不进);④ <b>参数解析器</b>把 HTTP 世界翻译成方法入参(@PathVariable、@RequestBody 走 HttpMessageConverter 反序列化);⑤ 反射调用 Controller;⑥ 返回值处理:@ResponseBody 再走 MessageConverter 序列化 JSON;⑦ postHandle → ⑧ 视图解析(REST 场景跳过)→ ⑨ afterCompletion(清尾,资源释放)。写过的每个 @RestController 都在这条流水线上。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 12</span><span class="fig-title">九步流水线 · 顺手拨一下"拦截器否决"开关</span></div>
+    <div class="stage stp" id="d-mvc"></div>
+    <div class="dctrl">
+      <button class="btn solid" id="mvc-play">▶ GET /order/7</button>
+      <button class="btn warn-o" id="mvc-deny">✋ preHandle 改为返回 false 再演</button>
+      <button class="btn" id="mvc-auto">▶▶ 连播</button>
+    </div>
+    <p class="caption">否决版在第 ③ 步提前散场——但 afterCompletion 依然会为"已经跑过的拦截器"执行(倒序),这是它做清理(比如登录态 ThreadLocal remove)的原因。</p>
+  </div>
+  <div class="note"><b class="tag">要点</b>追问"Filter、Interceptor、AOP 谁先谁后?"——<mark>Filter(Servlet 规范,容器管) → DispatcherServlet → Interceptor(Spring MVC 管) → AOP(Bean 代理层管)</mark>。粒度越往里越懂"业务方法",越往外越懂"原始请求"。</div>
+</section>
+
+<!-- 附录 -->
+<section class="ch" id="ch-cards">
+  <p class="kicker">附 录</p>
+  <h2>面试速查卡</h2>
+  <div class="cards" id="card-grid"></div>
+</section>
+
+<footer>
+  Spring 图解讲义 · 系列第三册 · 手写 vanilla JS/SVG,无依赖离线可开 · 口径 Spring Framework 6.x。
+</footer>
+</main>
+</div>
+
+<script>
+/* ============ 工具 ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function h(tag,attrs){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k==='text')e.textContent=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)));}return e;}
+function runGuard(){let id=0;return{next(){return++id},alive(my){return my===id}};}
+const safe=(name,fn)=>{try{fn();}catch(e){console.error('[demo:'+name+']',e);}};
+
+/* ============ mini beanFactory ============ */
+function initCLI(){
+  const out=$('#cli-out'),input=$('#cli-input'),chips=$('#cli-chips');
+  if(!out)return;
+  const put=(t,cls)=>{out.append(h('div',{class:'ln '+(cls||'')},t));out.scrollTop=out.scrollHeight;};
+  const BEANS=[
+    {name:'dataSource',from:'@Bean of AppConfig',type:'HikariDataSource',dep:[],tx:false},
+    {name:'userMapper',from:'@MapperScan 注册的 MapperFactoryBean',type:'UserMapper$$Proxy',dep:['sqlSessionFactory'],tx:false},
+    {name:'userFacade',from:'@Service com.demo.UserFacade',type:'UserFacade',dep:['userMapper','dataSource'],tx:true},
+    {name:'userController',from:'@RestController com.demo.UserController',type:'UserController',dep:['userFacade'],tx:false},
+  ];
+  const state={scanned:false,cycleMode:'field'};
+  function getbean(n){
+    const b=BEANS.find(x=>x.name===n);
+    if(!b){put('ERROR NoSuchBeanDefinitionException: no bean named \''+n+'\' (try: beans)','cli-err');return;}
+    if(!state.scanned){put('ERROR 请先 scan 刷新容器','cli-err');return;}
+    put('<span class="cli-dim">─ getBean("'+n+'") ─</span>','');
+    put('① L1 单例池: '+n+' → miss','');
+    if(b.dep.length)put('② 构造/依赖解析: '+b.dep.map(d=>'getBean('+d+')').join(' , '),'cli-note');
+    put('② 依赖就绪 → 实例化 → 属性填充(AutowiredBPP)','');
+    put('③ Aware → BPP.before → @PostConstruct → BPP.after'+(b.tx?' <span class="cli-warn">★ TransactionProxyCreator 在此把 '+n+' 包成 CGLIB 代理</span>':''),'');
+    put('④ 放入 L1 单例池 ✓ 返回 '+(b.tx?n+'@CGLIBProxy':n+'@'+Math.abs(hashCode(n)).toString(16).slice(0,6)),'cli-ok');
+  }
+  function hashCode(s){let h=0;for(let i=0;i<s.length;i++)h=(h<<5)-h+s.charCodeAt(i)|0;return h;}
+  function exec(line){
+    const parts=line.trim().split(/\s+/);if(!parts[0])return;
+    put('<span class="cli-prompt">beanFactory&gt;</span> '+line,'cli-cmd');
+    const c=parts[0].toLowerCase();
+    if(c==='clear'){out.innerHTML='';return;}
+    if(c==='help'){put('scan · beans · getbean &lt;name&gt; · proxy &lt;name&gt; · set cycle-mode &lt;field|ctor&gt; · refresh · info','cli-note');return;}
+    if(c==='scan'||c==='refresh'){
+      put('扫描 com.demo …','');
+      BEANS.forEach(b=>put('  注册 '+b.name+'  ← '+b.from,'cli-note'));
+      put('预实例化(singleton preInstantiate)…完成,共 '+BEANS.length+' 个单例 ✓','cli-ok');
+      state.scanned=true;return;}
+    if(c==='beans'){
+      if(!state.scanned){put('容器还没 scan(空空如也)','cli-warn');return;}
+      put('NAME          TYPE                          SOURCE','cli-dim');
+      BEANS.forEach(b=>put((b.name+'          ').slice(0,14)+(b.type+'                    ').slice(0,30)+b.from,''));
+      return;}
+    if(c==='getbean'){getbean(parts[1]||'');return;}
+    if(c==='proxy'){
+      const b=BEANS.find(x=>x.name===parts[1]);
+      if(!b){put('用法: proxy &lt;name&gt;','cli-warn');return;}
+      put(b.tx?' 有切面需求(@Transactional):单例池里存的是 '+b.name+'$$SpringCGLIB$$0,接口强转 OK,目标类强转看 proxyTargetClass':' 无切面:单例池存原始对象,谁也没穿马甲','cli-ok');return;}
+    if(c==='set'&&parts[1]==='cycle-mode'){
+      const m=parts[2];if(!['field','ctor'].includes(m)){put('用法: set cycle-mode field|ctor','cli-warn');return;}
+      state.cycleMode=m;put('cycle-mode = '+m+(m==='ctor'?' ⚠ 下次 refresh 预实例化将现场爆炸':''),'cli-warn');return;}
+    if(c==='cycle'||(c==='refresh'&&state.cycleMode==='ctor')){
+      put('ServiceA 字段注入 ServiceB,ServiceB 字段注入 ServiceA …','');
+      if(state.cycleMode==='field'){
+        put('A 实例化→入 L3 工厂→B 要 A 早期引用(getEarlyBeanReference)→B 完成→A 完成 ✓ 三级缓存化解','cli-ok');
+      }else{
+        put('new A(b) 需要 b → new B(a) 需要 a → <span class="cli-err">A 还没构造完,L3 无工厂可兜 → BeanCurrentlyInCreationException: request bean name could not be resolved</span>','cli-err');
+        put('出路:@Lazy 占位、拆环、或改用 setter——Boot 2.6+ 默认禁止循环依赖','cli-warn');
+      }
+      return;}
+    put('unknown command: '+parts[0]+'  (输入 help)','cli-err');
+  }
+  const history=[];let hidx=0;
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){const v=input.value.trim();input.value='';if(v){history.push(v);hidx=history.length;exec(v);}}
+    else if(e.key==='ArrowUp'){e.preventDefault();if(hidx>0){hidx--;input.value=history[hidx]||'';}}
+    else if(e.key==='ArrowDown'){e.preventDefault();if(hidx<history.length-1){hidx++;input.value=history[hidx]||'';}else{hidx=history.length;input.value='';}}
+  });
+  ['scan','beans','getbean userController','getbean userFacade','proxy userFacade','set cycle-mode ctor','cycle','set cycle-mode field','help'].forEach(s=>{
+    chips.append(h('button',{class:'cli-chip',onclick:()=>{exec(s);input.focus();}},s));
+  });
+  put('欢迎来到 mini beanFactory —— 场景包 com.demo:UserFacade 与 dataSource 等 4 个组件。','');
+  put('先 scan,再 getbean,把 cycle-mode 切到 ctor 撞个循环依赖。','cli-dim');
+}
+
+/* ============ 图1 IoC ============ */
+function initIoc(){
+  const L=$('#ioc-left'),R=$('#ioc-right'),say=$('#ioc-say');
+  const g=runGuard();let built=false,tested=false;
+  const CHAIN=[['new UserMapper()','硬编码'],['new HikariDataSource(cfg)','读 properties 失败?'],['new UserFacade(mapper)','焊死实现'],['new UserController(facade)','再焊一层']];
+  async function build(){
+    const my=g.next();built=true;tested=false;L.innerHTML='';R.innerHTML='';
+    say.className='say';say.innerHTML='两条路同时出发——目标是拿到一个能用的 UserController';
+    for(const [t,w]of CHAIN){
+      if(!g.alive(my))return;
+      L.append(h('div',{class:'ioc-card'},t,h('span',{class:'who'},w)));
+      await sleep(360);if(!g.alive(my))return;
+    }
+    R.append(h('div',{class:'ioc-card'},'声明: @Controller @Service @Mapper + @Bean',h('span',{class:'who'},'只写需要谁')));
+    await sleep(400);if(!g.alive(my))return;
+    R.append(h('div',{class:'ioc-card',style:'border-color:var(--pen);color:var(--pen)'},'容器: scan → 装配 → 代理 → 入池 ✓',h('span',{class:'who'},'new 的次数你来数?')));
+    say.innerHTML='手工 4 层 new,一处签名全链改;容器只声明一次。<b>但真正的分水岭在下一步 →</b> 点"单测换 Mock"';
+  }
+  function test(){
+    const my=g.next();
+    if(!built){say.className='say bad';say.innerHTML='先把两条路搭出来再测(点 ▶ 搭一搭)。';return;}
+    tested=true;
+    const old=L.children;
+    for(let i=0;i<old.length;i++){
+      setTimeout(()=>{if(!g.alive(my))return;old[i].classList.add('bad');},i*160);
+    }
+    setTimeout(()=>{
+      if(!g.alive(my))return;
+      L.append(h('div',{class:'ioc-card bad'},'✗ 换 MockCache:追进 4 个文件改 new,还得防别处又 new 一个真的'));
+      R.append(h('div',{class:'ioc-card mock'},'✓ @MockBean Cache 注入:测试容器替换目标,源码零改动'));
+      say.className='say';
+      say.innerHTML='<b style="color:var(--warn)">左:依赖关系写死在调用点</b> vs <b style="color:var(--teal)">右:依赖关系是一份"清单",装配时想换谁换谁</b> —— 这就是依赖倒置 + 容器给的最大红利:可替换性。';
+    },900);
+  }
+  $('#ioc-build').onclick=build;
+  $('#ioc-test').onclick=test;
+  $('#ioc-reset').onclick=()=>{g.next();L.innerHTML='';R.innerHTML='';built=false;say.className='say';say.innerHTML='两条路各就各位,点 ▶。';};
+  say.innerHTML='两条路各就各位,点 ▶。';
+}
+
+/* ============ 通用 stepper ============ */
+function stepper(stage,data,opts){
+  const listEl=h('div',{class:'stp-list'});const card=h('div',{class:'stp-card'});
+  stage.append(listEl,card);
+  let idx=-1;
+  const items=data.map((d,i)=>{
+    const it=h('div',{class:'stp-item'},h('i',null,d.n||(i+1).toString()),h('span',null,d.t));
+    it.onclick=()=>go(i);listEl.append(it);return it;
+  });
+  function go(i){
+    idx=i;
+    items.forEach((el,j)=>{el.classList.toggle('cur',j===i);el.classList.toggle('done',j<i);});
+    const d=data[i];
+    card.innerHTML='<b>'+(d.n?d.n+' ':'')+(d.h||d.t)+'</b><br>'+d.d+(d.tags?'<div style="margin-top:6px">'+d.tags.map(t=>'<span class="tag">'+t+'</span>').join('')+'</div>':'');
+    if(opts&&opts.onChange)opts.onChange(i,d);
+  }
+  go(0);
+  return {next(){if(idx<data.length-1)go(idx+1);else return false},prev(){if(idx>0)go(idx-1)},go,restart(){go(0)},cur(){return idx},count(){return data.length}};
+}
+
+/* ============ 图2 生命周期 ============ */
+function initLife(){
+  const stage=$('#d-life');
+  const DATA=[
+    {n:'①',t:'实例化',h:'实例化(构造器反射)',d:'调用构造器生成"空壳对象"——属性全是 null。<b>构造器注入在这一站完成</b>,这也是它救不了循环依赖的原因(还没有"壳外之物"可曝光)。',tags:['InstantiationAwareBPP 参与']},
+    {n:'②',t:'属性填充',h:'populateBean 属性注入',d:'@Autowired / @Resource / @Value 在此由 <b>AutowiredAnnotationBeanPostProcessor</b> 解析注入——字段注入能解循环,正因为实例化和填充是分开的两步。',tags:['DI 发生地']},
+    {n:'③',t:'Aware 三连',h:'BeanName / BeanFactory / ApplicationContextAware',d:'容器递"身份证":我叫啥、谁造的我、我住在哪个容器。ApplicationContextAware 的静态 holder 套路(很多 Utils 类拿上下文就靠它)。',tags:['回调']},
+    {n:'④',t:'BPP 前置',h:'postProcessBeforeInitialization',d:'初始化前的通用插座。经典用户:@PropertySource 家族无关,但 ConfigurationClass 后处理器已把定义加工完;很多中间件在这做"注解标记收集"。',tags:['扩展点']},
+    {n:'⑤',t:'@PostConstruct',h:'@PostConstruct',d:'javax 注解,由 CommonAnnotationBPP 调度。<b>三兄弟里最早的一个</b>:注解 → 接口 → 配置,侵入度递增,时机递增。',tags:['JSR-250']},
+    {n:'⑥',t:'afterPropertiesSet',h:'InitializingBean.afterPropertiesSet()',d:'Spring 接口方法,先于自定义 init-method。适合"依赖已齐,做一致性校验"(KafkaTemplate 在这建 producer)。',tags:['接口回调']},
+    {n:'⑦',t:'init-method',h:'initMethod / @Bean(initMethod=)',d:'XML 时代遗产,仍可用。<b>此时对象已完全可用,但还没穿代理马甲</b>——所以 init 里调自己 @Transactional 方法=裸调。',tags:['自定义']},
+    {n:'★',t:'BPP 后置',h:'postProcessAfterInitialization —— 代理诞生!',d:'<b>AbstractAutoProxyCreator(AOP)/ AsyncAnnotationBPP / MappedInterceptor…</b> 排队检查:要不要包代理?要,就换掉返回值。此后外部拿到的一切引用都是它。',tags:['AOP 入场','@Async 入场']},
+    {n:'⑨',t:'服役中',h:'进 L1 单例池',d:'singletonObjects 里躺着,每次 getBean 直接命中;prototype 每请求重走 ①-⑧(且不管销毁)。',tags:['运行期']},
+    {n:'⑩',t:'销毁',h:'@PreDestroy → DisposableBean → destroy-method',d:'容器关闭(优雅停机)时反序回收:先注解、再接口、最后自定义——和出生时镜像对称。',tags:['优雅停机']},
+  ];
+  const sp=stepper(stage,DATA);
+  const g=runGuard();let auto=false;
+  $('#life-next').onclick=()=>{g.next();auto=false;sp.next();};
+  $('#life-prev').onclick=()=>{g.next();auto=false;sp.prev();};
+  $('#life-reset').onclick=()=>{g.next();auto=false;sp.restart();};
+  $('#life-auto').onclick=async()=>{
+    const my=g.next();auto=true;sp.restart();
+    for(let i=0;i<sp.count()-1;i++){await sleep(1300);if(!g.alive(my)||!auto)return;sp.next();}
+  };
+}
+
+/* ============ 图3 三级缓存 ============ */
+function initCycle(){
+  const poolsEl=$('#cyc-pools'),say=$('#cyc-say');
+  const MODES={
+    field:[
+      {L1:[],L2:[],L3:[],cr:['A*'],s:'<b>getBean("A")</b>:L1 没有 → 标记创建中,开始造 A'},
+      {L1:[],L2:[],L3:['A'],cr:['A*'],s:'A 的构造器完成(空壳对象)→ <b>A 的 ObjectFactory 进 L3</b>:要早期引用时才决定给裸对象还是代理'},
+      {L1:[],L2:[],L3:['A'],cr:['A*','B*'],s:'填充 A 字段:需要 B → L1 没有 → 开始造 B(递归)'},
+      {L1:[],L2:[],L3:['A','B'],cr:['A*','B*'],s:'B 构造完成(空壳)→ B 的工厂进 L3'},
+      {L1:[],L2:[],L3:['B'],cr:['A*','B*'],s:'<b>关键一步</b>:填充 B 需要 A → L1、L2 都没有 → <b>执行 L3 里 A 的工厂</b> → 拿到 A 的早期引用(它可能被提前代理化)'},
+      {L1:[],L2:['A'],L3:['B'],cr:['A*','B*'],s:'A 的早期引用从 L3 挪进 L2(同一引用后续复用——L2 存在的意义:保证代理对象唯一)'},
+      {L1:['B'],L2:['A'],L3:[],cr:['A*'],s:'B 用"半成品 A"完成填充和 init → <b>B 进 L1 成品池</b>'},
+      {L1:['B','A'],L2:[],L3:[],s:'A 拿到成品 B 填完 → 若需代理,BPP 后置时发现 L2 已有早期引用 → <b>校验并统一用代理对象入 L1</b> → ✓ 环解开',win:true},
+    ],
+    ctor:[
+      {L1:[],L2:[],L3:[],cr:['A*'],s:'<b>getBean("A")</b>:开始造 A —— 但 A 的构造器参数需要 B!'},
+      {L1:[],L2:[],L3:[],cr:['A*','B*'],s:'必须先有 B 才能 new A → 去造 B → B 的构造器又需要 A'},
+      {L1:[],L2:[],L3:[],cr:['A*','B*'],s:'getBean("A") → 三池全空!A <b>构造没完成,连"空壳"都没有,L3 无从注册</b>',bad:true},
+      {L1:[],L2:[],L3:[],cr:['✗'],s:'💥 <b>BeanCurrentlyInCreationException</b>:当前请求的 Bean 正在创建中——构造器依赖环是逻辑死锁,神仙难救',bad:true},
+    ],
+    lazy:[
+      {L1:[],L2:[],L3:[],cr:['A*'],s:'A 构造参数标了 <b>@Lazy B</b> → Spring 直接塞一个<b>懒查找回调代理</b>当参数,不急着要 B'},
+      {L1:[],L2:[],L3:[],cr:['A','B*'],s:'A 构造完成 ✓ 轮到 B:B 构造需要 A → 这次 A 已是空壳且工厂在 L3 …'},
+      {L1:[],L2:['A'],L3:[],cr:['A','B'],s:'取 A 早期引用进 L2 → B 构造完成 → 双双入 L1 ✓'},
+      {L1:['B','A'],L2:[],L3:[],s:'@Lazy 的本质:<b>把"必须现在拿到"变成"用到再说"给构造器打洞</b>;真引用在 B 里首次方法调用时才完成解析',win:true},
+    ],
+  };
+  let mode='field',idx=0;
+  const poolsEl0=poolsEl;
+  const rows={};
+  ['L1','L2','L3','cr'].forEach((k,label)=>{
+    const row=h('div',{class:'cyc-row'});
+    const lab={L1:'一级 singletonObjects(成品)',L2:'二级 earlySingletonObjects(早期引用)',L3:'三级 singletonFactories(工厂)',cr:'正在创建中'}[k];
+    const slot=h('div',{class:'cyc-slot',id:'cyc-'+k});
+    row.append(h('label',null,lab),slot);poolsEl0.append(row);rows[k]=slot;
+  });
+  function chip(n){
+    const cls=n.replace(/[*✗]/g,'');
+    const c=h('span',{class:'cyc-chip '+cls.toLowerCase()+(n.includes('✗')?' prox':'')},n==='✗'?'':n);
+    if(n==='A')c.textContent='A@9f2e1';
+    if(n==='B')c.textContent='B@4d1a7';
+    return c;
+  }
+  function render(){
+    const st=MODES[mode][Math.min(idx,MODES[mode].length-1)];
+    rows.L1.innerHTML='';rows.L2.innerHTML='';rows.L3.innerHTML='';rows.cr.innerHTML='';
+    st.L1.forEach(n=>rows.L1.append(chip(n)));
+    st.L2.forEach(n=>{const c=chip(n);c.classList.add('prox');rows.L2.append(c);});
+    st.L3.forEach(n=>{const c=chip(n);c.classList.add('ghost');c.textContent='()→'+n;rows.L3.append(c);});
+    st.cr.forEach(n=>rows.cr.append(chip(n)));
+    say.className='say'+(st.bad?' bad':'');
+    say.innerHTML=st.s;
+  }
+  function reset(){idx=0;render();}
+  $('#cyc-next').onclick=()=>{const arr=MODES[mode];if(idx<arr.length-1){idx++;render();}};
+  $('#cyc-prev').onclick=()=>{if(idx>0){idx--;render();}};
+  $('#cyc-auto').onclick=async()=>{
+    const my=g.next();reset();
+    for(let i=0;i<MODES[mode].length-1;i++){await sleep(1400);if(!g.alive(my)||MODES[mode][idx]&&(MODES[mode][idx].bad))return;$('#cyc-next').click();}
+  };
+  const g=runGuard();
+  $$('#d-cycle ~ .dctrl [data-m], .dctrl [data-m]').forEach(b=>{
+    if(!b.dataset.m)return;
+    b.onclick=()=>{mode=b.dataset.m;$$('.dctrl [data-m]').forEach(x=>x.classList.toggle('on',x===b));$$('#d-cycle ~ .dctrl [data-m]').forEach(x=>x.classList.toggle('on',x===b));reset();};
+  });
+  render();
+}
+
+/* ============ 图4 AOP ============ */
+function initAop(){
+  const stackEl=$('#ao-stack'),say=$('#ao-say');
+  const g=runGuard();
+  let jdk=true;
+  const SEQ_OK=[
+    {f:'caller',cls:'target',t:'caller.orderService.create(...)',s:'调用方持有的引用 = 代理对象(不是 OrderService 本尊!)'},
+    {f:'proxy',cls:'proxy',t:'$Proxy / CGLIB 子类 → ReflectiveMethodInvocation.proceed()',s:'代理收到调用,启动拦截器链'},
+    {f:'aspect',cls:'aspect',t:'① TransactionInterceptor: begin → 绑定连接(ThreadLocal)',s:'环绕通知前半:开事务'},
+    {f:'aspect',cls:'aspect',t:'② LoggingAspect: log "enter create"',s:'环绕通知前半:打日志(链上还有鉴权、埋点继续排)'},
+    {f:'target',cls:'target',t:'③ OrderService.create() —— 真正的业务代码',s:'链走到头,反射调目标方法'},
+    {f:'aspect',cls:'aspect',t:'② LoggingAspect: log "leave ok"',s:'出栈:后半通知(around 的 joinPoint.proceed() 之后)'},
+    {f:'aspect',cls:'aspect',t:'① TransactionInterceptor: commit ✓',s:'出栈:提交/异常则回滚'},
+    {f:'caller',cls:'target',t:'return → caller',s:'一切透明,调用方以为自己直接调的 OrderService'},
+  ];
+  const SEQ_EX=SEQ_OK.map((s,i)=>i===6?{...s,t:'① TransactionInterceptor: catch! rollback ✗',cls:'aspect'}:s);
+  async function play(seq){
+    const my=g.next();stackEl.innerHTML='';
+    for(const f of seq){
+      if(!g.alive(my))return;
+      $$('.ao-frame',stackEl).forEach(e=>e.classList.remove('hot'));
+      const el=h('div',{class:'ao-frame '+f.cls,style:'margin-left:'+(f.f==='caller'?0:f.f==='proxy'?14:f.f==='aspect'?28:42)+'px'},f.t);
+      stackEl.append(el);el.classList.add('hot');
+      say.innerHTML=f.s;
+      await sleep(1100);
+    }
+    $$('.ao-frame',stackEl).forEach(e=>e.classList.remove('hot'));
+    say.innerHTML=jdk?'<b>JDK 代理</b>靠实现同一批接口冒充类型;方法最终反射调 target。切右侧卡片看 CGLIB 版差异。':'<b>CGLIB</b> 靠生成子类覆写方法;final 方法与类是它的盲区(覆写不了=拦不住)。';
+  }
+  $('#ao-play').onclick=()=>play(SEQ_OK);
+  $('#ao-ex').onclick=()=>{jdk&&0;play(SEQ_EX);};
+  $('#ao-clear').onclick=()=>{g.next();stackEl.innerHTML='';say.innerHTML='点播放:方法栈一帧帧压下去。';};
+  const jdkCard=$('#ao-jdk'),cgCard=$('#ao-cglib');
+  $('#ao-switch').onclick=()=>{jdk=!jdk;jdkCard.classList.toggle('on',jdk);cgCard.classList.toggle('on',!jdk);
+    say.innerHTML=(jdk?'<b>JDK 动态代理</b>:目标类必须有接口;代理 instanceof 接口 ✓,代理 instanceof 目标类 ✗(强转 ClassCastException 名场面)':'<b>CGLIB</b>:生成目标类子类(ASM 字节码);无接口也能用;Spring Boot 默认(proxyTargetClass=true)');};
+}
+
+/* ============ 图5 自调用 ============ */
+function initPit(){
+  const dot=$('#pit-dot'),side=$('#pit-side'),vd=$('#pit-vd');
+  const g=runGuard();
+  const PITS=[
+    ['this.b() 自调用','代理只管"从外面进来"的调用;this 是真身,通知链不存在'],
+    ['new OrderService()','容器根本不在场,裸对象无马甲'],
+    ['private / static 方法','子类覆写不到(跨类不可见),拦截器无处织入'],
+    ['final 方法 / final 类','CGLIB 无法覆写 final;直接代理失败或静默穿透'],
+    ['异常被 catch 吞','代理在方法外收不到异常 → 不触发回滚(第 9 讲开关台)'],
+    ['@Transactional 在非 Bean 类','扫描没进来,类上没注解=没代理'],
+    ['自研"同类多构造器"','走错构造器,依赖悄悄没注入'],
+  ];
+  function hl(id,cls){const el=$('#'+id);if(el){el.classList.remove('run-hl','bad-hl');if(cls)el.classList.add(cls);}}
+  function clearHl(){['pl0','pl1','pl2','pl3','pl4','pl5','pl6'].forEach(i=>hl(i));}
+  async function selfCall(){
+    const my=g.next();clearHl();
+    vd.className='pit-verdict say';vd.innerHTML='<b>剧本:外部调用 a()</b> —— 外部拿到的是<b>代理</b>,先进马甲 → 事务开启,一切正常(到 a 为止)…';
+    dot.style.left='8px';dot.style.top='14px';
+    await sleep(500);if(!g.alive(my))return;
+    hl('pl2','run-hl');
+    await sleep(700);if(!g.alive(my))return;
+    vd.innerHTML='a() 里 <code class="k">this.b()</code> —— this 指向<b style="color:var(--warn)">真身对象</b>,不是马甲!';
+    dot.classList.add('bad');
+    dot.style.left='170px';dot.style.top='104px';
+    hl('pl3','bad-hl');
+    await sleep(800);if(!g.alive(my))return;
+    hl('pl5','bad-hl');
+    dot.style.left='170px';dot.style.top='140px';
+    vd.className='pit-verdict say bad';
+    vd.innerHTML='💥 b() 里 <code class="k">insertLog()</code> <b>没走代理</b>:@Transactional 形同虚设。b 单独提交——外层回滚时它安然幸存,"脏数据"就是这么来的。';
+    dot.classList.remove('bad');
+  }
+  async function outsideCall(){
+    const my=g.next();clearHl();
+    vd.className='pit-verdict say';vd.innerHTML='<b>对照:另一个 Bean 调 b()</b> —— 先穿过<b>马甲</b>(虚线框):事务通知 begin…';
+    dot.style.left='8px';dot.style.top='14px';
+    await sleep(600);if(!g.alive(my))return;
+    hl('pl5','run-hl');
+    dot.style.left='170px';dot.style.top='140px';
+    vd.className='pit-verdict say good';
+    vd.innerHTML='✓ b() 的 @Transactional 正常生效——<b>同一个方法,两种调用路径,两种命运</b>。';
+  }
+  side.append(h('button',{class:'btn solid',onclick:selfCall},'▶ 剧本一:外部调 a() → 里应外合翻车'),
+              h('button',{class:'btn',onclick:outsideCall},'▶ 对照剧本:外部直接调 b()'),
+              h('button',{class:'btn',onclick:()=>{g.next();clearHl();dot.style.left='-30px';dot.classList.remove('bad');vd.className='pit-verdict say';vd.innerHTML='点右侧剧本开演。';}},'复位'));
+  PITS.forEach(([t,d])=>{
+    const b=h('button',{class:'btn pit-chip'},'⚠ '+t);
+    b.onclick=()=>{vd.className='pit-verdict say bad';vd.innerHTML='<b>'+t+'</b> —— '+d;};
+    side.append(b);
+  });
+  vd.innerHTML='点右侧剧本开演。';
+}
+
+/* ============ 图6 注解翻牌墙 ============ */
+function initAnno(){
+  const stage=$('#d-anno');
+  const CARDS=[
+    ['@Component / @Service…','组件扫描','ClassPathScanningCandidateComponentProvider','启动期扫描候选类 → 注册为 BeanDefinition。四个派生注解语义化,机制同一套。'],
+    ['@Autowired','按类型装配','AutowiredAnnotationBeanPostProcessor','属性填充阶段反射注入;<b>构造器注入优先</b>(final 字段+好测试)。找不到/多个候选 → 加 @Qualifier 或 @Primary。'],
+    ['@Bean','方法级注册','ConfigurationClassPostProcessor 解析','@Configuration 类里方法返回啥就注册啥;同 Config 内互相调用被<b>CGLIB 增强拦截</b>保证单例(普通类语义≠配置类语义!)。'],
+    ['@Value','单值绑定','PropertySourcesPlaceholderConfigurer(BFPP) + 注入 BPP','${expr:default} 的占位符在 BFPP 阶段替换进定义;SpEL #{...} 在实例化后求值。'],
+    ['@Transactional','代理+通知','AnnotationTransactionAttributeSource + TransactionInterceptor','本质:给 Bean 织入"begin/commit/rollback"环绕通知——BPP 后置换马甲。<b>代理盲区全是失效场景</b>(第 5、9 讲)。'],
+    ['@Async','线程池转发','AsyncAnnotationBeanPostProcessor','标注方法的代理返回 Future;裸 @Async 默认 SimpleAsyncTaskExecutor(8.0 起才用线程池),<b>生产必自配 Executor</b>。'],
+    ['@PostConstruct','初始化钩子','CommonAnnotationBeanPostProcessor','三个初始化时机里最早的;此时<b>还没有代理</b>,别在里头调自己的事务方法。'],
+    ['@Configuration','配置类增强','ConfigurationClassPostProcessor(BDRPP)','把"全模式"配置类用 CGLIB 包一层,@Bean 方法互调被拦到单例池;proxyBeanMethods=false 省这份开销=Boot 内部常配。'],
+    ['@EnableXxx','功能开关','@Import 的 Registrar/配置类','"开关注解"套路:一个 @Enable 拉起整套注册逻辑(如 @EnableAsync 就是 Import 了 AsyncConfigurationSelector)。'],
+    ['@Conditional','装配条件','Condition 评估引擎','按类路径/Bean/配置决定注册与否——Boot 自动配置的命根子(第四册专讲)。'],
+    ['@Import','往容器塞料','ConfigurationClassParser','三种姿势:导入配置类 / ImportSelector(动态给名单)/ ImportBeanDefinitionRegistrar(手写注册)。'],
+    ['@MapperScan','接口变 Bean','ClassPathScanning + MapperFactoryBean','扫描接口 → 每个注册成 FactoryBean;getBean("userMapper") 拿到的是动态代理——<b>MyBatis 没有"实现类"!</b>'],
+  ];
+  CARDS.forEach(([a,b,c,d])=>{
+    const f=h('div',{class:'flip'});
+    const inner=h('div',{class:'flip-inner'});
+    inner.append(
+      h('div',{class:'face f'},h('b',null,a),h('div',{style:'margin-top:8px;color:var(--ink2)'},b),h('div',{style:'margin-top:6px;font-size:11px;color:var(--gray)'},'点击翻面 ▸')),
+      h('div',{class:'face b'},h('em',null,'处理者:'+c),d)
+    );
+    f.append(inner);
+    f.onclick=()=>f.classList.toggle('on');
+    stage.append(f);
+  });
+  const all=h('button',{class:'btn',style:'margin:0 14px 12px'},'全部翻开/翻回');
+  all.onclick=()=>{const on=$$('.flip',stage).some(x=>!x.classList.contains('on'));$$('.flip',stage).forEach(x=>x.classList.toggle('on',on));};
+  stage.parentElement.append(all);
+}
+
+/* ============ 图7 线程绑定 ============ */
+function initTxb(){
+  const framesEl=$('#txb-frames'),connsEl=$('#txb-conns'),tl=$('#txb-tl'),say=$('#txb-say');
+  const g=runGuard();
+  let borrow=0,use=0;
+  const FRAMES=[['Controller.list()',''],['@Tx ServiceA.page()','tx'],['ServiceB.count()',''],['Mapper.select()','']];
+  function setup(){
+    framesEl.innerHTML='';
+    FRAMES.forEach(([t,k],i)=>{const el=h('div',{class:'txb-fr '+(k||''),id:'txb-f'+i},t);framesEl.append(el);});
+    connsEl.innerHTML='';
+    ['conn1','conn2','conn3'].forEach((c,i)=>{const el=h('span',{class:'conn'+(i?' out':''),id:'txb-'+c},c);connsEl.append(el);});
+    borrow=0;use=0;$('#txb-borrow').textContent=0;$('#txb-use').textContent=0;
+    tl.innerHTML='<b>TransactionSynchronizationManager</b>(ThreadLocal)<br>{ }';
+  }
+  async function play(withTx){
+    const my=g.next();setup();
+    const F=$$('.txb-fr',framesEl);
+    say.innerHTML=withTx?'入口 @Transactional → 开事务':'没有事务:每句 SQL 各自为政';
+    for(let i=0;i<F.length;i++){
+      if(!g.alive(my))return;
+      F.forEach((e,j)=>e.classList.toggle('act',j===i));
+      if(withTx&&i===1){
+        await sleep(400);if(!g.alive(my))return;
+        borrow++;$('#txb-borrow').textContent=borrow;
+        $('#txb-conn1').classList.add('busy');
+        tl.innerHTML='<b>TransactionSynchronizationManager</b> {ds → <span class="kv">conn1(活跃事务)</span>}';
+        say.innerHTML='借 <b>conn1</b> 并<b>绑到线程</b>——后续所有层拿连接先查这本账';
+        await sleep(600);
+      }
+      if(i>=2||!withTx){
+        const sqls=withTx?[3]:[2,3];
+        if(withTx&&i===3){
+          use++;$('#txb-use').textContent=use;
+          say.innerHTML='Mapper 用 conn1(线程账本命中 ✓),同一事务';
+          $('#txb-conn1').classList.add('busy');await sleep(500);
+        }
+        if(!withTx){
+          use++;$('#txb-use').textContent=use;borrow++;$('#txb-borrow').textContent=borrow;
+          const cn=$('#txb-conn'+(borrow%2?2:1));
+          cn.classList.remove('out');cn.classList.add('busy');
+          say.innerHTML='无账本 → 新借 '+cn.textContent+',自动提交,用完即还';
+          await sleep(500);
+          cn.classList.remove('busy');cn.classList.add('out');
+        }
+      }
+      await sleep(420);
+    }
+    if(!g.alive(my))return;
+    if(withTx){
+      await sleep(200);
+      tl.innerHTML='<b>TransactionSynchronizationManager</b> { }';
+      $('#txb-conn1').classList.remove('busy');
+      say.innerHTML='commit!归还 conn1 → 3 句 SQL 共用 1 借 1 还';
+    }else{
+      say.innerHTML='<b style="color:var(--warn)">3 借 3 还</b>:每句各拿各的连接,没有"同一事务"可言——性能与原子性双输';
+    }
+  }
+  $('#txb-notx').onclick=()=>play(false);
+  $('#txb-tx').onclick=()=>play(true);
+  setup();
+}
+
+/* ============ 图8 传播行为 ============ */
+function initProp(){
+  const O=$('#pr-o'),I=$('#pr-i'),say=$('#pr-say');
+  let p='REQUIRED',g=runGuard();
+  function bar(parent,left,w,cls,label){const b=h('span',{class:'pr-bar '+cls,style:'left:'+left+'%'},label);parent.append(b);requestAnimationFrame(()=>b.style.width=w+'%');return b;}
+  function clear(){O.innerHTML='';I.innerHTML='';}
+  function play(done){
+    const my=g.next();clear();
+    const outer=bar(O,2,88,'g','T1 begin');
+    say.innerHTML='outer @Transactional 开启 → 借 conn1 绑线程';
+    setTimeout(()=>{
+      if(!g.alive(my))return;
+      const inner=bar(I,22,42,'g','T2');
+      if(p==='REQUIRED'){say.innerHTML='REQUIRED:inner <b>加入 T1</b>——同一 conn1,一条命';}
+      if(p==='REQUIRES_NEW'){outer.classList.remove('g');outer.classList.add('gr');outer.textContent='T1 ⏸挂起';inner.classList.remove('g');inner.style.background='var(--amber)';inner.textContent='T2 独立事务';say.innerHTML='REQUIRES_NEW:conn1 解绑暂存,<b>借 conn2 开新事务</b>;inner 完事再换回来';}
+      if(p==='NOT_SUPPORTED'){outer.classList.remove('g');outer.classList.add('gr');outer.textContent='T1 ⏸挂起';inner.style.background='var(--gray)';inner.textContent='无事务';say.innerHTML='NOT_SUPPORTED:挂起 T1 清账本,inner 无事务裸跑';}
+      if(p==='NESTED'){const m=h('span',{class:'pr-mark',style:'left:24%;opacity:1'},'▮savepoint');I.append(m);say.innerHTML='NESTED:同一 conn1,先打 <b>savepoint</b>;inner 回滚只退到锚点';}
+    },700);
+    setTimeout(()=>{
+      if(!g.alive(my))return;
+      outer.classList.add('cmt');
+      if(outer.classList.contains('gr')){outer.classList.remove('gr');outer.classList.add('g');outer.textContent='T1 继续';}
+      if(p==='REQUIRES_NEW'||p==='NOT_SUPPORTED'){say.innerHTML='inner 收场,T1 恢复活跃…最后 commit ✓';}
+      say.innerHTML+=(p==='REQUIRED'?'一路绿灯,都提交':'')+' 现在点 💥,在 inner 末尾抛一个 RuntimeException 给 outer 捕获';
+      if(done)done();
+    },1600);
+  }
+  function boom(){
+    const my=g.next();
+    const barsI=$$('.pr-bar',I),barsO=$$('.pr-bar',O);
+    if(!barsI.length){play(()=>boom());return;}
+    barsI.forEach(b=>{b.classList.remove('g');b.classList.add('rd');});
+    setTimeout(()=>{
+      if(!g.alive(my))return;
+      if(p==='REQUIRED'){
+        barsO.forEach(b=>{b.classList.remove('g');b.classList.add('rd');b.textContent='T1 rollback!'});
+        say.innerHTML='<b style="color:var(--warn)">经典血案</b>:inner 异常虽被 catch,但共享事务已标 <b>rollback-only</b>;outer 提交时炸 <code class="k">UnexpectedRollbackException</code>——REQUIRED 一条命,谁作谁背锅';
+      }else if(p==='REQUIRES_NEW'){
+        say.innerHTML='✓ inner 独立回滚(它的数据没了);outer 完好,正常 commit——"记账失败别拖垮主流程"的标准姿势';
+      }else if(p==='NESTED'){
+        say.innerHTML='✓ inner 回滚到 savepoint(锚点后那截作废),outer 继续 commit——比 REQUIRES_NEW 省一条连接,粒度到"段"';
+      }else{
+        say.innerHTML='inner 本就没在事务里,回滚无从谈起(它的数据早就各自提交了)——NOT_SUPPORTED 适合"绝对不想被事务连坐"';
+      }
+    },600);
+  }
+  $('#pr-play').onclick=()=>play();
+  $('#pr-boom').onclick=boom;
+  $$('#d-prop ~ .dctrl [data-p], .dctrl [data-p]').forEach(b=>{
+    if(!b.dataset.p)return;
+    b.onclick=()=>{p=b.dataset.p;$$('.dctrl [data-p]').forEach(x=>x.classList.toggle('on',x===b));play();};
+  });
+  play();
+}
+
+/* ============ 图9 事务失效开关台 ============ */
+function initTxfail(){
+  const S={rt:true,catch:false,rfe:false,self:false,priv:false,fresh:false};
+  function compute(){
+    const proxied=!(S.self||S.priv||S.fresh);
+    const seen=!S.catch;
+    let final,say;
+    if(!proxied){
+      final='notx';say='<b>马甲没穿上</b>——@Transactional 的语义根本不存在:方法自己玩自己的,SQL 各自 autocommit,谈不上回滚。'+(S.self?'(自调用走 this)':'')+(S.priv?'(private 代理不到)':'')+(S.fresh?'(new 出来的不在容器)':'');
+    }else if(!S.rt&&!seen){final='commit';say='没抛异常/异常被吞,一切正常提交。';}
+    else if(!seen){final='commit';say='<b>catch 吞了异常</b>:代理在方法外只看到"正常返回" → commit。数据留在"错了一半"的现场——最阴的一种,报错都没有。';}
+    else if(S.rt||S.rfe){final='rollback';say='异常穿透到代理,且够格(运行时异常 / rollbackFor 已涵盖)→ <b>rollback ✓</b> 干净收场。';}
+    else{final='commit';say='<b>checked 异常默认不回滚</b>!(Runtime/Error 才滚)——补救:rollbackFor = Exception.class。';}
+    return {proxied,seen,final,say};
+  }
+  function render(){
+    const r=compute();
+    const l1=$('#tf-l1'),l2=$('#tf-l2'),f=$('#tf-final');
+    l1.className='tf-lamp '+(r.proxied?'good':'bad');
+    $('#tf-l1t').innerHTML='代理穿上马甲?<b>'+(r.proxied?'是':'否')+'</b>';
+    l2.className='tf-lamp '+((!r.proxied)?'':(r.seen?'good':'bad'));
+    $('#tf-l2t').innerHTML='异常传到代理?<b>'+(!r.proxied?'—':(r.seen?'是':'被吞了'))+'</b>';
+    f.className='tf-final '+r.final;
+    f.textContent=r.final==='commit'?'最终:提 交':r.final==='rollback'?'最终:回 滚':'最终:根本没事务';
+    $('#tf-say').innerHTML=r.say;
+  }
+  $$('.tf-sw .tgl').forEach(b=>{
+    b.onclick=()=>{const k=b.dataset.k;S[k]=!S[k];b.classList.toggle('on',S[k]);render();};
+  });
+  render();
+}
+
+/* ============ 图10 扩展点 ============ */
+function initExt(){
+  const stage=$('#d-ext');
+  const DATA=[
+    {n:'①',t:'BeanDefinitionRegistryPostProcessor',h:'还能注册新图纸',d:'容器启动最早期:Bean 定义还没齐,它有权<b>继续往里塞定义</b>。ConfigurationClassPostProcessor(解析 @Configuration/@Import/@Bean)就是本家族的头牌。',tags:['MapperScannerConfigurer 给每个 Mapper 接口发"出生证"','MyBatis @MapperScan 的入口']},
+    {n:'②',t:'BeanFactoryPostProcessor',h:'改图纸,不碰成品',d:'定义齐了、Bean 还没造:改属性值、换 scope、塞占位符。PropertySourcesPlaceholderConfigurer 在这把 ${...} 替换进定义。',tags:['只动定义,动不了实例']},
+    {n:'③',t:'BeanPostProcessor.before',h:'出厂前·粗加工',d:'每个 Bean 实例化后、init 前。GlobalProperty 设置、注解标记收集…(但注入发生在 populate 阶段,由专门的 BPP 干) ',tags:['逐个 Bean']},
+    {n:'④',t:'Aware 回调',h:'发身份证',d:'BeanName / BeanFactory / ApplicationContext / EmbeddedValueResolver…容器把"身世信息"塞给主动伸手要的 Bean。',tags:['ApplicationContextHolder 套路']},
+    {n:'⑤',t:'BeanPostProcessor.after',h:'出厂后·精装',d:'<b>代理诞生站</b>:AbstractAutoProxyCreator(@Transactional/@Async)、@Scheduled 注册、校验 Aware 结果…都在这最后一道工序给 Bean"换皮"。',tags:['AOP/异步/定时任务']},
+    {n:'⑥',t:'事件广播',h:'容器会说话',d:'ContextRefreshedEvent(启动完成,依赖全就绪)、ContextClosedEvent(优雅停机)、ApplicationReadyEvent(Boot 版就绪)。@EventListener 各取所需。',tags:['"启动完成后预加载"的标准姿势']},
+  ];
+  const sp=stepper(stage,DATA);
+  $$('#d-ext .stp-item').forEach((it,i)=>{it.onclick=()=>sp.go(i);});
+}
+
+/* ============ 图11 事件 ============ */
+function initEvent(){
+  const stage=$('#d-event');
+  const N={
+    pub:{x:'50%',y:'16%',cls:'pub',t:'publisher',d:'publishEvent(OrderCreated)'},
+    l1:{x:'8%',y:'42%',cls:'main-t',t:'积分 @EventListener',d:'@Order(1) 同步'},
+    l2:{x:'36%',y:'42%',cls:'pool-t',t:'风控 @Async',d:'task-exec-N'},
+    l3:{x:'64%',y:'42%',cls:'main-t',t:'日志 @EventListener',d:'@Order(2) 同步'},
+    tx:{x:'50%',y:'70%',cls:'pub',t:'业务事务',d:'commit / rollback'},
+    l4:{x:'82%',y:'4%',cls:'main-t',t:'短信 @TransactionalEventListener',d:'AFTER_COMMIT'},
+  };
+  const els={};
+  Object.entries(N).forEach(([k,v])=>{
+    const el=h('div',{class:'ev-node '+v.cls,style:'left:'+v.x+';top:'+v.y+';transform:translate(-50%,-50%)'},h('b',null,v.t),h('small',null,v.d));
+    stage.append(el);els[k]=el;
+  });
+  const g=runGuard();
+  function flash(el,cls,ms){el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),ms||900);}
+  async function play(commit){
+    const my=g.next();
+    const seq=[
+      ()=>{flash(els.pub,'hot');return'发布 OrderCreated(此刻仍在业务事务内)';},
+      ()=>{flash(els.l1,'hot');return'同步监听 1:积分 @EventListener —— 在 main 线程立刻执行';},
+      ()=>{flash(els.l2,'hotp');return'异步监听:风控 @Async —— 扔进 task-exec 线程池,main 不等';},
+      ()=>{flash(els.l3,'hot');return'同步监听 2:日志 @Order(2) —— 按序执行';},
+      ()=>{flash(els.tx,commit?'hot':'hot');return commit?'业务事务 commit ✓':'💥 业务事务 ROLLBACK ✗';},
+      ()=>{if(commit){flash(els.l4,'txhot',1400);return'@TransactionalEventListener(AFTER_COMMIT):此刻醒来发短信 ✓';}return'短信监听者:整场没被叫醒 —— 回滚了就不该发';},
+    ];
+    for(const s of seq){
+      if(!g.alive(my))return;
+      sayLine(s());
+      await sleep(1200);
+    }
+    if(!g.alive(my))return;
+    sayLine(commit?'<b>同步按序、异步分池、副作用看提交</b>——一个事务边界内把"该现在做的"和"成了才做的"分得干干净净。':'监听者里 @EventListener 已经跑过了(同步不等提交!)——对"必须成事之后才做"的逻辑,<b>别用裸 @EventListener 赌运气</b>。');
+  }
+  let sayEl=$('#ev-say');
+  if(!sayEl){sayEl=h('div',{class:'say',id:'ev-say',style:'position:absolute;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line)'});stage.append(sayEl);stage.style.height='360px';}
+  function sayLine(t){sayEl.innerHTML=t;}
+  $('#ev-play').onclick=()=>play(true);
+  $('#ev-rollback').onclick=()=>play(false);
+}
+
+/* ============ 图12 MVC ============ */
+function initMvc(){
+  const stage=$('#d-mvc');
+  const DATA=[
+    {n:'①',t:'HandlerMapping 路由匹配',h:'按 URL+Method 找处理方法',d:'RequestMappingHandlerMapping 表里命中 <code class="k">GET /order/{id}</code> → 返回 HandlerExecutionChain = Controller 方法 + <b>拦截器链</b>。'},
+    {n:'②',t:'HandlerAdapter',h:'"怎么调"的翻译官',h2:'',d:'Servlet 只会调 Servlet,Controller 是普通对象——Adapter 负责反射调用、参数适配(解耦调度与调用)。'},
+    {n:'③',t:'拦截器 preHandle',h:'按序放行/否决',d:'登录校验、traceId 注入的常用落点。<b>任一返回 false → 直接散场</b>(postHandle 也不跑,afterCompletion 倒序清理)。'},
+    {n:'④',t:'参数解析器',h:'HTTP 世界 → Java 入参',d:'@PathVariable 7→int、@RequestBody 走 HttpMessageConverter 反序列化 JSON、@RequestParam…一屋子 Resolver 各领一种注解。'},
+    {n:'⑤',t:'调用 Controller',h:'你的方法终于跑了',d:'handlerMethod.invoke(request, response) —— 就在这一刻,它调的 Service 可能又是代理(第 4 讲的马甲在下一层等你)。'},
+    {n:'⑥',t:'返回值处理',h:'Java → HTTP body',d:'@ResponseBody → RequestResponseBodyMethodProcessor → MappingJackson2HttpMessageConverter 写 JSON;返回 String 视图名则走 ViewResolver。'},
+    {n:'⑦',t:'postHandle',h:'视图还没渲染,还能改 ModelAndView',d:'拦截器逆向二次过问;REST 场景里存在感很低(没有 ModelAndView 可改)。'},
+    {n:'⑧',t:'afterCompletion',h:'请求谢幕,倒序打扫',d:'<b>无论是否异常都会执行</b>;拦截器自己埋的 ThreadLocal(登录态、traceId)必须在这 remove——否则线程池复用,身份串号。'},
+    {n:'⑨',t:'响应 200',h:'回浏览器',d:'连接归还给容器线程池。'},
+  ];
+  let deny=false;
+  const sp=stepper(stage,DATA,{onChange:(i)=>{}});
+  const g=runGuard();
+  async function run(){
+    const my=g.next();
+    for(let i=0;i<DATA.length;i++){
+      if(!g.alive(my))return;
+      sp.go(i);
+      if(deny&&i===2){
+        $$('.stp-item',stage)[2].style.borderColor='var(--warn)';
+        await sleep(900);if(!g.alive(my))return;
+        sp.go(7);
+        $$('.stp-card',stage)[0].innerHTML+='<br><b style="color:var(--warn)">✋ preHandle=false:④-⑥ 全部跳过,但 ⑧ afterCompletion 照跑(清理是兜底)——响应 401</b>';
+        return;
+      }
+      await sleep(1100);
+    }
+    if(!g.alive(my))return;
+    say('全部走完 → 200 {"id":7,...}');
+  }
+  function say(t){const c=$('.stp-card',stage);if(c)c.innerHTML='<b>流水线广播</b><br>'+t;}
+  $('#mvc-play').onclick=()=>{deny=false;run();};
+  $('#mvc-deny').onclick=()=>{deny=true;run();};
+  $('#mvc-auto').onclick=()=>{deny=false;run();};
+}
+
+/* ============ 附录 ============ */
+function initCards(){
+  const grid=$('#card-grid');
+  const data=[
+    ['IoC 解决了什么?','创建权/装配权/生命周期管理上交容器:解耦调用与实现、单例统一管、横切能力(代理/回调)才有插手点。','ch-ioc'],
+    ['BeanFactory vs ApplicationContext?','地基 vs 精装房:事件、资源、环境、国际化、预实例化单例。实际都用后者。','ch-ioc'],
+    ['三级缓存分别是?','L1 成品 / L2 早期引用 / L3 ObjectFactory。L3 存在的理由:把"要不要提前代理"的决定推迟到真有人要早期引用时。','ch-cycle'],
+    ['构造器循环依赖为什么无解?','A 构造没完成就没有任何"引用"可曝光——解法 @Lazy 占位或拆环;Boot 2.6 默认直接禁循环依赖。','ch-cycle'],
+    ['@Transactional 失效场景?','非 public/final/static · 自调用(this) · 非 Bean(new 的) · 异常被吞 · checked 异常默认不滚 · 数据源没配事务管理器。','ch-txfail'],
+    ['REQUIRED 下 catch 了异常为什么还炸?','共享事务已被标记 rollback-only;outer commit 时抛 UnexpectedRollbackException——要隔离换 REQUIRES_NEW。','ch-prop'],
+    ['REQUIRES_NEW 和 NESTED?','前者换连接独立生死(占两条连接,挂起外层);后者同连接 savepoint,回滚到锚点外层还能活。','ch-prop'],
+    ['JDK 代理和 CGLIB?','有接口→JDK(接口实现,强转目标类炸);无接口或 proxyTargetClass=true→CGLIB(子类覆写,final 拦不住)。Boot 默认 CGLIB。','ch-aop'],
+    ['AOP 和 Filter/Interceptor 层次?','Filter(Servlet 容器) → Interceptor(MVC) → AOP(Bean 代理)。由外到内:请求 → 控制器 → 方法。','ch-mvc'],
+    ['@PostConstruct 时机?','属性注入后、InitializingBean/init-method 之前;此时还没代理——init 里自调事务方法=裸调。','ch-life'],
+    ['Spring 事件是异步的吗?','默认同步同线程。要 @EnableAsync+@Async;"事务提交后才做"用 @TransactionalEventListener(AFTER_COMMIT)。进程内、不持久、别当 MQ。','ch-event'],
+    ['@MapperScan 为什么没有实现类?','扫描接口注册 MapperFactoryBean,getObject() 返回 JDK 动态代理(SQL 会话代理)。FactoryBean 的活教材。','ch-ext'],
+  ];
+  data.forEach(([q,a,id])=>{grid.append(h('div',{class:'card'},h('b',null,q),a+' ',h('a',{href:'#'+id},'▸ 回看')));});
+}
+
+/* ============ 装配 ============ */
+function initSpy(){
+  const links=$$('.toc a');
+  const secs=links.map(a=>$(a.getAttribute('href'))).filter(Boolean);
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-18% 0px -72% 0px'});
+  secs.forEach(s=>io.observe(s));
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  safe('cli',initCLI);
+  safe('ioc',initIoc);
+  safe('life',initLife);
+  safe('cycle',initCycle);
+  safe('aop',initAop);
+  safe('pit',initPit);
+  safe('anno',initAnno);
+  safe('txb',initTxb);
+  safe('prop',initProp);
+  safe('txfail',initTxfail);
+  safe('ext',initExt);
+  safe('event',initEvent);
+  safe('mvc',initMvc);
+  safe('cards',initCards);
+  initSpy();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/redis", "destination": "/redis-illustrated.html" },
+    { "source": "/mysql", "destination": "/mysql-illustrated.html" },
+    { "source": "/spring", "destination": "/spring-illustrated.html" },
+    { "source": "/boot", "destination": "/spring-boot-illustrated.html" },
+    { "source": "/arch", "destination": "/architecture-illustrated.html" },
+    { "source": "/agent", "destination": "/ai-agent-illustrated.html" }
+  ]
+}

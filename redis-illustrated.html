@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redis 图解讲义 · 会动的缓存课</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ============ 令牌 ============ */
+:root{
+  --paper:#F5F6F2; --card:#FFFFFF; --stage:#FAFBF7;
+  --ink:#1E232B; --ink2:#59616E; --line:#DDE0D8;
+  --red:#CE3B24; --red-bg:#FBEFEC; --red-line:#EAC0B6;
+  --teal:#0E7C6B; --teal-bg:#E8F4F1;
+  --blue:#2D5FA6; --blue-bg:#EBF0F8;
+  --amber:#A9750A; --amber-bg:#FAF2DE;
+  --gray:#7A828C;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --serif:"Noto Serif SC","Source Han Serif SC","STZhongsong","SimSun",serif;
+  --sans:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+  --kai:"KaiTi","STKaiti","Kaiti SC",var(--serif);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans); color:var(--ink); background:var(--paper);
+  font-size:16px; line-height:1.85; -webkit-font-smoothing:antialiased;
+}
+/* 讲义格纸底纹 */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(30,35,43,.04) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(30,35,43,.04) 1px,transparent 1px);
+  background-size:28px 28px;}
+::selection{background:rgba(206,59,36,.18)}
+a{color:var(--blue);text-decoration:none}
+b{font-weight:700}
+
+/* ============ 版式 ============ */
+.wrap{display:grid;grid-template-columns:224px minmax(0,832px);gap:52px;max-width:1180px;margin:0 auto;padding:0 24px}
+main{min-width:0;padding-bottom:96px}
+section.ch{margin-top:96px;scroll-margin-top:24px}
+.kicker{font-family:var(--serif);color:var(--red);font-weight:600;font-size:14px;letter-spacing:.12em;margin-bottom:6px}
+h1,h2{font-family:var(--serif);font-weight:900;line-height:1.3;letter-spacing:.01em}
+h2{font-size:32px;margin-bottom:18px}
+h3{font-size:18px;margin:30px 0 10px;font-weight:700}
+p{margin:12px 0;max-width:76ch}
+p.lead{font-size:17px;color:var(--ink2)}
+ul.tight{margin:8px 0 8px 1.4em}
+ul.tight li{margin:6px 0}
+code.k{font-family:var(--mono);font-size:.86em;background:#EBEDE6;border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+mark{background:none;color:var(--red);font-weight:700}
+.think{font-family:var(--kai);color:var(--red);background:var(--red-bg);border:1px dashed var(--red-line);border-radius:8px;padding:8px 14px;font-size:15px;margin:18px 0}
+.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--red);border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;font-size:15px}
+.note b.tag{color:var(--red);font-weight:700;margin-right:6px}
+
+/* ============ 侧栏目录 ============ */
+aside.toc{position:sticky;align-self:start;top:24px;height:calc(100vh - 48px);overflow:auto;padding:28px 0 28px;scrollbar-width:thin}
+.toc-brand{font-family:var(--serif);font-weight:900;font-size:19px;line-height:1.4;margin-bottom:14px}
+.toc-brand small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--red);letter-spacing:.18em;font-weight:600}
+.toc ol{list-style:none}
+.toc li a{display:flex;gap:10px;align-items:baseline;padding:5.5px 10px;border-radius:6px;font-size:13.5px;color:var(--ink2);border-left:2px solid transparent}
+.toc li a i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--gray);width:20px;flex:none}
+.toc li a:hover{background:#ECEEE6;color:var(--ink)}
+.toc li a.active{color:var(--red);font-weight:700;border-left-color:var(--red);background:rgba(206,59,36,.06)}
+.toc li a.active i{color:var(--red)}
+
+/* ============ 英雄区 ============ */
+.hero{padding-top:48px}
+.hero-top{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:40px;align-items:end}
+.hero-title{font-size:clamp(44px,6.5vw,72px);line-height:1.14}
+.hero-title .stroke{position:relative;display:inline-block}
+.hero-title .stroke svg{position:absolute;left:-4px;right:-4px;bottom:-8px;width:calc(100% + 8px);height:16px;overflow:visible}
+.hero-title .stroke svg path{stroke:var(--red);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:420;stroke-dashoffset:420;animation:wipe 1s .5s ease-out forwards}
+@keyframes wipe{to{stroke-dashoffset:0}}
+.hero-sub{margin-top:16px;font-size:15.5px;color:var(--ink2)}
+.hero-sub code{font-family:var(--mono);color:var(--teal);font-size:14px}
+.hero-kicker{font-family:var(--serif);letter-spacing:.3em;color:var(--red);font-size:14px;font-weight:600;margin-bottom:10px}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+.caret{display:inline-block;width:9px;height:1.05em;background:var(--red);vertical-align:-2px;animation:blink 1.1s infinite}
+.reveal{opacity:0;transform:translateY(14px);animation:rv .7s ease-out forwards}
+.reveal.d1{animation-delay:.1s}.reveal.d2{animation-delay:.25s}.reveal.d3{animation-delay:.45s}
+@keyframes rv{to{opacity:1;transform:none}}
+
+/* 终端 */
+.terminal{grid-column:1/-1;margin-top:34px;background:#161A20;border-radius:14px;overflow:hidden;box-shadow:0 18px 44px rgba(30,35,43,.22)}
+.term-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#1E242C;border-bottom:1px solid #2A313B}
+.term-bar .dot{width:11px;height:11px;border-radius:50%}
+.term-bar .t{font-family:var(--mono);font-size:12px;color:#8E97A5;margin-left:6px}
+.term-body{padding:14px 18px 16px;font-family:var(--mono);font-size:13.5px;line-height:1.75}
+#cli-out{max-height:300px;overflow:auto;scrollbar-width:thin}
+#cli-out .ln{white-space:pre-wrap;word-break:break-all}
+.cli-prompt{color:#E4573D;font-weight:600}
+.cli-cmd{color:#F2F4F0}
+.cli-status{color:#67B7A3}.cli-int{color:#D9A404}.cli-bulk{color:#B9C2CF}.cli-nil{color:#6E7683}
+.cli-err{color:#F08A72}.cli-warn{color:#E4573D}
+.cli-inputline{display:flex;align-items:center;gap:8px;margin-top:4px}
+#cli-input{flex:1;background:transparent;border:none;outline:none;color:#F2F4F0;font:inherit;caret-color:#E4573D}
+#cli-input:focus-visible{outline:none}
+.cli-chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 16px}
+.cli-chip{font-family:var(--mono);font-size:11.5px;color:#B9C2CF;background:#232A33;border:1px solid #303945;border-radius:99px;padding:3px 12px;cursor:pointer;transition:border-color .15s,color .15s}
+.cli-chip:hover{border-color:#E4573D;color:#fff}
+
+/* ============ 插图框 ============ */
+.demo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin:26px 0;box-shadow:0 2px 0 rgba(30,35,43,.03)}
+.fig-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.fig-no{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--red);border-radius:4px;padding:2px 8px;flex:none}
+.fig-title{font-family:var(--serif);font-size:17px;font-weight:600}
+.caption{font-family:var(--kai);color:var(--ink2);font-size:14px;line-height:1.7;margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
+.caption::before{content:"图注 · ";color:var(--red)}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.dctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.dctrl .gap{flex:1}
+.btn{font-family:var(--sans);font-size:13px;color:var(--ink);background:#fff;border:1px solid #C7CCC0;border-radius:7px;padding:5px 14px;cursor:pointer;line-height:1.6;transition:border-color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--red);color:var(--red)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.solid:hover:not(:disabled){background:var(--red);border-color:var(--red);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{border-color:var(--red);color:var(--red);background:var(--red-bg);font-weight:700}
+.btn:focus-visible,.cli-chip:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.hint{font-size:13px;color:var(--ink2);margin-top:10px}
+.hint b{color:var(--red)}
+.dlog{font-family:var(--mono);font-size:12.5px;line-height:1.7;background:#1E232B;color:#C9D0DA;border-radius:8px;padding:10px 14px;margin-top:12px;max-height:150px;overflow:auto;scrollbar-width:thin}
+.dlog .ln-ok{color:#6FC2AE}.dlog .ln-err{color:#F08A72}.dlog .ln-warn{color:#E8B54A}.dlog .ln-dim{color:#7A828C}
+svg text{font-family:var(--sans)}
+svg .mono{font-family:var(--mono)}
+
+/* 通用小件 */
+.pill{display:inline-block;font-size:12px;font-family:var(--mono);border-radius:99px;padding:1px 10px;border:1px solid var(--line);background:#fff}
+.pill.red{color:var(--red);border-color:var(--red-line);background:var(--red-bg)}
+.pill.teal{color:var(--teal);border-color:#BFDDD5;background:var(--teal-bg)}
+.pill.blue{color:var(--blue);border-color:#C6D5EC;background:var(--blue-bg)}
+.pill.amber{color:var(--amber);border-color:#E5D3A8;background:var(--amber-bg)}
+.bar{height:8px;background:#E6E8E0;border-radius:5px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:var(--teal);transition:width .3s;border-radius:5px}
+.tok{position:absolute;width:58px;height:24px;border-radius:6px;background:var(--blue);color:#fff;font-size:10.5px;font-family:var(--mono);display:grid;place-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:5;transition:left .45s linear,top .45s linear,opacity .25s,background .2s,transform .2s;pointer-events:none}
+.tok.teal{background:var(--teal)}.tok.red{background:var(--red)}.tok.amber{background:var(--amber)}.tok.gray{background:var(--gray)}
+table.tb{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;background:var(--card)}
+table.tb th,table.tb td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top}
+table.tb th{background:#ECEEE6;font-weight:700;font-size:13px}
+table.tb td.m,table.tb th.m{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+table.tb td .warn{color:var(--red)}
+
+/* ============ 第1章 快慢对比 ============ */
+.fa-lanes{padding:16px 18px;display:grid;gap:16px}
+.fa-lane{display:grid;grid-template-columns:150px 1fr 110px;gap:12px;align-items:center;font-size:13.5px}
+.fa-track{position:relative;height:34px;background:#EDEFEA;border:1px solid var(--line);border-radius:17px}
+.fa-disk{position:absolute;top:6px;left:10px;width:14px;height:14px;border-radius:50%;border:2px solid var(--gray);transition:left .3s linear}
+.fa-ball{position:absolute;top:7px;left:8px;width:20px;height:20px;border-radius:50%;background:var(--teal);box-shadow:0 2px 5px rgba(0,0,0,.18)}
+.fa-ball.slow{background:var(--gray)}
+.fa-time{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--ink2)}
+.fa-times{display:inline-grid;grid-template-areas:"stack";font-weight:700}
+.fa-times span{grid-area:stack}
+.fa-verdict{font-weight:700;color:var(--red);min-height:1.8em;text-align:center;font-size:15px}
+.fa-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
+.fa-card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px}
+.fa-card b{display:block;font-family:var(--serif);margin-bottom:2px}
+
+/* ============ 第2章 事件循环 ============ */
+.lp-wrap{display:grid;grid-template-columns:170px minmax(0,1fr) 150px;gap:12px;padding:14px;align-items:stretch}
+.lp-client{background:var(--blue-bg);border:1px solid #C6D5EC;border-radius:8px;padding:6px 8px;margin-bottom:8px;font-size:12.5px}
+.lp-client b{display:block;color:var(--blue);font-size:12px}
+.lp-client button{margin-top:4px;width:100%;font-size:11.5px;padding:3px 4px;border-radius:5px;border:1px solid #C6D5EC;background:#fff;cursor:pointer;font-family:var(--mono)}
+.lp-client button:hover{border-color:var(--red)}
+.lp-mid{display:flex;flex-direction:column;gap:10px}
+.lp-qhead{font-size:12px;color:var(--ink2);margin-bottom:5px}
+.lp-qhead b{color:var(--red);font-family:var(--mono)}
+.lp-qrow{display:flex;gap:6px;flex-wrap:wrap;min-height:28px}
+.qchip{font-family:var(--mono);font-size:11px;color:#fff;background:var(--blue);border-radius:5px;padding:2.5px 7px;white-space:nowrap;transition:all .3s}
+.qchip.slow{background:var(--red)}
+.lp-engine{position:relative;background:var(--card);border:1.5px solid var(--ink);border-radius:10px;padding:10px 12px;text-align:center}
+.lamp{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:99px;padding:2px 12px;margin:0 3px;background:#F0F1EC;color:var(--ink2);transition:background .15s,color .15s}
+.lamp.hot{background:var(--red);color:#fff;border-color:var(--red)}
+.lp-cmd{font-family:var(--mono);font-size:13px;margin-top:8px;min-height:22px}
+.lp-cmd .idle{color:var(--gray)}
+.lp-block{position:absolute;inset:0;background:rgba(206,59,36,.12);color:var(--red);font-size:12.5px;font-weight:700;display:grid;place-items:center;border-radius:10px;animation:pulse .8s infinite alternate}
+@keyframes pulse{from{opacity:.7}to{opacity:1}}
+.lp-done{font-size:12px}
+#lp-drow{display:flex;flex-direction:column;gap:6px}
+.dchip{font-family:var(--mono);font-size:11px;background:var(--teal-bg);border:1px solid #BFDDD5;color:var(--teal);border-radius:5px;padding:2.5px 7px;animation:pop .25s}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.lp-stats{padding:0 14px 10px;font-size:13px;color:var(--ink2)}
+.lp-stats b{font-family:var(--mono);color:var(--ink)}
+.dimmed{opacity:.35;transition:opacity .2s}
+
+/* ============ 第3章 类型台 ============ */
+.tp-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tp-tab{font-family:var(--mono);font-size:13px;border:1px solid var(--line);background:#fff;border-radius:7px 7px 0 0;padding:6px 16px;cursor:pointer;color:var(--ink2)}
+.tp-tab.on{color:#fff;background:var(--ink);border-color:var(--ink);font-weight:600}
+.tp-stage{min-height:290px;padding:14px}
+.tp-grid{display:grid;grid-template-columns:minmax(0,1fr) 236px;gap:14px}
+.tp-cmds{font-family:var(--mono);font-size:12px;line-height:1.85;background:var(--stage);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.tp-cmds .c{color:var(--teal);margin-right:8px}
+.tp-desc{font-size:13.5px;line-height:1.8;color:var(--ink2);margin-top:8px}
+.tp-desc b{color:var(--ink)}
+/* list */
+.lq-row{display:flex;align-items:center;gap:0;flex-wrap:wrap;min-height:120px}
+.lq-node{background:var(--card);border:1.5px solid var(--ink);border-radius:6px;padding:4px;display:flex;gap:3px;margin:0 12px;position:relative}
+.lq-node::after{content:"";position:absolute;right:-12px;top:50%;width:12px;height:2px;background:var(--gray)}
+.lq-node:last-child::after{display:none}
+.lq-item{font-family:var(--mono);font-size:12px;min-width:24px;text-align:center;background:var(--blue-bg);border-radius:3px;padding:3px 5px;animation:pop .25s}
+.lq-item.head{background:var(--red);color:#fff}
+.lq-tag{font-size:10px;color:var(--red);position:absolute;top:-15px;left:50%;transform:translateX(-50%);white-space:nowrap}
+/* hash/set 编码 */
+.encbox{border:1.5px dashed var(--line);border-radius:10px;padding:12px;min-height:150px;background:var(--card)}
+.encbox .enc-title{font-family:var(--mono);font-size:12px;color:var(--ink2);margin-bottom:8px}
+.lp-chain{display:flex;gap:4px;flex-wrap:wrap}
+.lp-cell{font-family:var(--mono);font-size:11.5px;background:var(--amber-bg);border:1px solid #E5D3A8;border-radius:4px;padding:3px 8px;animation:pop .2s}
+.ht-buckets{display:flex;gap:10px;flex-wrap:wrap}
+.ht-col{display:flex;flex-direction:column;gap:5px;width:104px}
+.ht-slot{font-family:var(--mono);font-size:10.5px;color:var(--gray)}
+.ht-item{font-family:var(--mono);font-size:11.5px;background:var(--blue-bg);border:1px solid #C6D5EC;border-radius:4px;padding:2px 7px;animation:pop .2s}
+.is-bars{display:flex;gap:6px;align-items:flex-end;min-height:90px}
+.is-bar{font-family:var(--mono);font-size:11px;text-align:center;color:var(--teal);animation:pop .25s}
+.is-bar i{display:block;height:8px;background:var(--teal);border-radius:2px;margin-bottom:3px}
+.zs-wrap{display:grid;grid-template-columns:minmax(0,1fr) 1fr;gap:14px}
+/* string sds */
+.sds{display:flex;font-family:var(--mono);font-size:12px;border:1.5px solid var(--ink);border-radius:6px;overflow:hidden;margin:10px 0}
+.sds>span{padding:6px 10px;border-right:1.5px solid var(--ink)}
+.sds .hd{background:#ECEEE6;color:var(--ink2)}
+.sds .bd{background:var(--teal-bg);color:var(--teal);flex:1;overflow:hidden;white-space:nowrap}
+.sds .nl{background:var(--card);color:var(--gray);width:52px}
+.sds .free{background:repeating-linear-gradient(45deg,#F0F1EC,#F0F1EC 4px,#E2E4DC 4px,#E2E4DC 8px);color:var(--gray);width:60px}
+.st-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;font-size:12.5px}
+.st-cards>div{background:var(--stage);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.st-cards b{font-family:var(--mono);color:var(--red);font-size:12px}
+
+/* ============ 第4章 跳表 ============ */
+.sk-box{padding:6px 10px}
+.sk-node rect{fill:#fff;stroke:var(--ink);stroke-width:1.5;rx:6}
+.sk-node.hl rect{fill:var(--red);stroke:var(--red)}
+.sk-node.hl text{fill:#fff}
+.sk-node.cur rect{stroke:var(--red);stroke-width:3}
+.sk-edge{stroke:#B9BEB4;stroke-width:1.5;fill:none}
+.sk-edge.act{stroke:var(--red);stroke-width:2.5}
+.sk-head-lbl{font-size:11px;fill:var(--ink2)}
+.sk-stats{display:flex;gap:26px;font-size:13px;color:var(--ink2);padding:2px 12px 10px}
+.sk-stats b{font-family:var(--mono);color:var(--red);font-size:15px}
+.sk-scores{font-family:var(--mono);font-size:11.5px;color:var(--gray);padding:0 12px 8px}
+
+/* ============ 第5章 持久化 ============ */
+.ps-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ps-panel{padding:12px}
+.ps-panel h4{font-family:var(--mono);font-size:13px;margin-bottom:8px}
+.ps-pages{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.ps-pg{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:5px;padding:3px 8px;background:var(--teal-bg);color:var(--teal);cursor:pointer}
+.ps-pg.cow{background:var(--amber-bg);border-color:#E5D3A8;color:var(--amber);cursor:default}
+.ps-proc{border:1.5px solid var(--ink);border-radius:8px;padding:8px 10px;font-size:12.5px;background:var(--card)}
+.ps-file{font-family:var(--mono);font-size:12px;margin-top:6px}
+.ps-log{font-family:var(--mono);font-size:11.5px;color:var(--ink2);min-height:46px;margin-top:6px;line-height:1.7}
+.aof-lines{font-family:var(--mono);font-size:11.5px;background:#22262D;color:#C9D0DA;border-radius:6px;padding:8px 10px;min-height:120px;max-height:120px;overflow:auto;line-height:1.65;scrollbar-width:thin}
+.aof-lines .fs{color:#6FC2AE}
+.aof-buf{font-family:var(--mono);font-size:11.5px;border:1px dashed #E5D3A8;background:var(--amber-bg);color:var(--amber);border-radius:6px;padding:4px 8px;margin-top:6px;min-height:22px}
+.aof-disk{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:8px}
+.aof-disc{width:26px;height:26px;border-radius:50%;border:2px solid var(--gray);background:#fff;transition:box-shadow .2s}
+.aof-disc.flash{box-shadow:0 0 0 5px rgba(14,124,107,.3);border-color:var(--teal)}
+.aof-risk{color:var(--red);font-weight:700}
+.radios{display:flex;gap:4px;flex-wrap:wrap}
+.radios .btn{font-family:var(--mono);font-size:12px;padding:3px 10px}
+
+/* ============ 第6章 过期淘汰 ============ */
+.ex-keys{padding:10px 14px;display:grid;gap:7px}
+.ex-row{display:grid;grid-template-columns:76px 130px 1fr 130px;gap:10px;align-items:center;font-family:var(--mono);font-size:12px}
+.ex-ttlbar{height:9px;background:#E6E8E0;border-radius:5px;overflow:hidden}
+.ex-ttlbar i{display:block;height:100%;background:var(--blue);transition:width .25s linear}
+.ex-meta{font-size:11px;color:var(--ink2)}
+.ex-row.gone{opacity:.32;text-decoration:line-through}
+.ex-row.evil{background:var(--red-bg);border-radius:6px}
+.ex-row.sample{outline:2px solid var(--amber);outline-offset:-1px}
+.ex-row.del{outline:2px solid var(--red);outline-offset:-1px}
+.ex-mem{padding:0 14px 12px;font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:10px}
+.ex-mem .bar{flex:1;height:12px}
+.ex-mem .bar>i.red{background:var(--red)}
+
+/* ============ 第7章 三大缓存问题 ============ */
+.cc-stage{height:342px}
+.cc-clients{position:absolute;top:8px;left:0;right:0;display:flex;justify-content:space-around;padding:0 8px}
+.cc-client{width:38px;height:24px;border-radius:6px;background:var(--blue);color:#fff;font-size:10px;font-family:var(--mono);display:grid;place-items:center;transition:opacity .3s,background .2s}
+.cc-client.hit{background:var(--teal)}
+.cc-client.err{background:var(--red)}
+.cc-gate{position:absolute;top:60px;left:6%;right:6%;border-top:3px dashed transparent;transition:border-color .3s;display:grid;place-items:center}
+.cc-gate span{position:absolute;top:-12px;background:var(--card);padding:0 10px;font-size:12px;color:var(--red);font-weight:700;opacity:0;transition:opacity .3s}
+.cc-gate.on{border-color:var(--red)}
+.cc-gate.on span{opacity:1}
+.cc-cache{position:absolute;top:112px;left:0;right:0;display:flex;justify-content:center;gap:16px}
+.cc-slot{width:88px;background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:5px 7px;font-family:var(--mono);font-size:11px;text-align:center;position:relative;transition:border-color .25s,box-shadow .25s}
+.cc-slot .cc-key{color:var(--ink);font-weight:600;min-height:17px}
+.cc-slot .bar{height:6px;margin-top:4px}
+.cc-slot .bar>i{background:var(--teal)}
+.cc-slot.flash{border-color:var(--red);box-shadow:0 0 0 4px rgba(206,59,36,.2)}
+.cc-slot.hitf{border-color:var(--teal);box-shadow:0 0 0 4px rgba(14,124,107,.18)}
+.cc-slot.hot::after{content:"热";position:absolute;top:-9px;right:-7px;background:var(--red);color:#fff;font-size:10px;border-radius:99px;padding:0 6px}
+.cc-db{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:230px;background:var(--card);border:1.5px solid var(--ink);border-radius:10px;padding:8px 12px;font-size:12.5px;text-align:center}
+.cc-db .bar{height:10px;margin-top:5px}
+.cc-db .bar>i{background:var(--teal);transition:width .5s}
+.cc-db.over .bar>i{background:var(--red)}
+.cc-db.over{border-color:var(--red);animation:pulse .6s infinite alternate}
+.cc-ctrls{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.sol-line{margin-top:10px;padding:8px 12px;background:var(--teal-bg);border:1px solid #BFDDD5;border-radius:8px;font-size:13px;display:none}
+.sol-line.on{display:block;animation:rv .3s}
+.sol-line b{color:var(--teal)}
+
+/* ============ 第8章 主从 ============ */
+.rp-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+.rp-box{border:1.5px solid var(--ink);border-radius:10px;background:var(--card);padding:9px 12px;font-size:12.5px}
+.rp-box.master{border-color:var(--red)}
+.rp-box.slave.dis{opacity:.5}
+.rp-state{font-family:var(--mono);font-size:11.5px;color:var(--ink2)}
+.rp-off{font-family:var(--mono);font-size:12px;margin:4px 0}
+.rp-off b{color:var(--red)}
+.rp-backlog{display:flex;gap:2px;height:20px;margin-top:5px}
+.rp-blk{flex:1;border-radius:2px;background:#E6E8E0;font-family:var(--mono);font-size:9px;color:#fff;display:grid;place-items:center;overflow:hidden}
+.rp-link{position:relative;height:34px}
+.rp-msg{font-family:var(--mono);font-size:12px;color:var(--teal);margin-top:8px;min-height:20px}
+.rp-load{height:7px;background:#E6E8E0;border-radius:4px;overflow:hidden;margin-top:5px}
+.rp-load>i{display:block;height:100%;width:0;background:var(--amber);transition:width .1s linear}
+
+/* ============ 第9章 哨兵 ============ */
+.sn-grid{position:relative;height:322px;padding:12px}
+.sn-master{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:160px}
+.sn-slaves{position:absolute;top:88px;left:50%;transform:translateX(-50%);display:flex;gap:14px}
+.sn-sentinels{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:14px}
+.sn-node{background:var(--card);border:1.5px solid var(--ink);border-radius:9px;padding:6px 10px;font-size:12.5px;text-align:center;min-width:104px;position:relative;transition:all .3s}
+.sn-node.master{border-color:var(--red);color:var(--red);font-weight:700}
+.sn-node.dead{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+.sn-node.promoted{border-color:var(--teal);background:var(--teal-bg);color:var(--teal)}
+.sn-badge{display:block;font-family:var(--mono);font-size:10px;color:var(--ink2);font-weight:400}
+.sn-sdown{position:absolute;top:-9px;right:-7px;background:var(--amber);color:#fff;font-family:var(--mono);font-size:10px;border-radius:99px;padding:1px 7px;animation:pop .25s}
+.sn-leader{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:15px;animation:pop .3s}
+
+/* ============ 第10章 集群 ============ */
+.cl-slotbar{position:relative;height:34px;margin:26px 16px 8px}
+.cl-seg{position:absolute;top:6px;height:22px;border-radius:4px;font-family:var(--mono);font-size:10.5px;color:#fff;display:grid;place-items:center;transition:filter .2s}
+.cl-seg.blink{filter:brightness(1.45)}
+.cl-cursor{position:absolute;top:0;width:2px;height:34px;background:var(--red);transition:left .8s cubic-bezier(.3,.7,.3,1)}
+.cl-cursor span{position:absolute;top:-19px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--red);font-weight:700;white-space:nowrap}
+.cl-nodes{display:flex;justify-content:space-around;gap:10px;padding:10px 16px 14px}
+.cl-node{position:relative;width:150px;background:var(--card);border:1.5px solid var(--ink);border-radius:9px;padding:7px 9px;font-size:12px;text-align:center;transition:border-color .25s,box-shadow .25s}
+.cl-node b{font-family:var(--mono)}
+.cl-node .rng{font-family:var(--mono);font-size:10.5px;color:var(--ink2)}
+.cl-node.target{border-color:var(--red);box-shadow:0 0 0 4px rgba(206,59,36,.2)}
+.cl-node.down{border-color:var(--red);background:var(--red-bg)}
+.cl-slave{font-family:var(--mono);font-size:10.5px;color:var(--ink2);margin-top:3px}
+.cl-input{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:0 16px 10px}
+.cl-input input{font-family:var(--mono);font-size:13px;border:1px solid #C7CCC0;border-radius:7px;padding:5px 10px;min-width:180px;background:#fff}
+.cl-info{font-family:var(--mono);font-size:12.5px;padding:0 16px 10px;min-height:22px;color:var(--ink2)}
+.cl-info b{color:var(--red)}
+
+/* ============ 第11章 事务管道 ============ */
+.pp-tl{margin:14px 16px 4px}
+.pp-tllbl{font-family:var(--mono);font-size:12px;width:104px;flex:none;color:var(--ink2)}
+.pp-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.pp-track{position:relative;height:34px;flex:1;background:#EDEFEA;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.pp-seg{position:absolute;top:6px;height:22px;border-radius:4px;font-size:10px;color:#fff;display:grid;place-items:center;font-family:var(--mono);white-space:nowrap;overflow:hidden;opacity:0;transition:opacity .15s}
+.pp-res{font-family:var(--mono);font-size:12px;width:86px;flex:none;text-align:right}
+.tx-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+.tx-box{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:9px 11px;font-size:12.5px;min-height:120px}
+.tx-item{font-family:var(--mono);font-size:12px;border-radius:5px;padding:2.5px 8px;margin:4px 0;background:#F0F1EC;animation:pop .2s}
+.tx-item.queued{background:var(--amber-bg);border:1px solid #E5D3A8}
+.tx-item.exec{background:var(--teal-bg);border:1px solid #BFDDD5}
+.tx-item.bad{background:var(--red-bg);border:1px solid var(--red-line);color:var(--red)}
+.tx-verdict{font-size:12.5px;margin-top:6px;min-height:18px;font-weight:700}
+
+/* ============ 第12章 锁 ============ */
+.lk-stage{padding:14px;min-height:250px}
+.lk-actors{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.lk-actor{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:8px 12px;font-size:13px;transition:border-color .25s}
+.lk-actor.holding{border-color:var(--teal);background:var(--teal-bg)}
+.lk-actor.waiting{border-color:var(--amber);background:var(--amber-bg)}
+.lk-actor.inside{border-color:var(--red);background:var(--red-bg)}
+.lk-res{border:1.5px solid var(--ink);border-radius:10px;padding:9px 12px;font-size:12.5px;background:var(--card)}
+.lk-res .holder{font-family:var(--mono);font-weight:700}
+.lk-ttl{height:9px;background:#E6E8E0;border-radius:5px;overflow:hidden;margin-top:5px}
+.lk-ttl>i{display:block;height:100%;width:100%;background:var(--teal)}
+.lk-ttl.warn>i{background:var(--red)}
+.lk-crit{margin-top:10px;border:1.5px dashed var(--line);border-radius:10px;padding:7px 12px;font-size:12.5px;min-height:38px;color:var(--ink2)}
+.lk-crit.occupied{border-color:var(--teal);color:var(--teal)}
+.lk-crit.danger{border-color:var(--red);color:var(--red);font-weight:700;background:var(--red-bg)}
+.lk-note{font-size:12.5px;color:var(--ink2);margin-top:8px}
+.lk-note b{color:var(--red)}
+
+/* ============ 速查卡 ============ */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:13.5px;line-height:1.7}
+.card b{display:block;font-family:var(--serif);font-size:14.5px;margin-bottom:4px}
+.card b::before{content:"问 ";color:var(--red)}
+.card a{font-family:var(--mono);font-size:11px;color:var(--gray)}
+
+footer{margin-top:88px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2);font-family:var(--kai);line-height:1.9}
+
+/* ============ 响应式 & 减弱动效 ============ */
+@media (max-width:1120px){
+  .wrap{grid-template-columns:minmax(0,860px);justify-content:center}
+  aside.toc{position:static;height:auto;order:-1;padding:12px 0 0}
+  .toc ol{display:flex;overflow-x:auto;gap:4px;padding-bottom:8px;scrollbar-width:thin}
+  .toc li a{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;border-radius:4px}
+  .toc li a.active{border-bottom-color:var(--red);background:none}
+  .toc-brand{padding-left:10px}
+}
+@media (max-width:820px){
+  .hero-top{grid-template-columns:1fr}
+  .lp-wrap{grid-template-columns:1fr}
+  .ps-grid,.tp-grid,.rp-wrap,.tx-grid,.lk-actors,.zs-wrap{grid-template-columns:1fr}
+  .st-cards{grid-template-columns:1fr}
+  .cc-slot{width:56px;font-size:9px}
+  h2{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+  .reveal{opacity:1;transform:none}
+  .hero-title .stroke svg path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ================= 目录 ================= -->
+<aside class="toc" aria-label="目录">
+  <div class="toc-brand"><small>REDIS · ILLUSTRATED</small>Redis 图解讲义</div>
+  <nav><ol>
+    <li><a href="#hero"><i>00</i>开篇 · 交互终端</a></li>
+    <li><a href="#ch-intro"><i>01</i>是什么 · 为什么快</a></li>
+    <li><a href="#ch-loop"><i>02</i>单线程事件循环</a></li>
+    <li><a href="#ch-types"><i>03</i>五大数据类型</a></li>
+    <li><a href="#ch-skip"><i>04</i>跳表与 ZSet</a></li>
+    <li><a href="#ch-persist"><i>05</i>持久化 RDB/AOF</a></li>
+    <li><a href="#ch-expire"><i>06</i>过期与内存淘汰</a></li>
+    <li><a href="#ch-cache"><i>07</i>穿透·击穿·雪崩</a></li>
+    <li><a href="#ch-repl"><i>08</i>主从复制</a></li>
+    <li><a href="#ch-sentinel"><i>09</i>哨兵机制</a></li>
+    <li><a href="#ch-cluster"><i>10</i>Cluster 分片</a></li>
+    <li><a href="#ch-atomic"><i>11</i>事务与管道</a></li>
+    <li><a href="#ch-lock"><i>12</i>分布式锁</a></li>
+    <li><a href="#ch-cards"><i>附</i>面试速查卡</a></li>
+  </ol></nav>
+</aside>
+
+<!-- ================= 正文 ================= -->
+<main>
+
+<!-- 英雄区 -->
+<section id="hero" class="hero">
+  <div class="hero-top">
+    <div>
+      <p class="hero-kicker reveal d1">内存缓存 · 十二讲</p>
+      <h1 class="hero-title reveal d1">Redis<br><span class="stroke">图解讲义<svg viewBox="0 0 200 12" aria-hidden="true"><path d="M3 8 C 40 2, 70 11, 105 6 S 170 3, 197 7"/></svg></span></h1>
+      <p class="hero-sub reveal d2">右侧是一个<b>能真敲命令</b>的迷你 redis-cli:它内部有一台带过期惰删除的小 Redis。
+      SET、LPUSH、ZADD、MULTI… 都认。<code>127.0.0.1:6379&gt;<span class="caret"></span></code></p>
+    </div>
+    <div class="reveal d3">
+      <p style="font-size:13.5px;color:var(--ink2)">每一讲配一张<b style="color:var(--red)">可以按下去动的插图</b>——播放、步进、点节点,动画跟着你的操作走。共 <b style="font-family:var(--mono);color:var(--red)">14</b> 张交互图,离线可看,数据按 Redis 7.x 校。</p>
+    </div>
+  </div>
+  <div class="terminal reveal d2">
+    <div class="term-bar">
+      <span class="dot" style="background:#E05C4B"></span><span class="dot" style="background:#E0B13E"></span><span class="dot" style="background:#5FBF77"></span>
+      <span class="t">redis-cli — 本页内置模拟器</span>
+    </div>
+    <div class="term-body">
+      <div id="cli-out"></div>
+      <div class="cli-inputline">
+        <span class="cli-prompt">127.0.0.1:6379&gt;</span>
+        <input id="cli-input" autocomplete="off" spellcheck="false" aria-label="redis 命令输入框">
+      </div>
+    </div>
+    <div class="cli-chips" id="cli-chips"></div>
+  </div>
+</section>
+
+<!-- 第1章 -->
+<section class="ch" id="ch-intro">
+  <p class="kicker">第 一 讲</p>
+  <h2>Redis 是什么,凭什么快</h2>
+  <p class="lead">Redis(Remote Dictionary Server)是一个<mark>运行在内存里的键值数据库</mark>。单机就能稳拿约 <b>10 万 QPS</b> 的量级,而一次带磁盘访问的 MySQL 点查往往要 5–20ms——这是它成为"缓存"代名词的根本原因。常见用途:热点缓存、计数器、排行榜、分布式锁、会话共享、消息(Stream)、地理位置(GEO)、布隆去重。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 1</span><span class="fig-title">取一条数据:内存航班 vs 磁盘航班</span></div>
+    <div class="stage" id="d-fast">
+      <div class="fa-lanes">
+        <div class="fa-lane"><span>Redis · 读内存</span>
+          <div class="fa-track"><div class="fa-ball" id="fa-ball1"></div></div>
+          <span class="fa-time" id="fa-t1">—</span>
+        </div>
+        <div class="fa-lane"><span>MySQL · 读磁盘</span>
+          <div class="fa-track"><div class="fa-ball slow" id="fa-ball2"></div><div class="fa-disk" id="fa-disk"></div></div>
+          <span class="fa-time" id="fa-t2">—</span>
+        </div>
+        <div class="fa-verdict" id="fa-vd"></div>
+      </div>
+      <div class="fa-cards">
+        <div class="fa-card"><b>① 全在内存</b>读写字节级代价,磁盘要寻道、读页,慢几个数量级</div>
+        <div class="fa-card"><b>② 单线程执行命令</b>没有锁竞争、没有线程上下文切换,见第 2 讲</div>
+        <div class="fa-card"><b>③ IO 多路复用</b>一个 epoll 照看几万条连接,见第 2 讲</div>
+        <div class="fa-card"><b>④ 高效数据结构</b>SDS / listpack / 跳表 / 压缩整数集合,见第 3、4 讲</div>
+      </div>
+      <div class="dctrl">
+        <button class="btn solid" id="fa-play">▶ 同一起点,起飞</button>
+        <span class="hint">动画放大了真实比例:0.2ms 对 10ms,正好差 <b>约 50 倍</b></span>
+      </div>
+    </div>
+    <p class="caption">同一个"读一条记录",内存里是一次指针的旅程;磁盘上是一次磁头的旅程。Redis 的快,首先是存储介质的快。</p>
+  </div>
+  <div class="note"><b class="tag">要点</b>Redis 不是"更快的 MySQL",它是<b>另一层的系统</b>:数据先在内存里被命中,数据库只是兜底。理解后面所有章节,都可以带着这个问题去看——这一步省掉的是网络往返,还是磁盘 IO?</div>
+</section>
+
+<!-- 第2章 -->
+<section class="ch" id="ch-loop">
+  <p class="kicker">第 二 讲</p>
+  <h2>单线程事件循环:它真的"单线程"吗</h2>
+  <p class="lead">一条命令在 Redis 里的一生:<mark>客户端 socket 就绪 → IO 多路复用器(epoll)感知 → 从队列里取出命令 → 单线程逐条执行 → 写回回复</mark>。Redis 6.0 引入的"多线程"只负责<b>网络读写与协议解析</b>,命令的<b>执行仍然是一个线程</b>——所以"Redis 是单线程模型"这句话,指的从来是执行。</p>
+  <p>为什么单线程反而快?因为 Redis 的瓶颈在内存和网络,不在 CPU:省掉了线程切换和加锁开销,每个请求走"快速路径"。也正因为串行,<mark>任何一条命令都没有并发执行的对手——单条命令天然原子</mark>;但反过来,一条慢命令就会堵住所有人。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 2</span><span class="fig-title">Reactor 事件循环 · 亲手制造一次阻塞</span></div>
+    <div class="stage" id="d-loop">
+      <div class="lp-wrap">
+        <div class="lp-clients">
+          <div class="lp-client" id="lp-c0"><b>App A</b><button data-cost="600">GET user:1</button></div>
+          <div class="lp-client" id="lp-c1"><b>App B</b><button data-cost="700">INCR pv</button></div>
+          <div class="lp-client" id="lp-c2"><b>App C</b><button data-cost="600">LPUSH mq t</button></div>
+          <div class="lp-client" style="background:var(--red-bg);border-color:var(--red-line)"><b style="color:var(--red)">闯祸专用</b><button id="lp-slow" style="border-color:var(--red-line);color:var(--red)">KEYS *(全库扫描)</button></div>
+        </div>
+        <div class="lp-mid">
+          <div><div class="lp-qhead">等待队列 <b id="lp-qn">0</b> 条</div><div class="lp-qrow" id="lp-qrow"></div></div>
+          <div class="lp-engine">
+            <div class="lp-lamps"><span class="lamp" id="lp-l1">① 多路复用读取</span><span class="lamp" id="lp-l2">② 执行命令</span><span class="lamp" id="lp-l3">③ 写回回复</span></div>
+            <div class="lp-cmd" id="lp-cmd"><span class="idle">idle — 事件循环空转,等待可读事件</span></div>
+            <div class="lp-block" id="lp-block" hidden>⚠ KEYS * 正在执行 —— 后面所有命令都得排队</div>
+          </div>
+        </div>
+        <div class="lp-done"><div class="lp-qhead">已完成回复</div><div id="lp-drow"></div></div>
+      </div>
+      <div class="lp-stats">已处理 <b id="lp-n">0</b> 条 · 累计等待 <b id="lp-wait">0</b> ms(模拟值)</div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="lp-burst">▶ 先来 6 条普通命令</button>
+      <button class="btn" id="lp-reset">重置</button>
+      <span class="hint">玩法:趁队列里在忙,点右侧红色的 <b>KEYS *</b>——看三盏灯如何被它长时间占住</span>
+    </div>
+    <p class="caption">三盏灯是事件循环的一轮:读取 → 执行 → 回复,永远串行。慢命令进场的瞬间,它身后所有请求的等待时间一起变长——这就是线上禁用 KEYS 的理由。</p>
+  </div>
+  <h3>把慢命令逐出事件循环</h3>
+  <ul class="tight">
+    <li>用渐进式遍历 <code class="k">SCAN / HSCAN / SSCAN / ZSCAN</code> 替代 <code class="k">KEYS</code>、<code class="k">HGETALL</code> 大 hash;</li>
+    <li>大集合排序交给 <code class="k">SORT RO</code> 或应用层;删大 key 用 <code class="k">UNLINK</code>(后台线程回收内存);<code class="k">FLUSHALL ASYNC</code>;</li>
+    <li>开 <code class="k">maxmemory</code> 与慢日志 <code class="k">SLOWLOG GET</code> 抓现行;7.0 的 <b>io-threads-do-reads</b> 与命令批量执行(fstacked)进一步摊薄 IO 开销。</li>
+  </ul>
+  <div class="think">想一想:第 2 讲说"单条命令天然原子",那第 11 讲为什么还需要 MULTI 事务和 Lua?——因为原子的是"一条命令",不是"一串命令读同一个 key 的整个过程"。</div>
+</section>
+
+<!-- 第3章 -->
+<section class="ch" id="ch-types">
+  <p class="kicker">第 三 讲</p>
+  <h2>五大数据类型:每种都有自己的"小身子骨"</h2>
+  <p class="lead">Redis 的类型不是"表结构",而是<mark>为不同形状的数据选了不同的底层编码</mark>。小数据用紧凑的连续内存(listpack/intset,省内存、缓存友好),超过阈值自动转成指针结构(hashtable 等)。下面这个"类型台"可以逐个打开看,还能往里塞数据、亲眼触发编码转换。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 3</span><span class="fig-title">类型控制台 · 点标签切换,点按钮动手</span></div>
+    <div class="stage" id="d-types" style="padding:14px"></div>
+    <p class="caption">左侧是当前类型的微观结构与交互实验,右侧是这个类型最常用的命令。编码转换阈值(hash-max-listpack-entries=128 等)在实验里被缩小到 12,方便你几秒内看到"变身"。</p>
+  </div>
+  <h3>这一讲的记忆锚点</h3>
+  <ul class="tight">
+    <li><b>String</b> 底层是 <b>SDS</b> 动态字符串:O(1) 取长度、预分配 + 惰性释放减少 realloc、二进制安全(可以存图片)。value 小于 44 字节用 <code class="k">embstr</code>(一次分配),纯数字用 <code class="k">int</code> 共享对象,否则 <code class="k">raw</code>。最大 512MB。</li>
+    <li><b>List</b> 底层是 <b>quicklist</b>:双向链表,每个节点装一个 <b>listpack</b>(7.2 起取代 ziplist,修复了连锁更新隐患)。两头进出一律 O(1),中间按索引访问是 O(N)——别拿它当随机访问数组用。</li>
+    <li><b>Hash</b>:字段少而小时整个 hash 挤在一个 listpack 里(<mark>没有指针开销</mark>,配置对象的首选);大了转 hashtable,字段多而 value 大时还能启用 hash 的 zval 共享编码省内存。</li>
+    <li><b>Set</b>:全是整数且 ≤512 个 → <b>intset</b> 有序数组;否则 hashtable。交并差 <code class="k">SINTER / SUNION / SDIFF</code>、共同好友、抽奖 <code class="k">SPOP</code>、随机采样 <code class="k">SRANDMEMBER</code>。</li>
+    <li><b>ZSet</b>:小 → listpack;大 → <mark>dict + skiplist 双结构</mark>:dict 管"成员→分数"O(1) 查分,跳表管排序取名次。下一讲专拆它。</li>
+  </ul>
+  <div class="note"><b class="tag">要点</b>被问"底层用了什么数据结构",标准答法是<mark>分大小</mark>说:小对象 listpack/intset,超过阈值转 hashtable/skiplist,阈值来自 <code class="k">hash-max-listpack-entries</code>、<code class="k">zset-max-listpack-entries</code> 这些配置——一句话里既有结论又有调优意识。</div>
+</section>
+
+<!-- 第4章 -->
+<section class="ch" id="ch-skip">
+  <p class="kicker">第 四 讲</p>
+  <h2>跳表:一条随机的"快速路"</h2>
+  <p class="lead">跳表(skiplist)就是<mark>给有序链表加了几层"高速路入口"</mark>:每个节点抛硬币决定自己长多高(Redis 里晋级概率 p=1/4,最高 32 层)。查找时从最高层出发,<b>能走就走、走过头就下楼</b>,平均每比较 <code class="k">log<sub>1/p</sub>N ≈ 2·log₄N</code> 次命中目标,O(logN)。</p>
+  <p>ZSet 为什么选跳表而不是红黑树?<mark>① 好写好懂</mark>,没有旋转的复杂度;<mark>② 范围查询太顺</mark>——最底层就是完整有序链表,ZRANGEBYSCORE 找到起点直接往后串;红黑树做区间要先找 LCA 再中序遍历;<mark>③ 概率平衡</mark>不需要严格再平衡;<mark>④ 内存换时间可控</mark>(每节点平均 1.33 个指针)。代价:没有 dict 的 O(1) 查分,所以 ZSet 是 <b>skiplist + dict 两个结构共享成员</b>——排名找跳表,查分找 dict。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 4</span><span class="fig-title">跳表查找 · 看红色指针"能走就走,下楼再来"</span></div>
+    <div class="stage sk-box" id="d-skip"></div>
+    <div class="sk-stats"><span>比较次数 <b id="sk-cmp">—</b></span><span>若用普通链表 <b id="sk-lin">—</b></span><span>节点指针均值 ≈1.33 · 层高上限 32</span></div>
+    <div class="dctrl">
+      <span style="font-size:13px">查找成员分数(=节点值):</span>
+      <button class="btn" data-t="17">17</button>
+      <button class="btn" data-t="25">25</button>
+      <button class="btn" data-t="18">18(不存在!)</button>
+      <input id="sk-input" style="font-family:var(--mono);font-size:12px;border:1px solid #C7CCC0;border-radius:6px;padding:3px 8px;width:70px" placeholder="自定…" aria-label="跳表查找目标">
+      <button class="btn solid" id="sk-go">▶ 查找</button>
+      <span class="hint">每步动画后自动讲解;找不到时指针停在"应该插入的位置"前</span>
+    </div>
+    <p class="caption">同一条查找路径,对比下方"链表要 N 步"的红字:数据越大规模差距越大。ZADD 的每次插入会重新"掷骰子"决定新节点层高,整体分布自然保持平衡。</p>
+  </div>
+</section>
+
+<!-- 第5章 -->
+<section class="ch" id="ch-persist">
+  <p class="kicker">第 五 讲</p>
+  <h2>持久化:RDB 快照与 AOF 日志</h2>
+  <p class="lead">内存说没就没,所以 Redis 要把数据落到磁盘。<mark>RDB 是"照一张全景照片",AOF 是"记一本流水账"</mark>:RDB(<code class="k">SAVE</code>/<code class="k">BGSAVE</code>)在某个时刻把全部键值序列化进 <code class="k">dump.rdb</code>;<code class="k">BGSAVE</code> 会 <b>fork</b> 一个子进程去写盘,靠操作系统的<b>写时复制(COW)</b>让父子共享同一份内存,只有被改写的页才复制。</p>
+  <p>AOF(<code class="k">appendonly yes</code>)把每条写命令追加进 <code class="k">appendonly.aof</code>,重启时"重放日志"恢复。日志先写进 <b>aof_buf 缓冲区</b>,由 <code class="k">appendfsync</code> 决定何时刷盘:<b>always</b> 每命令一次(最稳最慢)、<b>everysec</b> 每秒一次(默认,最多丢 1 秒)、<b>no</b> 交给操作系统(最快,可能丢很多)。AOF 越记越长,超过阈值后 fork 子进程做<b>重写</b>——用当前内存状态生成最小命令集,而不是回放历史。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 5</span><span class="fig-title">亲手戳一下写时复制:BGSAVE 期间改一个页</span></div>
+    <div class="stage ps-grid" id="d-rdb">
+      <div class="ps-panel"><h4>父进程(主线程 · 继续服务)</h4>
+        <div class="ps-pages" id="rdb-pages"></div>
+        <div style="font-size:12px;color:var(--ink2)">绿色 = 父子共享的内存页。<b style="color:var(--amber)">点击任意一页</b> = 客户端在这期间改写了它。</div>
+      </div>
+      <div class="ps-panel"><h4>子进程(BGSAVE 写快照)</h4>
+        <div class="ps-proc">
+          <div style="font-size:12.5px">逐页写进 <b>dump.rdb</b>,看到的是 fork 瞬间的世界 ↓</div>
+          <div class="ps-file">进度 <span id="rdb-prog">0%</span></div>
+          <div class="bar"><i id="rdb-bar" style="background:var(--amber)"></i></div>
+          <div class="ps-log" id="rdb-log">待命 —— 点下方 BGSAVE。</div>
+        </div>
+      </div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="rdb-bgsave">▶ BGSAVE(fork + 写盘)</button>
+      <span class="hint">试着在它写到一半时点第 2 页——看它如何"分身"</span>
+      <span class="gap"></span><span class="pill red">fork 风险:大实例内存可能瞬间翻倍 · 关掉 THP</span>
+    </div>
+    <p class="caption">子进程拿到的是一页"共享的旧内存";谁先写这一页,内核就为谁复制一份——所以快照永远是 fork 时刻的一致状态,而主进程毫不受影响。</p>
+  </div>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 6</span><span class="fig-title">fsync 三档:数据到底什么时候算"落袋"</span></div>
+    <div class="stage ps-grid" id="d-aof" style="padding:12px">
+      <div>
+        <h4 style="font-family:var(--mono);font-size:13px;margin-bottom:6px">appendonly.aof(日志文件,已落盘)</h4>
+        <div class="aof-lines" id="aof-file">— 空 —</div>
+        <div class="aof-disk"><div class="aof-disc" id="aof-disc"></div><div>磁盘<br><span style="font-size:11px;color:var(--ink2)" id="aof-fcnt">fsync × 0</span></div></div>
+      </div>
+      <div>
+        <h4 style="font-family:var(--mono);font-size:13px;margin-bottom:6px">aof_buf(内存缓冲区,还没落盘)</h4>
+        <div class="aof-buf" id="aof-buf">(空)</div>
+        <div style="font-size:12px;color:var(--ink2);margin-top:8px">每秒一个刻度 ▸ 时钟:<b id="aof-clock" style="font-family:var(--mono)">0s</b></div>
+        <div class="ps-log" id="aof-log" style="min-height:60px">选一档策略,点播放。</div>
+        <div class="radios" style="margin-top:8px">
+          <button class="btn on" data-f="always">always</button>
+          <button class="btn" data-f="everysec">everysec</button>
+          <button class="btn" data-f="no">no</button>
+        </div>
+      </div>
+    </div>
+    <div class="dctrl"><button class="btn solid" id="aof-play">▶ 播放:2 秒内写入 6 条命令,然后断电</button>
+      <span class="hint">对比每档下"日志文件"里剩下的内容——<b>那就是重启后还能找回的数据</b></span></div>
+    <p class="caption">everysec 是默认也是工程共识:由一个后台线程每秒 fsync,主线程不等待;最坏丢一秒。Redis 7.0 起 AOF 改为"多文件(multi-part)":基础文件 + 增量文件 + manifest,重写与追加不再互相绞。</p>
+  </div>
+  <table class="tb">
+    <tr><th></th><th class="m">RDB</th><th class="m">AOF</th></tr>
+    <tr><td><b>本质</b></td><td>某一时刻的二进制快照</td><td>写命令追加日志(7.0 起也支持混合)</td></tr>
+    <tr><td><b>恢复速度</b></td><td class="m" style="color:var(--teal)">快(直接载入)</td><td class="m">慢(要重放,大实例分钟级)</td></tr>
+    <tr><td><b>数据安全</b></td><td class="m" style="color:var(--red)">两次快照之间的全丢</td><td class="m" style="color:var(--teal)">everysec 最多丢 1s</td></tr>
+    <tr><td><b>体积/可读</b></td><td>紧凑,不可读</td><td>大;文本可查、可 redis-check-aof 修</td></tr>
+    <tr><td><b>典型用法</b></td><td colspan="2"><mark>两个都开</mark>:AOF 保安全,RDB 做备份和主从全量同步的底座(4.0+ 的"混合持久化"把两者拧成一股东西:AOF 文件头是 RDB,尾部是增量命令)。</td></tr>
+  </table>
+  <div class="note"><b class="tag">要点</b>追问三连的标准答案:<b>fork 干了什么</b>(COW 共享内存)、<b>为什么 everysec 而不是 always</b>(主线程不等 fsync)、<b>AOF 为什么必须重写</b>(日志只增不改,重放成本和体积都会失控)。</div>
+</section>
+
+<!-- 第6章 -->
+<section class="ch" id="ch-expire">
+  <p class="kicker">第 六 讲</p>
+  <h2>过期与内存淘汰:两套"清道夫"</h2>
+  <p class="lead">Redis 的过期靠<mark>惰性删除 + 定期删除</mark>两条腿:设过 <code class="k">EXPIRE</code> 的键记在 <b>expires 字典</b>里;访问一个键先查它是否过期,过期就当场删(<b>惰性</b>,CPU 友好但可能占着内存不还);后台每 <b>100ms</b> 跑一次<b>定期</b>任务——从带 TTL 的键里随机抽 20 个,删掉其中已过期的,<mark>若过期比例超过 25% 就立刻再来一轮</mark>(上限 1ms 时间片,防止把主循环拖死)。</p>
+  <p>当内存达到 <code class="k">maxmemory</code>,就是另一套故事——<b>淘汰策略</b>(<code class="k">maxmemory-policy</code>):8 选 1,按"从哪些键里挑"(全部/只挑设过 TTL 的)与"怎么挑"(LRU/LFU/TTL/随机/noeviction)组合。精确 LRU 要维护全量链表,太贵;Redis 用<b>采样近似</b>:随机抽 <code class="k">maxmemory-samples</code>(默认 5)个,淘汰其中最久未用的——用一点点误差换 O(1) 的开销。Redis 4.0 加了 <b>LFU</b>:每个对象 8 bit 计数器,对数概率递增 + 随时间衰减,专治"偶尔一次被访问就赖着不走"。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 7</span><span class="fig-title">过期实验室 · 惰性删除、定期抽样、内存淘汰,一台全占</span></div>
+    <div class="stage" id="d-expire">
+      <div class="ex-keys" id="ex-rows"></div>
+      <div class="ex-mem">内存占用(模拟 maxmemory)<div class="bar"><i id="ex-membar" style="background:var(--blue)"></i></div><span id="ex-memtxt">52%</span></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="ex-tick">▶ 让时钟走起来</button>
+      <button class="btn" id="ex-get">GET k1(惰删除演示)</button>
+      <button class="btn" id="ex-periodic">⑂ 手动触发一轮定期任务</button>
+      <button class="btn" id="ex-access">随机制造几次访问</button>
+      <span class="gap"></span>
+      <span style="font-size:13px">淘汰策略:</span>
+      <div class="radios"><button class="btn on" data-pol="lru">allkeys-lru</button><button class="btn" data-pol="lfu">allkeys-lfu</button></div>
+    </div>
+    <div class="hint" id="ex-say" style="min-height:1.8em"></div>
+    <p class="caption">先让时钟走到 k1 过期,再点 GET——这就是惰性删除;或者等时钟自动走到 3s/6s——看它自己抽 3 个样(演示缩小了规模,真实是 20 个)。最后内存顶到 85%,按策略触发淘汰:被"采样选中"的框琥珀色,被淘汰的划红线。</p>
+  </div>
+  <div class="note"><b class="tag">要点</b>volatile-* 系列只从<b>设过 TTL 的键</b>里淘汰——如果所有键都不过期,它退化得和 noeviction 一样(写命令直接报 OOM)。这也是"缓存场景推荐 allkeys-lru、别用默认的 noeviction"的由来。noeviction 不是"不删",而是<b>宁可报错也不删</b>,给不丢数据、纯做存储的场景留的。</div>
+</section>
+
+<!-- 第7章 -->
+<section class="ch" id="ch-cache">
+  <p class="kicker">第 七 讲</p>
+  <h2>缓存三大问题:穿透、击穿、雪崩</h2>
+  <p class="lead">三个词长得像,病因完全不同:<mark>穿透</mark>是查的键<b>根本不存在</b>,缓存里永远没有它的坑,次次漏到 DB;<mark>击穿(局部失效)</mark>是<b>一个热点键</b>过期瞬间被并发打穿;<mark>雪崩(全局失效)</mark>是<b>一大批键同时到期</b>(或 Redis 整个挂了),流量像雪崩压向数据库。三句话,三个解法方向:防不存在、防单点瞬间、防同一时刻。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 8</span><span class="fig-title">三大问题彩排台 · 选剧本开演,再开解法重演一遍</span></div>
+    <div class="stage cc-stage" id="d-cache"></div>
+    <div class="cc-ctrls" id="cc-ctrls"></div>
+    <div class="sol-line" id="cc-sol"></div>
+    <p class="caption">青色 = 缓存命中直接返回;琥珀/红色 = 请求漏到底层数据库。右下角的仪表是 DB 负载——三大问题的共同终点都是把它打爆,解法的共同终点都是把它按下去。</p>
+  </div>
+  <table class="tb">
+    <tr><th></th><th>成因</th><th>解法(按优先级)</th></tr>
+    <tr><td><b>缓存穿透</b></td><td>查询不存在的数据 / 恶意随机 key</td><td>① 参数合法性校验挡在门外 ② <mark>缓存空值</mark>(短 TTL)③ <mark>布隆过滤器</mark>前置(注意:标准 bloom 不支持删除,误判率要按容量算)</td></tr>
+    <tr><td><b>缓存击穿</b></td><td>单个热点键过期 + 高并发</td><td>① <mark>互斥重建</mark>:只放一个请求去 DB,其余等待/降级 ② <mark>逻辑过期</mark>:值里带过期时间,过期先返回旧值、异步刷新(热点 key 干脆不设物理 TTL)</td></tr>
+    <tr><td><b>缓存雪崩</b></td><td>大批 key 同一时刻过期;或 Redis 服务整体不可用</td><td>① TTL 加随机抖动打散 ② 多级缓存(本地 Caffeine 垫一层)③ 网关限流/熔断兜底 ④ 高可用:主从 + 哨兵/Cluster(八九十讲)把"整体挂"的概率压下去</td></tr>
+  </table>
+  <div class="think">想一想:雪崩的终极解法为什么是"高可用 + 限流"而不是"永不过期"?——缓存的价值在于能失效;不能失效的缓存,是把自己写成了数据库。</div>
+</section>
+
+<!-- 第8章 -->
+<section class="ch" id="ch-repl">
+  <p class="kicker">第 八 讲</p>
+  <h2>主从复制:全量与增量</h2>
+  <p class="lead">副本要跟上主库,分两种剧本。<mark>全量复制</mark>(第一次见面):副本发 <code class="k">PSYNC ? -1</code>,主库 BGSAVE 生成 RDB 并流式推送,副本落盘加载;传输期间的<b>新写命令暂存在副本客户端输出缓冲</b>(client-output-buffer-limit slave 256MB 64MB 60s——缓冲爆了就重来,大实例要么调大要么用无盘复制 repl-diskless-sync)。加载完主库把缓冲里的命令倾泻而下,追平后进入<b>命令传播</b>:长连接,一条命令一条命令地推。</p>
+  <p><mark>部分(增量)复制</mark>(短暂断线):每个主库有一个 ID(<b>replid</b>)和一个递增的 <b>复制偏移量 offset</b>,副本记录自己复制到哪;主库把最近发过的命令写进一块<b>环形 backlog</b>(默认 1MB)。重连时副本报上 replid+offset,<mark>缺口还躺在 backlog 里 → 只补发差的那一段</mark>;断太久、缺口被覆盖 → 退回全量。主库故障切换后 replid 换新,只带 replid2 能对上号的副本才能走增量。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 9</span><span class="fig-title">主从同步 · 先全量,再断一次网,看它走不走增量</span></div>
+    <div class="stage" id="d-repl">
+      <div class="rp-wrap">
+        <div class="rp-box master">
+          <div><b style="color:var(--red)">master</b> · replid <span class="rp-state">7f3a…c1</span></div>
+          <div class="rp-off">offset <b id="rp-mo">0</b></div>
+          <div style="font-size:12px">backlog(环形缓冲,默认 1MB)</div>
+          <div class="rp-backlog" id="rp-backlog"></div>
+          <div class="rp-msg" id="rp-mmsg">&nbsp;</div>
+        </div>
+        <div class="rp-box slave" id="rp-sbox">
+          <div><b style="color:var(--teal)">replica</b> · 状态 <span class="rp-state" id="rp-state">DISCONNECTED</span></div>
+          <div class="rp-off">offset <b id="rp-so" style="color:var(--teal)">0</b></div>
+          <div class="rp-load"><i id="rp-load"></i></div>
+          <div style="font-size:11.5px;color:var(--ink2)">RDB 加载进度</div>
+          <div class="rp-msg" id="rp-smsg">&nbsp;</div>
+        </div>
+      </div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="rp-full">① 副本上线(全量复制)</button>
+      <button class="btn" id="rp-write">② 主库写 3 条命令</button>
+      <button class="btn" id="rp-short">③ 断线一会儿再回来</button>
+      <button class="btn" id="rp-long">④ 断太久(backlog 被覆盖)</button>
+      <span class="gap"></span><button class="btn" id="rp-reset">重置</button>
+    </div>
+    <p class="caption">灰色格子是 backlog 里滑过的历史命令;③ 里断线期间主库又写了几条,回来时你看它只把缺口那一截染成青色补发——部分复制成功。④ 里 backlog 被写满冲掉,只能灰溜溜再走一遍全量。</p>
+  </div>
+  <div class="note"><b class="tag">要点</b>主从的三大意义:<b>热备</b>(数据冗余)、<b>读扩展</b>(读多写少的流量分给副本)、<b>Cluster 的地基</b>(每个分片就是一主一从)。追问必到:<b>主从是强一致吗?</b>——不是。复制是异步的,副本可能读到旧数据;Redis 没有提供"写成功即所有副本可见"的同步写语义,<code class="k">WAIT</code> 命令只能"尽力等待"。</div>
+</section>
+
+<!-- 第9章 -->
+<section class="ch" id="ch-sentinel">
+  <p class="kicker">第 九 讲</p>
+  <h2>哨兵:给主从加一双"盯梢的眼"</h2>
+  <p class="lead">主从解决了"有备胎",没解决"备胎自动上位"。<mark>Sentinel(哨兵)集群干的就是这件事:监控、通知、自动故障转移、为新主库配置</mark>。每个哨兵每秒 ping 主库、副本和其他哨兵;超时判<b>主观下线</b>(SDOWN,"我觉得它死了");再把判断广播给同伴,<mark>达到 quorum 个哨兵都说死,才升级为客观下线(ODOWN)</mark>——防止一个哨兵网抖误判。</p>
+  <p>确认主库真死后,哨兵们先<b>选一个领头哨兵</b>(类 Raft:configEpoch + 过半同意)来主持葬礼兼婚礼;领头者从副本里挑新主:<mark>过滤掉下线的、断线的 → <code class="k">slave-priority</code> 优先级高者 → 复制 offset 最新者 → runid 最小者</mark>。然后让其他副本 <code class="k">REPLICAOF</code> 新主,老主复活也只能当副本,最后通过发布订阅把"换主了"通知给客户端。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 10</span><span class="fig-title">故障转移彩排 · 点"下一步"演完整个剧本(quorum=2,共 3 哨兵)</span></div>
+    <div class="stage sn-grid" id="d-sentinel">
+      <div class="sn-master" id="sn-master"><div class="sn-node master" id="sn-m">M-Master<span class="sn-badge" id="sn-mb">10.0.0.1:6379</span></div></div>
+      <div class="sn-slaves">
+        <div class="sn-node" id="sn-r1">R-Slave-1<span class="sn-badge">offset 42</span></div>
+        <div class="sn-node" id="sn-r2">R-Slave-2<span class="sn-badge">offset 40</span></div>
+      </div>
+      <div class="sn-sentinels">
+        <div class="sn-node" id="sn-s1">Sentinel-1<span class="sn-badge">10.0.0.4:26379</span></div>
+        <div class="sn-node" id="sn-s2">Sentinel-2<span class="sn-badge">10.0.0.5:26379</span></div>
+        <div class="sn-node" id="sn-s3">Sentinel-3<span class="sn-badge">10.0.0.6:26379</span></div>
+      </div>
+    </div>
+    <div class="dctrl"><button class="btn solid" id="sn-step">下一步 ▸</button><button class="btn" id="sn-reset">重来</button>
+      <span class="hint" id="sn-hint">共 6 步:宕机 → 主观下线 → 客观下线 → 选领头 → 挑新主 → 切换与通知</span></div>
+    <div class="dlog" id="sn-log"></div>
+    <p class="caption">注意第 4 步:不是"第一个发现的"当领头,而是投票过半——被选中的 Sentinel-2 头顶王冠。也注意第 5 步:slave-priority 相同时,<b>offset 更大的 R-Slave-1</b> 胜出——它数据最全。</p>
+  </div>
+  <div class="note"><b class="tag">要点</b>哨兵部署<b>至少 3 个、奇数、分散在故障域</b>(不同机器/可用区)。哨兵保存配置靠"订阅 +1/-1 计数器"彼此对齐,老主复活会收到新主的 REPLICAOF 指令——所以<b>哨兵模式里老主绝不会双写</b>。哨兵只管"一主 N 从"这一组,想要横向扩容看下一讲的 Cluster。</div>
+</section>
+
+<!-- 第10章 -->
+<section class="ch" id="ch-cluster">
+  <p class="kicker">第 十 讲</p>
+  <h2>Cluster:16384 个槽的三国时代</h2>
+  <p class="lead">哨兵再稳,写也集中在一个主库。<mark>Redis Cluster 把键空间切成 16384 个哈希槽(hash slot),分给 N 个主库各管一段</mark>:<code class="k">slot = CRC16(key) % 16384</code>。每个主库再带自己的副本,分片内主挂了分片内切换——<b>又扩容、又高可用</b>。为什么是 16384 而不是 65536?心跳包要把"每个槽属于谁"的位图发给所有节点:16384 位 = 2KB,65536 位 = 8KB,心跳开销乘以节点数;而常见部署不超过一千个主节点,16384 够分。</p>
+  <p>客户端可能拿不到准确的槽表,于是有了两种重定向:<code class="k">MOVED</code>(槽有固定主人,你问错了节点,直接告诉你去谁那,客户端可缓存修正)和 <code class="k">ASK</code>(槽正在迁移中,这条请求去临时接收方碰运气)。想多键操作同槽,用 <mark>hash tag</mark>:<code class="k">{user:1001}.name</code> 与 <code class="k">{user:1001}.age</code> 只对花括号内容做哈希,天然同槽。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 11</span><span class="fig-title">槽路由 · 输入任意 key,看 CRC16 把它送进哪个节点</span></div>
+    <div class="stage" id="d-cluster" style="padding:8px 0 0">
+      <div class="cl-slotbar" id="cl-bar"></div>
+      <div class="cl-nodes">
+        <div class="cl-node" id="cl-m1"><b>M1</b> <span class="rng">0–5460</span><div class="cl-slave">S1 · 副本</div></div>
+        <div class="cl-node" id="cl-m2"><b>M2</b> <span class="rng">5461–10922</span><div class="cl-slave">S2 · 副本</div></div>
+        <div class="cl-node" id="cl-m3"><b>M3</b> <span class="rng">10923–16383</span><div class="cl-slave">S3 · 副本</div></div>
+      </div>
+      <div class="cl-info" id="cl-info">把 key 送进来,下方会算出 CRC16 → 槽号 → 归属节点。</div>
+      <div class="cl-input">
+        <input id="cl-key" value="user:1001" aria-label="集群 key 输入框">
+        <button class="btn solid" id="cl-route">▶ 路由这个 key</button>
+        <button class="btn" data-k="foo">foo</button>
+        <button class="btn" data-k="bar">bar</button>
+        <button class="btn" data-k="{user:1001}.name">{user:1001}.name</button>
+        <button class="btn" data-k="{user:1001}.age">{user:1001}.age</button>
+        <span class="gap"></span>
+        <button class="btn" id="cl-moved">▶ 模拟:打到错误节点的 MOVED</button>
+        <button class="btn" id="cl-down">💥 M3 宕了</button>
+      </div>
+    </div>
+    <p class="caption">foo 落在 12182、bar 落在 5061(可与真库 CLUSTER KEYSLOT 对答案)。连续点两个 {user:1001}.* ——花括号里的内容相同,槽必然相同,这才 MULTI/Lua 多键在集群里的活路。点"💥 M3 宕了":它的副本 S3 就地升主,槽表无缝接管,路由照常。</p>
+  </div>
+  <div class="note"><b class="tag">要点</b>节点间靠 <b>Gossip 协议</b>(ping/pong 心跳)互相感知状态、传播槽表;多数主节点认为某分片主不可达,分片副本才升主。<mark>Cluster 的 Lua/MULTI 只允许操作落在同一槽的键</mark>;副本读的是"大概最新"——读写分离要接受这个语义。集群无跨槽再平衡的手动干预成本,扩容用 redis-cli --cluster reshard 在线搬槽。</div>
+</section>
+
+<!-- 第11章 -->
+<section class="ch" id="ch-atomic">
+  <p class="kicker">第 十一 讲</p>
+  <h2>事务与管道:打包的艺术</h2>
+  <p class="lead"><mark>事务(MULTI/EXEC):把一串命令排队,EXEC 时一次性串行执行,中间不插别人的命令</mark>——这是"隔离"不是"回滚":入队时语法错误会拒绝整个事务,但<b>执行期错误(比如对字符串 INCR)之后的命令照样执行,已执行的不撤销</b>,不满足 ACID 的 A。WATCH 提供乐观锁:被监视的键在 EXEC 前变了,事务直接放弃返回 (nil),客户端重试。</p>
+  <p><mark>管道(Pipeline):纯粹省网络</mark>——把 N 条命令一次发出去、一次性收回复,把 N 次 RTT 压成 1 次。它<mark>不提供任何原子性保证</mark>——服务端还是一条条执行,别的事务穿插照样穿插。事务管"逻辑上打包",管道管"网络上打包",这题面试最爱挖坑。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 12</span><span class="fig-title">逐条发 vs 管道发:时间都花在路上</span></div>
+    <div class="stage" id="d-pipe">
+      <div class="pp-tl">
+        <div class="pp-row"><span class="pp-tllbl">逐条发送</span><div class="pp-track" id="pp-lane1"></div><span class="pp-res" id="pp-r1"></span></div>
+        <div class="pp-row"><span class="pp-tllbl">Pipeline</span><div class="pp-track" id="pp-lane2"></div><span class="pp-res" id="pp-r2"></span></div>
+      </div>
+    </div>
+    <div class="dctrl"><button class="btn solid" id="pp-play">▶ 同样 4 条命令,各发一遍</button>
+      <span class="hint">蓝 = 请求在途,青 = 服务端执行,灰 = 回复在途;RTT 取 0.5ms,执行每条 0.1ms</span></div>
+    <p class="caption">4 次往返 ≈ 2.4ms 变 1 次往返 ≈ 1.1ms;命令越多差距越大。但注意:管道里所有命令依然可能被别的客户端穿插——"快"和"原子"是两回事。</p>
+  </div>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 13</span><span class="fig-title">事务的三种结局 · 排队→EXEC,以及两种"翻车"</span></div>
+    <div class="stage tx-grid" id="d-tx">
+      <div class="tx-box"><b style="font-family:var(--mono);font-size:12px">CLIENT A</b><div id="tx-queue"></div></div>
+      <div class="tx-box"><b style="font-family:var(--mono);font-size:12px">EXEC 之后(服务端视角)</b><div id="tx-exec"></div><div class="tx-verdict" id="tx-vd"></div></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" data-c="ok">剧本一:正常 MULTI/EXEC</button>
+      <button class="btn" data-c="syntax">剧本二:入队一条语法错误</button>
+      <button class="btn" data-c="runtime">剧本三:执行到一半报错(无回滚!)</button>
+      <button class="btn" data-c="watch">剧本四:WATCH 被截胡</button>
+    </div>
+    <p class="caption">剧本三最阴:SET k hello 成功,INCR k 报错,后面 LPUSH 照常执行——事务没有"撤销成功"的能力。要"要么全做要么全不做",用 Lua(原子执行 + 可编程判断),或者把不可分割性设计进单条命令(如 INCR 天然原子)。</p>
+  </div>
+</section>
+
+<!-- 第12章 -->
+<section class="ch" id="ch-lock">
+  <p class="kicker">第 十二 讲</p>
+  <h2>分布式锁:一把锁的四个灵魂拷问</h2>
+  <p class="lead"><code class="k">SET lock &lt;uuid&gt; NX EX 30</code> 一行就是 Redis 锁的全部入场式:<b>NX</b> 保证互斥,EX 防死锁。但真正的工程在四个追问里——<mark>① 会不会死锁?</mark>超时有 TTL,但要显著大于业务最坏耗时。<mark>② 会不会误删?</mark>value 存唯一标识,释放时先比对——而且"比对 + 删除"必须 Lua 原子完成,否则"我查完是我的,还没删就过期被别人拿了"。<mark>③ 业务没干完锁先过期怎么办?</mark>看门狗(如 Redisson)在持有期间周期续期。<mark>④ 主从切换丢锁怎么办?</mark>主库刚加锁就宕机、锁还没复制到副本就升主——锁凭空消失。RedLock(向 N 个独立实例多数加锁)想治这个病,但它对时钟漂移和进程停顿的依赖争议很大(Martin Kleppmann 的批评),<b>强正确性场景(钱)请改用数据库行锁/共识系统</b>,Redis 锁更适合"效率锁"——减少冲突,而非绝对的排他。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 14</span><span class="fig-title">锁的一生 · 正确版 vs 误删事故版,对照着演</span></div>
+    <div class="stage" id="d-lock">
+      <div class="lk-stage">
+        <div class="lk-actors">
+          <div class="lk-actor" id="lk-a"><b>A</b><span style="float:right;font-family:var(--mono);font-size:11px;color:var(--ink2)" id="lk-as">idle</span></div>
+          <div class="lk-actor" id="lk-b"><b>B</b><span style="float:right;font-family:var(--mono);font-size:11px;color:var(--ink2)" id="lk-bs">idle</span></div>
+        </div>
+        <div class="lk-res">
+          <div><span class="pill red" style="font-size:11px">key</span> <code class="k">lock:stock</code> = <span class="holder" id="lk-holder">nil</span> · TTL <span class="holder" id="lk-ttlnum">—</span>s(演示中 1s 动画时间 = 3s 锁时)</div>
+          <div class="lk-ttl" id="lk-ttl"><i id="lk-ttlbar"></i></div>
+        </div>
+        <div class="lk-crit" id="lk-crit">临界区:扣减库存 —— 空</div>
+        <div class="lk-note" id="lk-note"></div>
+      </div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="lk-good">▶ 标准版:NX + EX + 唯一值 + 看门狗</button>
+      <button class="btn" id="lk-bad">▶ 事故版:裸 DEL 误删他人锁</button>
+      <span class="hint">事故版盯住 TTL 归零那一瞬——A 的活还没干完,锁已经易主</span>
+    </div>
+    <p class="caption">看门狗的价值在第 12 秒:持有者业务超时在即,锁 TTL 被自动"续命"回满;释放时 Lua 比对 uuid,只开自己那把锁。事故版里 A 的 DEL 删掉了 B 的锁,随后 A、C 同时站在临界区里——这就是"误删"的具象化。</p>
+  </div>
+  <div class="note"><b class="tag">要点</b>面试收口句:"Redis 单实例锁在极端故障下不保证互斥,所以它适合做<b>效率锁</b>;做<b>正确性锁</b>要么 Redlock + 充分认知其局限,要么换方案(数据库乐观锁、ZooKeeper/etcd 的临时顺序节点 + 会话机制)。"——能说出"效率锁/正确性锁"这组对比,这题就赢了。</div>
+</section>
+
+<!-- 附录 -->
+<section class="ch" id="ch-cards">
+  <p class="kicker">附 录</p>
+  <h2>面试速查卡</h2>
+  <p class="lead">十二讲压缩成一句话卡片,忘词时先来这儿续命。每卡右下角标了回看哪一图的细节。</p>
+  <div class="cards" id="card-grid"></div>
+</section>
+
+<footer>
+  Redis 图解讲义 · 全部动画为手写 vanilla JS/SVG,无外部依赖,离线可打开。<br>
+  口径按 Redis 7.x(listpack 已取代 ziplist、multi-part AOF、cluster 行为),更早期版本的差异在各讲正文内有标注。
+</footer>
+</main>
+</div>
+
+<script>
+/* =====================================================================
+   工具
+===================================================================== */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[rnd(0,a.length-1)];
+function h(tag,attrs){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k==='text')e.textContent=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)));}return e;}
+const svgNS='http://www.w3.org/2000/svg';
+function S(tag,attrs){const e=document.createElementNS(svgNS,tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='text')e.textContent=v;else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c)e.append(c);}return e;}
+function mklog(box){return{add(msg,cls){const l=h('div',{class:cls?('ln-'+cls):''},msg);box.append(l);box.scrollTop=box.scrollHeight;}}}
+function runGuard(){let id=0;return{next(){return++id},alive(my){return my===id}};}
+function btnOn(bar,text,cls){return (b)=>{b.disabled=b.classList.contains('on');}}
+
+/* =====================================================================
+   0. 迷你 redis-cli
+===================================================================== */
+function initCLI(){
+  const out=$('#cli-out'), input=$('#cli-input'), chips=$('#cli-chips');
+  if(!out)return;
+  const store=new Map(); // key -> {type, v, exp}
+  const state={multi:null};
+  const put=(text,cls)=>{out.append(h('div',{class:'ln '+(cls||'')},text));out.scrollTop=out.scrollHeight;};
+  const ok=v=>({k:'st',v}), err=v=>({k:'er',v}), int=v=>({k:'int',v}), bulk=v=>({k:'bl',v});
+  const E=(m)=>err('ERR '+m);
+  function getE(k){const e=store.get(k);if(!e)return null;if(e.exp&&Date.now()>=e.exp){store.delete(k);return null;}return e;}
+  function typed(k,t){const e=getE(k);if(!e)return{miss:true};if(e.type!==t)return{wrong:true,e};return{e};}
+  const cmds={
+    PING:a=>ok(a.length?'PONG: '+a[0]:'PONG'),
+    ECHO:a=>a.length?bulk(a.join(' ')):E('wrong number of arguments for \'echo\' command'),
+    SET:(a,flags)=>{if(a.length<2)return E("wrong number of arguments for 'set' command");const[k,v]=a;const cur=flags.NX?store.get(k):null;if(flags.NX&&getE(k))return bulk(null);if(flags.XX&&!getE(k))return bulk(null);const old=getE(k);store.set(k,{type:'string',v,exp:old?old.exp:null});if(flags.EX)store.get(k).exp=Date.now()+flags.EX*1000;return ok('OK');},
+    SETNX:a=>{if(a.length<2)return E('syntax error');if(getE(a[0]))return int(0);store.set(a[0],{type:'string',v:a[1],exp:null});return int(1);},
+    GET:a=>{if(a.length!==1)return E("wrong number of arguments for 'get' command");const r=typed(a[0],'string');if(r.miss)return bulk(null);if(r.wrong)return E('WRONGTYPE Operation against a key holding the wrong kind of value');return bulk(r.e.v);},
+    DEL:a=>{let n=0;a.forEach(k=>{if(store.delete(k))n++});return int(n);},
+    EXISTS:a=>int(a.filter(k=>getE(k)).length),
+    TYPE:a=>{const r=typed(a[0],'any');if(r.miss)return bulk('none');return bulk(r.wrong?'??':r.e.type);},
+    TTL:a=>{const e=store.get(a[0]);if(!e||!getE(a[0]))return int(-2);if(!e.exp)return int(-1);return int(Math.ceil((e.exp-Date.now())/1000));},
+    EXPIRE:a=>{const e=getE(a[0]);if(!e)return int(0);e.exp=Date.now()+parseInt(a[1])*1000;return int(1);},
+    STRLEN:a=>{const r=typed(a[0],'string');if(r.miss)return int(0);if(r.wrong)return E('WRONGTYPE');return int(r.e.v.length);},
+    APPEND:a=>{let r=typed(a[0],'string');if(r.wrong)return E('WRONGTYPE');const cur=r.e.v||'';if(!r.e)store.set(a[0],{type:'string',v:cur+a[1],exp:null});else r.e.v=cur+a[1];return int(store.get(a[0]).v.length);},
+    INCR:a=>{const r=typed(a[0],'string');if(r.miss){store.set(a[0],{type:'string',v:'1',exp:null});return int(1);}if(r.wrong)return E('WRONGTYPE');const n=parseInt(r.e.v);if(isNaN(n))return E('value is not an integer or out of range');r.e.v=String(n+1);return int(n+1);},
+    DECR:a=>{const r=typed(a[0],'string');if(r.miss){store.set(a[0],{type:'string',v:'-1',exp:null});return int(-1);}if(r.wrong)return E('WRONGTYPE');const n=parseInt(r.e.v);if(isNaN(n))return E('value is not an integer or out of range');r.e.v=String(n-1);return int(n-1);},
+    LPUSH:a=>{if(a.length<2)return E("syntax error");let r=typed(a[0],'list');if(r.wrong)return E('WRONGTYPE');let e=r.e;if(!e){e={type:'list',v:[],exp:null};store.set(a[0],e);}for(let i=1;i<a.length;i++)e.v.unshift(a[i]);return int(e.v.length);},
+    RPUSH:a=>{if(a.length<2)return E("syntax error");let r=typed(a[0],'list');if(r.wrong)return E('WRONGTYPE');let e=r.e;if(!e){e={type:'list',v:[],exp:null};store.set(a[0],e);}for(let i=1;i<a.length;i++)e.v.push(a[i]);return int(e.v.length);},
+    LPOP:a=>{const r=typed(a[0],'list');if(r.miss)return bulk(null);if(r.wrong)return E('WRONGTYPE');return bulk(r.e.v.shift()??null);},
+    RPOP:a=>{const r=typed(a[0],'list');if(r.miss)return bulk(null);if(r.wrong)return E('WRONGTYPE');return bulk(r.e.v.pop()??null);},
+    LLEN:a=>{const r=typed(a[0],'list');if(r.miss)return int(0);if(r.wrong)return E('WRONGTYPE');return int(r.e.v.length);},
+    LRANGE:a=>{if(a.length<3)return E("wrong number of arguments for 'lrange' command");const r=typed(a[0],'list');if(r.miss)return{k:'ar',v:[]};if(r.wrong)return E('WRONGTYPE');let s=+a[1],e=+a[2],L=r.e.v.length;if(s<0)s=Math.max(0,L+s);if(e<0)e=L+e;return{k:'ar',v:r.e.v.slice(s,e+1).map(x=>bulk(x))};},
+    SADD:a=>{if(a.length<2)return E("wrong number of arguments");let r=typed(a[0],'set');if(r.wrong)return E('WRONGTYPE');let e=r.e;if(!e){e={type:'set',v:new Set(),exp:null};store.set(a[0],e);}let n=0;for(let i=1;i<a.length;i++){if(!e.v.has(a[i])){e.v.add(a[i]);n++}}return int(n);},
+    SMEMBERS:a=>{const r=typed(a[0],'set');if(r.miss)return{k:'ar',v:[]};if(r.wrong)return E('WRONGTYPE');return{k:'ar',v:[...r.e.v].map(x=>bulk(x))};},
+    SISMEMBER:a=>{const r=typed(a[0],'set');if(r.miss)return int(0);return int(r.e.v.has(a[1])?1:0);},
+    SINTER:a=>{const sets=[];for(const k of a){const r=typed(k,'set');if(r.wrong)return E('WRONGTYPE');if(r.miss)return{k:'ar',v:[]};sets.push(r.e.v);}if(!sets.length)return E('wrong number of arguments');const first=[...sets[0]];const inter=first.filter(x=>sets.every(s=>s.has(x)));return{k:'ar',v:inter.map(x=>bulk(x))};},
+    HSET:a=>{if(a.length<4||(a.length-1)%2!==0)return E("wrong number of arguments for 'hset' command");let r=typed(a[0],'hash');if(r.wrong)return E('WRONGTYPE');let e=r.e;if(!e){e={type:'hash',v:new Map(),exp:null};store.set(a[0],e);}let n=0;for(let i=1;i<a.length;i+=2){if(!e.v.has(a[i]))n++;e.v.set(a[i],a[i+1]);}return int(n);},
+    HGET:a=>{const r=typed(a[0],'hash');if(r.miss||r.wrong&&(r.wrong))return r.wrong?E('WRONGTYPE'):bulk(null);return bulk(r.e.v.get(a[1])??null);},
+    HGETALL:a=>{const r=typed(a[0],'hash');if(r.miss)return{k:'ar',v:[]};if(r.wrong)return E('WRONGTYPE');const arr=[];r.e.v.forEach((v,f)=>{arr.push(bulk(f),bulk(v))});return{k:'ar',v:arr};},
+    HLEN:a=>{const r=typed(a[0],'hash');if(r.miss)return int(0);return int(r.e.v.size);},
+    ZADD:a=>{if(a.length<4)return E("wrong number of arguments for 'zadd' command");let r=typed(a[0],'zset');if(r.wrong)return E('WRONGTYPE');let e=r.e;if(!e){e={type:'zset',v:new Map(),exp:null};store.set(a[0],e);}let n=0;for(let i=1;i<a.length;i+=2){const sc=parseFloat(a[i]);if(isNaN(sc))return E('value is not a valid float');if(!e.v.has(a[i+1]))n++;e.v.set(a[i+1],sc);}return int(n);},
+    ZRANGE:a=>{if(a.length<3)return E("wrong number of arguments for 'zrange' command");const r=typed(a[0],'zset');if(r.miss)return{k:'ar',v:[]};if(r.wrong)return E('WRONGTYPE');const ws=a[3]&&a[3].toUpperCase()==='WITHSCORES';let arr=[...r.e.v.entries()].sort((x,y)=>x[1]-y[1]||(x[0]<y[0]?-1:1));let s=+a[1],e=+a[2],L=arr.length;if(s<0)s=Math.max(0,L+s);if(e<0)e=L+e;arr=arr.slice(s,e+1);const v=[];arr.forEach(([m,sc])=>{v.push(bulk(m));if(ws)v.push(bulk(String(sc)))});return{k:'ar',v};},
+    ZSCORE:a=>{const r=typed(a[0],'zset');if(r.miss)return bulk(null);const sc=r.e.v.get(a[1]);return sc===undefined?bulk(null):bulk(String(sc));},
+    ZCARD:a=>{const r=typed(a[0],'zset');if(r.miss)return int(0);return int(r.e.v.size);},
+    MULTI:()=>{if(state.multi)return E('MULTI calls can not be nested');state.multi=[];return ok('OK');},
+    DISCARD:()=>{if(!state.multi)return E('DISCARD without MULTI');state.multi=null;return ok('QUEUED discarded');},
+    EXEC:()=>{if(!state.multi)return E('EXEC without MULTI');const q=state.multi;state.multi=null;const replies=q.map(([c,a,f])=>run(c,a,f,true));return{k:'ar',v:replies};},
+    KEYS:a=>{if(a[0]!=='*'&&!a[0].includes('?'))return E('this demo only supports * and ? patterns');const re=new RegExp('^'+a[0].replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?g?/g,'.')+'$'.replace('$','') + '$');const ks=[...store.keys()].filter(k=>getE(k));return{k:'ar',v:ks.map(x=>bulk(x)),warn:'⚠ KEYS 是 O(N) 阻塞命令,会卡住整个事件循环 —— 生产请用 SCAN(第 2 讲动画演示过)'};},
+    DBSIZE:()=>int([...store.keys()].filter(k=>getE(k)).length),
+    FLUSHALL:()=>{store.clear();return ok('OK');},
+    INFO:()=>bulk('# Redis(模拟)\r\nredis_version:7.x-illustrated\r\nused_memory_human:42.00K\r\nrole:master\r\nconnected_clients:1'),
+    HELP:()=>bulk('试试 SET/GET/INCR/EXPIRE+TTL/LPUSH+LRANGE/HSET+HGETALL/SADD+SINTER/ZADD+ZRANGE … MULTI+EXEC 也行;↑↓ 翻历史;clear 清屏'),
+  };
+  function run(name,args,flags,inner){
+    const c=cmds[name.toUpperCase()];
+    if(!c)return inner?err("unknown command '"+name+"'"):(E("unknown command '"+name+"', with args beginning with:"));
+    try{return c(args,flags||{});}catch(ex){return E('oops: '+ex.message);}
+  }
+  function fmt(r){
+    const lines=[];
+    if(r.k==='st')lines.push([r.v,'cli-status']);
+    else if(r.k==='er')lines.push(['(error) '+r.v,'cli-err']);
+    else if(r.k==='int')lines.push(['(integer) '+r.v,'cli-int']);
+    else if(r.k==='bl')lines.push(r.v===null?['(nil)','cli-nil']:['"'+r.v+'"','cli-bulk']);
+    else if(r.k==='ar'){
+      if(!r.v.length)lines.push(['(empty array)','cli-nil']);
+      r.v.forEach((x,i)=>{lines.push(['('+ (i+1) +') '+(x.k==='int'?x.v:'"'+x.v+'"'), x.k==='int'?'cli-int':'cli-bulk']);});
+      if(r.warn)lines.push([r.warn,'cli-warn']);
+    }
+    return lines;
+  }
+  function parseFlags(tokens){ // 提取 EX/NX/XX
+    const flags={};const rest=[];
+    for(let i=0;i<tokens.length;i++){const t=tokens[i].toUpperCase();
+      if(t==='EX'&&i+1<tokens.length){flags.EX=+tokens[++i];continue;}
+      if(t==='NX'){flags.NX=1;continue;}
+      if(t==='XX'){flags.XX=1;continue;}
+      rest.push(tokens[i]);}
+    return{args:rest,flags};
+  }
+  function tokenize(line){const out=[],re=/"([^"]*)"|(\S+)/g;let m;while(m=re.exec(line))out.push(m[1]!==undefined?m[1]:m[2]);return out;}
+  const history=[];let hidx=0;
+  function exec(line){
+    put('127.0.0.1:6379> '+line,'cli-cmd');
+    const tokens=tokenize(line);if(!tokens.length)return;
+    const[name,...trest]=tokens;
+    if(name.toLowerCase()==='clear'){out.innerHTML='';return;}
+    const{args,flags}=parseFlags(trest);
+    if(state.multi&&name.toUpperCase()!=='EXEC'&&name.toUpperCase()!=='DISCARD'&&cmds[name.toUpperCase()]){
+      state.multi.push([name,args,flags]);put('QUEUED','cli-status');return;}
+    const reply=run(name,args,flags,false);
+    fmt(reply).forEach(([txt,cls])=>put(txt,cls));
+  }
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){const v=input.value.trim();input.value='';if(v){history.push(v);hidx=history.length;exec(v);}}
+    else if(e.key==='ArrowUp'){e.preventDefault();if(hidx>0){hidx--;input.value=history[hidx]||'';}}
+    else if(e.key==='ArrowDown'){e.preventDefault();if(hidx<history.length-1){hidx++;input.value=history[hidx]||'';}else{hidx=history.length;input.value='';}}
+  });
+  const samples=['SET name redis','GET name','INCR pv','LPUSH mq a b c','LRANGE mq 0 -1','HSET u:1 name 小红 age 18','HGETALL u:1','SADD tags 音乐 旅行','SADD tags 美食 音乐','SINTER tags tags','ZADD rank 90 a 85 b 99 c','ZRANGE rank 0 -1 WITHSCORES','SET s EX 8','TTL s','MULTI','EXEC','KEYS *','HELP'];
+  samples.forEach(s=>{chips.append(h('button',{class:'cli-chip',onclick:()=>{exec(s);input.focus();}},s));});
+  put('欢迎回来 —— 这是一个真会存数据的小 Redis(带惰性过期)。','cli-nil');
+  put('试试下面的一排快捷命令,或直接敲。输入 HELP 看支持列表。','cli-nil');
+}
+
+/* =====================================================================
+   1. 快慢对比
+===================================================================== */
+function initFast(root){
+  const b1=$('#fa-ball1',root),b2=$('#fa-ball2',root),dsk=$('#fa-disk',root);
+  const t1=$('#fa-t1'),t2=$('#fa-t2'),vd=$('#fa-vd'),play=$('#fa-play');
+  const g=runGuard();let busy=false;
+  play.onclick=async()=>{
+    const my=g.next();if(busy){return}busy=true;play.disabled=true;vd.textContent='';t1.textContent='—';t2.textContent='—';
+    b1.style.transition='none';b2.style.transition='none';b1.style.left='8px';b2.style.left='8px';dsk.style.left='10px';
+    await sleep(50);if(!g.alive(my)){busy=false;return}
+    const track=b1.parentElement.clientWidth-36;
+    b1.style.transition='left .35s cubic-bezier(.3,.6,.4,1)';b1.style.left=track+'px';
+    const st=performance.now();
+    const t1i=setInterval(()=>{const e=(performance.now()-st)/350*0.2;if(g.alive(my))t1.textContent=e.toFixed(2)+' ms';},30);
+    await sleep(420);clearInterval(t1i);if(g.alive(my)){t1.textContent='≈0.2 ms';b1.style.left='8px';b1.style.transition='none';}
+    b2.style.transition='left 3.4s linear';b2.style.left=track+'px';
+    dsk.style.transition='left 1.6s ease-in-out';dsk.style.left=(track*0.45)+'px';
+    const st2=performance.now();
+    const t2i=setInterval(()=>{const e=Math.min(1,(performance.now()-st2)/3400)*10;if(g.alive(my))t2.textContent=e.toFixed(1)+' ms';},60);
+    await sleep(3500);clearInterval(t2i);if(g.alive(my)){t2.textContent='≈10 ms';vd.textContent='磁盘跑完 1 圈,内存已经取了 50 趟 —— 这就是缓存存在的意义';b2.style.left='8px';b2.style.transition='none';dsk.style.left='10px';dsk.style.transition='none';}
+    busy=false;play.disabled=false;
+  };
+}
+
+/* =====================================================================
+   2. 事件循环
+===================================================================== */
+function initLoop(root){
+  const qrow=$('#lp-qrow',root),drow=$('#lp-drow',root),qn=$('#lp-qn',root);
+  const cmdEl=$('#lp-cmd',root),block=$('#lp-block',root);
+  const lamps=[$('#lp-l1',root),$('#lp-l2',root),$('#lp-l3',root)];
+  const nEl=$('#lp-n',root),wEl=$('#lp-wait',root);
+  const g=runGuard();let queue=[],done=0,totalWait=0,running=false;
+  const setLamp=i=>lamps.forEach((l,j)=>l.classList.toggle('hot',j===i));
+  function send(client,cmd,cost,isSlow){
+    const chip=h('span',{class:'qchip'+(isSlow?' slow':'')},cmd);
+    const item={cmd,cost,isSlow,chip,t0:performance.now()};
+    qrow.append(chip);queue.push(item);qn.textContent=queue.length;
+    if(!running)loop();
+  }
+  async function loop(){
+    running=true;const my=g.next();
+    while(queue.length){
+      const item=queue[0];
+      setLamp(0);cmdEl.innerHTML='<span class="cli-prompt">→</span> 读取 '+item.cmd;await sleep(200);if(!g.alive(my))return;
+      setLamp(1);cmdEl.innerHTML='<b style="color:var(--red)">执行 '+item.cmd+'</b>';
+      if(item.isSlow){block.hidden=false;[$('#lp-c0'),$('#lp-c1'),$('#lp-c2')].forEach(c=>c.classList.add('dimmed'));}
+      await sleep(item.cost);if(!g.alive(my))return;
+      if(item.isSlow){block.hidden=true;[$('#lp-c0'),$('#lp-c1'),$('#lp-c2')].forEach(c=>c.classList.remove('dimmed'));}
+      setLamp(2);cmdEl.innerHTML='<span style="color:var(--teal)">写回回复</span> '+item.cmd;await sleep(180);if(!g.alive(my))return;
+      queue.shift();item.chip.remove();qn.textContent=queue.length;
+      totalWait+=performance.now()-item.t0;done++;nEl.textContent=done;wEl.textContent=Math.round(totalWait);
+      drow.prepend(h('span',{class:'dchip'},item.cmd+' ✓'));
+      if(drow.children.length>6)drow.lastChild.remove();
+    }
+    setLamp(-1);cmdEl.innerHTML='<span class="idle">idle — 事件循环空转,等待可读事件</span>';
+    running=false;
+  }
+  $$('.lp-client button[data-cost]').forEach((b,i)=>{b.onclick=()=>{const cmd=b.textContent;send(i,cmd,+b.dataset.cost,false);};});
+  $('#lp-slow',root).onclick=()=>send(0,'KEYS *',2800,true);
+  $('#lp-burst',root).onclick=()=>{const cs=[['GET user:1',600],['INCR pv',700],['LPUSH mq t',600],['GET user:2',600],['HGETALL u:9',700],['GET cart:3',600]];cs.forEach((c,i)=>setTimeout(()=>send(i%3,c[0],c[1],false),i*260));};
+  $('#lp-reset',root).onclick=()=>{g.next();running=false;queue.forEach(q=>q.chip.remove());queue=[];drow.innerHTML='';qn.textContent=0;nEl.textContent=0;wEl.textContent=0;totalWait=0;done=0;setLamp(-1);block.hidden=true;[$('#lp-c0'),$('#lp-c1'),$('#lp-c2')].forEach(c=>c.classList.remove('dimmed'));cmdEl.innerHTML='<span class="idle">idle — 事件循环空转,等待可读事件</span>';};
+}
+
+/* =====================================================================
+   3. 类型台
+===================================================================== */
+function initTypes(root){
+  const tabsDef=[['string','String'],['list','List'],['hash','Hash'],['set','Set'],['zset','ZSet']];
+  const tabBar=h('div',{class:'tp-tabs'});const stage=h('div',{class:'tp-stage'});
+  root.append(tabBar,stage);
+  let cur='';
+  function show(name){cur=name;$$('.tp-tab',tabBar).forEach(t=>t.classList.toggle('on',t.dataset.t===name));stage.innerHTML='';(views[name]||(()=>{}))(stage);}
+  tabsDef.forEach(([t,label])=>{const b=h('button',{class:'tp-tab','data-t':t,onclick:()=>show(t)},label);tabBar.append(b);});
+  function grid(stage){const g=h('div',{class:'tp-grid'});const left=h('div'),right=h('div',{class:'tp-cmds'});g.append(left,right);stage.append(g);return{left,cmds:right};}
+  function cmdLine(box,pairs){box.innerHTML='';pairs.forEach(([c,d])=>{box.append(h('div',null,h('span',{class:'c'},c),d));});}
+  function desc(parent,text){parent.append(h('p',{class:'tp-desc',html:text}));}
+  const views={};
+  /* ---- String ---- */
+  views.string=stage=>{
+    const{left,cmds}=grid(stage);
+    cmdLine(cmds,[['SET k v [EX s] [NX]','原子设置,锁的入场券'],['GETSET/INCR/DECR','原子改数值'],['APPEND/STRLEN','拼字符串 / O(1) 长度'],['SETRANGE/GETRANGE','按字节切片']]);
+    const bar=h('div');const input=h('input',{value:'hello redis',style:'font-family:var(--mono);font-size:13px;border:1px solid #C7CCC0;border-radius:6px;padding:4px 8px;width:160px'});
+    const sds=h('div',{class:'sds'});
+    function draw(){const v=input.value;sds.innerHTML='';sds.append(h('span',{class:'hd'},'len='+v.length),h('span',{class:'hd'},'alloc='+Math.max(16,v.length+1)),h('span',{class:'bd'},v),h('span',{class:'nl'},'\\0'),h('span',{class:'free'},'free'));}
+    input.oninput=draw;
+    bar.append(h('span',{style:'font-size:13px'},'SDS 字节数组: '),input);
+    left.append(h('div',{style:'font-size:13px'},'改改下面这串字节,SDS 头部实时跟读长度(这就是 O(1) STRLEN 的秘密):'),bar,sds);
+    const cards=h('div',{class:'st-cards'});
+    cards.append(
+      h('div',null,h('b',null,'int'),'64 位整数共享对象,计数器的最快形态'),
+      h('div',null,h('b',null,'embstr'),'≤44 字节的短串:一次分配,连续内存'),
+      h('div',null,h('b',null,'raw'),'长串:malloc 管理,可改可扩,最大 512MB'));
+    left.append(cards);
+    desc(left,'<b>为什么不用 C 字符串?</b>C 串求长度要 O(N)、拼接可能溢出、存不了 \\0 二进制;SDS 把长度记在头上、按需预分配、用"惰性删除+真正释放"两阶段管理 free 区。');
+    draw();
+  };
+  /* ---- List ---- */
+  views.list=stage=>{
+    const{left,cmds}=grid(stage);
+    cmdLine(cmds,[['LPUSH/RPUSH','两头进 O(1)'],['LPOP/RPOP','两头出 O(1)'],['LINDEX/LRANGE','中间按位 O(N)'],['LMOVE','原子搬运 = 可靠队列零件'],['BLPOP','阻塞式任务队列']]);
+    let items=['任务A','任务B','任务C','任务D'];let cnt=0;
+    const row=h('div',{class:'lq-row'});
+    const tagline=h('div',{style:'font-size:12px;color:var(--ink2);margin-top:6px',html:'一个 quicklist 节点 = 一个 listpack(紧凑连续内存);节点之间双向链接。节点装到 <b>list-max-listpack-size(默认 128)</b> 就分裂。'});
+    function draw(){row.innerHTML='';items.forEach((it,i)=>{const node=h('div',{class:'lq-node'},h('span',{class:'lq-item'},it));if(i===0)node.append(h('div',{class:'lq-tag'},'头'));if(i===items.length-1&&items.length>1)node.append(h('div',{class:'lq-tag'},'尾'));row.append(node);});}
+    left.append(h('div',{style:'font-size:13px'},'quicklist = 双向链表 × listpack,所以两头都快、中间要顺路数过去:'),row,tagline);
+    const b1=h('button',{class:'btn',onclick:()=>{items.unshift('X'+(++cnt));draw();}},'LPUSH 左塞');
+    const b2=h('button',{class:'btn',onclick:()=>{items.push('Y'+(++cnt));draw();}},'RPUSH 右塞');
+    const b3=h('button',{class:'btn',onclick:()=>{if(items.length)items.shift();draw();}},'LPOP');
+    const b4=h('button',{class:'btn',onclick:()=>{if(items.length)items.pop();draw();}},'RPOP');
+    root.querySelector('.dctrl')?.remove();
+    const c=h('div',{class:'dctrl'});c.append(b1,b2,b3,b4,h('span',{class:'hint'},'两端 O(1);想按索引跳进中间——换结构,别为难链表'));stage.append(c);
+    draw();
+  };
+  /* ---- Hash ---- */
+  views.hash=stage=>{
+    const{left,cmds}=grid(stage);
+    cmdLine(cmds,[['HSET/HGET','字段级读写'],['HINCRBY','字段原子加'],['HGETALL','<b>大 hash 慎用</b>(阻塞)'],['HSCAN','渐进遍历'],['field 多 value 大 →','整对象 JSON 塞 String 反而更差']]);
+    let n=0,enc='listpack';
+    const badge=h('span',{class:'pill teal'},'编码:listpack');
+    const box=h('div',{class:'encbox'});
+    const chain=h('div',{class:'lp-chain'});const buckets=h('div',{class:'ht-buckets'});buckets.style.display='none';
+    box.append(h('div',{class:'enc-title'},'f1 → v1 · f2 → v2 · …(连续内存,没有逐字段 malloc)'),chain,buckets);
+    const rows=h('div',{style:'font-size:13px;display:flex;gap:10px;align-items:center'},badge);
+    function draw(){if(enc==='listpack'){chain.style.display='flex';buckets.style.display='none';badge.textContent='编码:listpack';badge.className='pill teal';}else{chain.style.display='none';buckets.style.display='flex';badge.textContent='编码:hashtable';badge.className='pill blue';}}
+    const add=h('button',{class:'btn solid',onclick:()=>{n++;chain.append(h('span',{class:'lp-cell'},'f'+n+':v'+n));
+      if(n>12&&enc==='listpack'){enc='hashtable';box.innerHTML='';
+        const bl=h('div',{class:'ht-buckets'});for(let b=0;b<6;b++){const col=h('div',{class:'ht-col'},h('div',{class:'ht-slot'},'bucket '+b));for(let i=b;i<n;i+=6)col.append(h('div',{class:'ht-item'},'f'+(i+1)));bl.append(col);}
+        box.append(h('div',{class:'enc-title'},'超过阈值:每个字段变成真·字典 entry,可以 O(1) 定位;代价是指针与 malloc 开销'),bl);
+      }
+      draw();}}, '＋ 添加 1 个字段');
+    const add10=h('button',{class:'btn',onclick:()=>{for(let i=0;i<10;i++)add.dispatchEvent(new Event('click'));}}, '＋10');
+    const reset=h('button',{class:'btn',onclick:()=>{n=0;enc='listpack';box.innerHTML='';box.append(h('div',{class:'enc-title'},'f1 → v1 · f2 → v2 · …'),chain,buckets);
+      box.querySelector('.enc-title').nextElementSibling&&0;const ch2=h('div',{class:'lp-chain'});box.append(ch2);
+      views.hash._rebuild&&0;show('hash');}}, '清空');
+    left.append(h('div',{style:'font-size:13px'},'真实阈值 <code class="k">hash-max-listpack-entries=128</code> 与 <code class="k">value ≤64B</code>(演示压到 12 方便看)。点按钮喂字段:'),rows);
+    const c=h('div',{class:'dctrl'});c.append(add,add10,reset,h('span',{class:'hint'},'转换是<b>单向</b>的:转成 hashtable 后就算删回 3 个字段也不会缩回去'));
+    stage.append(c);draw();
+  };
+  /* ---- Set ---- */
+  views.set=stage=>{
+    const{left,cmds}=grid(stage);
+    cmdLine(cmds,[['SADD/SREM','加/删成员'],['SISMEMBER','存在性 O(1)'],['SINTER/SUNION/SDIFF','交并差:共同好友'],['SPOP','抽奖(可弹出个数)'],['SRANDMEMBER','可重复采样'],['SDIFFSTORE','存档差集']]);
+    let mode='intset';const ints=[];const strs=new Set();
+    const box=h('div',{class:'encbox'});const title=h('div',{class:'enc-title'},'intset:全整数且 ≤512 个 → 有序整数数组,查找用二分');
+    const bars=h('div',{class:'is-bars'});const buckets=h('div',{class:'ht-buckets'});buckets.style.display='none';
+    box.append(title,bars,buckets);
+    function draw(){if(mode==='intset'){bars.style.display='flex';buckets.style.display='none';bars.innerHTML='';[...ints].sort((a,b)=>a-b).forEach(v=>{const w=Math.min(60,8+Math.log2(v+1)*8);bars.append(h('div',{class:'is-bar'},h('i',{style:'width:'+w+'px'}),String(v)));});if(!ints.length)bars.append(h('span',{style:'font-size:12px;color:var(--ink2)'},'(空)'));title.textContent='intset:全整数且 ≤512 个 → 有序整数数组,查找用二分';}
+      else{bars.style.display='none';buckets.style.display='flex';buckets.innerHTML='';const arr=[...strs];const bl=h('div',{class:'ht-buckets'});for(let b=0;b<5;b++){const col=h('div',{class:'ht-col'},h('div',{class:'ht-slot'},'bucket '+b));arr.forEach((v,i)=>{if((v.length+i)%5===b)col.append(h('div',{class:'ht-item'},v));});bl.append(col);}
+        buckets.replaceWith(bl);setTimeout(()=>{box.append(bl);},0);title.textContent='出现非整数成员 → 整体转 hashtable(同样不可逆)';}}
+    title.textContent='intset:全整数且 ≤512 个 → 有序整数数组,查找用二分';
+    const say=h('div',{class:'hint'});
+    const bInt=h('button',{class:'btn solid',onclick:()=>{const v=rnd(1,64);if(ints.includes(v)){say.innerHTML='已经有 '+v+' 了 —— <b>Set 自动去重,无变化</b>';return;}ints.push(v);say.textContent='SADD '+v;draw();}}, '＋随机整数');
+    const bStr=h('button',{class:'btn',onclick:()=>{strs.add('m'+rnd(1,999)+pick(['','·x','!']));if(mode==='intset'){mode='hash';}say.innerHTML='塞进了一个非整数 → <b>触发编码转换</b> intset → hashtable';draw();}}, '＋字符串成员');
+    left.append(h('div',{style:'font-size:13px'},'注意有序条:每次插入都保持升序 —— 这就是"整数小集合"的紧凑方案:'),box,say);
+    const c=h('div',{class:'dctrl'});c.append(bInt,bStr);stage.append(c);draw();
+  };
+  /* ---- ZSet ---- */
+  views.zset=stage=>{
+    const{left,cmds}=grid(stage);
+    cmdLine(cmds,[['ZADD key sc m','加/改分数'],['ZRANGE 0 -1','升序排行榜'],['ZREVRANGE','从高到低'],['ZSCORE','O(1) 查某人分数'],['ZINCRBY','点赞 +1'],['ZRANGEBYSCORE','区间:按分数段取人']]);
+    const wrap=h('div',{class:'zs-wrap'});
+    const dict=h('div',{class:'encbox'});dict.append(h('div',{class:'enc-title'},'dict:member → score(O(1) 查分)'));
+    const dlist=h('div');dict.append(dlist);
+    const skip=h('div',{class:'encbox'});skip.append(h('div',{class:'enc-title'},'skiplist:按分数排序(取名次/范围)'));
+    const rows=[['小红',99],['阿强',85],['小明',77],['路人甲',42]];
+    rows.forEach(([m,s])=>{dlist.append(h('div',{style:'font-family:var(--mono);font-size:12px;margin:4px 0'},m+' → '+s));});
+    const chain=h('div',{class:'lp-chain',style:'margin-top:8px'});
+    [...rows].sort((a,b)=>a[1]-b[1]).forEach(([m,s])=>{chain.append(h('span',{class:'lp-cell',style:'background:var(--blue-bg);border-color:#C6D5EC'},s+'·'+m));});
+    skip.append(h('div',{style:'font-size:12px;color:var(--ink2);margin-bottom:4px'},'最底层就是完整有序链表:'),chain);
+    wrap.append(dict,skip);left.append(wrap);
+    desc(left,'<b>一份数据两套索引</b>,成员对象两边共享(dict 存的是指向跳表节点的指针)。代价是多一倍指针,换来的是:<b>查分 O(1)、排名 O(logN)、范围查询顺着链表就走完</b>——排行榜三个需求全占。小 ZSet(≤128 成员)先用 listpack 省内存,超了才"双结构"。下一讲把跳表单独拆开玩。');
+  };
+  show('string');
+}
+
+/* =====================================================================
+   4. 跳表查找
+===================================================================== */
+function initSkip(root){
+  const nodes=[{v:3,l:2},{v:6,l:1},{v:9,l:3},{v:12,l:1},{v:15,l:1},{v:17,l:2},{v:21,l:1},{v:25,l:3},{v:27,l:1},{v:100,l:1}];
+  const MAXL=3,NODEW=60,NODEH=26,COLW=90,X0=58,Y0=30;
+  const width=X0+COLW*nodes.length+30, height=Y0+MAXL*50+16;
+  const box=$('#d-skip');box.innerHTML='';
+  const svg=S('svg',{viewBox:'0 0 '+width+' '+height,width:'100%'});
+  box.prepend(svg);
+  const g=runGuard();
+  function y(lvl){return Y0+(MAXL-lvl)*50;}
+  function x(col){return X0+col*COLW;}
+  // 背景行说明
+  for(let lvl=1;lvl<=MAXL;lvl++){svg.append(S('text',{x:14,y:y(lvl)+17,'font-size':'10',fill:'#7A828C',class:'mono'},'L'+lvl));}
+  const edges={},cell={};
+  for(let lvl=1;lvl<=MAXL;lvl++){edges[lvl]=[];for(let c=-1;c<nodes.length;c++){if(c===nodes.length-1)continue;const reach=(c===-1)||nodes[c].l>=lvl;const nxt=(c===-1)?0:c+1;let d=nxt;while(d<nodes.length&&nodes[d].l<lvl)d++;if(d<nodes.length&&reach){const ln=S('line',{x1:x(c)+NODEW,y1:y(lvl)+NODEH/2,x2:x(d),y2:y(lvl)+NODEH/2,class:'sk-edge'});svg.append(ln);edges[lvl].push({from:c,to:d,el:ln});}}}
+  svg.append(S('rect',{x:x(-1),y:y(1),width:NODEW,height:NODEH*3+22,rx:8,fill:'none',stroke:'#B9BEB4','stroke-dasharray':'3 3'}));
+  svg.append(S('text',{x:x(-1)+8,y:y(1)-6,'font-size':'11',fill:'#59616E'},'HEAD'));
+  nodes.forEach((n,i)=>{const gg=S('g',{class:'sk-node'});gg.append(S('rect',{x:x(i),y:y(n.l)-8,width:NODEW,height:NODEH+(n.l-1)*50+16,rx:6}));for(let lvl=1;lvl<=n.l;lvl++){gg.append(S('text',{x:x(i)+NODEW/2,y:y(lvl)+17,'text-anchor':'middle','font-size':'12',class:'mono'},String(n.v)));}cell[i]=gg;svg.append(gg);});
+  const cmpEl=$('#sk-cmp'),linEl=$('#sk-lin');
+  let lastLog=null;
+  async function search(target){
+    const my=g.next();cmpEl.textContent='…';linEl.textContent='…';
+    let cmp=0,col=-1,lvl=MAXL;
+    const enter=c=>{col=c;if(c>=0){$$('.sk-node.cur',svg).forEach(n=>n.classList.remove('cur'));cell[c].classList.add('cur');}};
+    enter(-1);
+    outer: while(lvl>=1){
+      let e=edges[lvl].find(E=>E.from===col);
+      while(e&&e.to<nodes.length){
+        const nv=nodes[e.to].v;cmp++;
+        e.el.classList.add('act');cell[e.to].classList.add('hl');
+        await sleep(560);if(!g.alive(my))return;
+        if(nv===target){cmpEl.textContent=cmp;linEl.textContent='最多 '+(col+1+e.to+1)+' 次';await sleep(700);cell[e.to].classList.remove('hl');$$('.sk-node.cur',svg).forEach(n=>n.classList.remove('cur'));enter(col);cell[e.to].classList.add('cur');return;}
+        if(nv>target){break;}
+        e.el.classList.remove('act');cell[e.to].classList.remove('hl');enter(e.to);
+        e=edges[lvl].find(E=>E.from===col);
+      }
+      if(e){cell[e.to].classList.remove('hl');e.el.classList.remove('act');}
+      lvl--;
+      if(lvl>=1){const nxt=edges[lvl].find(E=>E.from===col);enter(col);await sleep(380);if(!g.alive(my))return;}
+    }
+    enter(-1);
+    cmpEl.textContent=cmp;linEl.textContent='N';
+  }
+  $$('.dctrl .btn[data-t]',root).forEach(b=>{b.onclick=()=>search(+b.dataset.t);});
+  $('#sk-go',root).onclick=()=>{const v=parseInt($('#sk-input').value);if(!isNaN(v))search(v);};
+  $('#sk-input').addEventListener('keydown',e=>{if(e.key==='Enter')$('#sk-go').click();});
+}
+
+/* =====================================================================
+   5. RDB + AOF
+===================================================================== */
+function initRdb(root){
+  const pagesEl=$('#rdb-pages'),bar=$('#rdb-bar'),prog=$('#rdb-prog'),log=$('#rdb-log');
+  const g=runGuard();let state='idle';
+  const basePages=['页A','页B','页C','页D'];let doms=[];
+  function draw(){pagesEl.innerHTML='';doms=basePages.map(p=>{const d=h('span',{class:'ps-pg'},p);pagesEl.append(d);return d;});}
+  draw();
+  let snapshotTaken=false;
+  $('#rdb-bgsave').onclick=async()=>{
+    const my=g.next();if(state==='run')return;state='run';
+    log.textContent='BGSAVE:fork() 成功,父子共享 '+basePages.length+' 页(COW)…';draw();snapshotTaken=true;
+    for(let i=1;i<=20;i++){
+      if(!g.alive(my))return;
+      bar.style.width=(i*5)+'%';prog.textContent=(i*5)+'%';
+      await sleep(130);
+    }
+    if(!g.alive(my))return;
+    log.textContent='dump.rdb 写入完成 ✓ 子进程退出。';state='idle';
+  };
+  pagesEl.addEventListener('click',e=>{
+    const el=e.target.closest('.ps-pg');if(!el)return;
+    if(state!=='run'){el.style.outline='2px solid var(--gray)';setTimeout(()=>el.style.outline='',400);return;}
+    const name=el.textContent;
+    if(el.classList.contains('cow')){log.textContent='(再点同一个页:已经复制过了)';return;}
+    el.classList.add('cow');
+    const dup=h('span',{class:'ps-pg cow'},name+'′');
+    pagesEl.append(dup);
+    log.innerHTML='客户端改写 '+name+' → 内核先为该页复制一份:父进程拿新页(黄),子进程继续读旧快照 ✓';
+  });
+}
+function initAof(root){
+  const file=$('#aof-file'),buf=$('#aof-buf'),disc=$('#aof-disc'),fcnt=$('#aof-fcnt'),clock=$('#aof-clock'),log=$('#aof-log'),play=$('#aof-play');
+  let mode='always';
+  $$('.radios .btn',root).forEach(b=>{b.onclick=()=>{mode=b.dataset.f;$$('.radios .btn',root).forEach(x=>x.classList.toggle('on',x===b));};});
+  const g=runGuard();let fs=0;
+  const cmds=['*2\r\n$3\r\nSET\r\n$3\r\nk:5\r\n$1\r\n1',
+              '*2\r\n$4\r\nINCR\r\n$3\r\ncnt',
+              '*4\r\n$5\r\nLPUSH\r\n$2\r\nq\r\n$1\r\na',
+              '*3\r\n$4\r\nHSET\r\n$3\r\nu:1\r\n$1\r\nn',
+              '*3\r\n$5\r\nZADD\r\n$3\r\nrk\r\n$2\r\n99',
+              '*4\r\n$5\r\nSADD\r\n$4\r\ntags\r\n$6\r\n"音乐"'];
+  play.onclick=async()=>{
+    const my=g.next();play.disabled=true;fs=0;fcnt.textContent='fsync × 0';file.innerHTML='— 空 —';buf.textContent='(空)';log.textContent='';
+    const buffered=[];
+    let sec=0;clock.textContent='0s';
+    for(let i=0;i<cmds.length;i++){
+      if(!g.alive(my)){play.disabled=false;return}
+      buffered.push(cmds[i].split('\r\n').pop().replace(/^\$\d+\r\n$/,'')||cmds[i]);
+      const line=cmds[i].replace(/\\r\\n/g,' | ').replace(/\*\d+ \| /,'');
+      if(file.textContent==='— 空 —')file.innerHTML='';
+      if(mode==='always'){
+        file.append(h('div',null,line));file.scrollTop=file.scrollHeight;bufed();
+        fs++;fcnt.textContent='fsync × '+fs;flash();log.textContent='every写 → fsync,立刻落盘';
+      }else{
+        file.append(h('div',{class:'fs'},line));file.scrollTop=file.scrollHeight;flushLines();
+        fs++;fcnt.textContent='fsync × '+fs;flash();log.textContent='每秒整批 fsync:上一次落盘到此刻之间的,重启后找回来了';
+      }
+      sec=i%2===1?i/2+1:sec;clock.textContent=Math.floor((i+1)/3)+'s';
+      await sleep(620);
+      if(!g.alive(my)){play.disabled=false;return}
+    }
+    clock.textContent='2s';
+    if(mode==='no'){log.innerHTML='<span class="aof-risk">⚡ 断电!缓冲区里 '+bufed().length+' 条命令只停留在内存 —— 全部丢失</span>';file.innerHTML='';}
+    else if(mode==='everysec'){log.textContent='重启重放:已 fsync 的都在,最后未整秒的至多 1 秒命令丢失。';}
+    else{log.textContent='重启重放:一条不少,但每条命令都多等一次 fsync,吞吐最低。';}
+    play.disabled=false;
+    function flushLines(){}
+    function bufed(){return buffered;}
+    function flash(){disc.classList.add('flash');setTimeout(()=>disc.classList.remove('flash'),250);}
+  };
+}
+
+/* =====================================================================
+   6. 过期与淘汰
+===================================================================== */
+function initExpire(root){
+  const rowsEl=$('#ex-rows'),membar=$('#ex-membar'),memtxt=$('#ex-memtxt'),say=$('#ex-say');
+  let pol='lru';
+  const g=runGuard();
+  const K=[
+    {k:'k1',ttl:3,use:0,hit:1},{k:'k2',ttl:6,use:1,hit:5},{k:'k3',ttl:9,use:2,hit:2},
+    {k:'k4',ttl:12,use:3,hit:8},{k:'k5',ttl:15,use:4,hit:0},{k:'k6',ttl:0,use:5,hit:3}
+  ];
+  let now=0,running=false,timer=null;
+  function draw(){rowsEl.innerHTML='';K.forEach(o=>{
+    const row=h('div',{class:'ex-row'+(o.dead?' gone':'')+(o.flag==='sample'?' sample':'')+(o.flag==='del'?' del':'')+(o.flag==='evict'?' evil':'')});
+    const ttlPct=o.ttl?Math.max(0,Math.round((o.ttl-(now-o.born))/o.ttl*100)):0;
+    row.append(h('span',null,o.k+(o.ttl?' ttl '+o.ttl+'s':' 持久')));
+    const bar=h('div',{class:'ex-ttlbar'},h('i',{style:'width:'+(o.ttl?(o.dead?0:ttlPct):(100))+'%;'+(o.ttl?'':'background:var(--gray)')}));
+    row.append(bar);
+    row.append(h('span',{class:'ex-meta'},(pol==='lru'?'上次访问 t='+(o.use!=null?(o.use>=0?o.use:'-'):'?'):'命中数 '+o.hit)+' · 内存 '+(20+o.ttl)+'MB'));
+    row.dataset.k=o.k;rowsEl.append(row);o.el=row;});
+  }
+  K.forEach(o=>{o.born=0;});
+  draw();
+  function setSay(t){say.innerHTML=t;}
+  function flash(o,flag,ms){o.flag=flag;draw();setTimeout(()=>{if(o.flag===flag){o.flag=null;draw();}},ms);}
+  $('#ex-tick').onclick=()=>{
+    if(running){running=false;clearInterval(timer);return;}
+    running=true;timer=setInterval(()=>{
+      now++;K.forEach(o=>{if(o.ttl&&!o.dead&&now-o.born>=o.ttl){/* 等惰性/定期来收尸 */}});
+      draw();
+      const mem=52+now*1.6;membar.style.width=Math.min(100,mem)+'%';memtxt.textContent=Math.round(Math.min(100,mem))+'%';
+      if(mem>=85){clearInterval(timer);running=false;$('#ex-tick').textContent='▶ 让时钟走起来';evict();}
+    },420);
+    $('#ex-tick').textContent='⏸ 停';
+  };
+  $('#ex-get').onclick=()=>{
+    const o=K[0];
+    if(o.ttl&&now-o.born>=o.ttl&&!o.dead){o.dead=true;draw();setSay('GET k1 → 访问时发现 TTL 已过 → <b>惰性删除</b>当场回收:这就是平时"不访问就占着内存"的债。');}
+    else if(!o.dead){o.use=now;setSay('GET k1 → 还活着,返回 (nil 或值),顺手续写"最近访问时间"给 LRU 记账。');draw();}
+    else setSay('k1 已经删掉了 —— 惰删除、定期删除殊途同归,谁先到算谁的。');
+  };
+  $('#ex-periodic').onclick=async()=>{
+    const alive=K.filter(o=>!o.dead&&o.ttl);
+    if(!alive.length){setSay('没有带 TTL 的活键可采样了。');return;}
+    const my=g.next();
+    const sampleN=Math.min(3,alive.length);
+    const s=[];for(let i=0;i<sampleN;i++)s.push(pick(alive));
+    s.forEach(o=>flash(o,'sample',500));
+    await sleep(560);if(!g.alive(my))return;
+    const expired=s.filter(o=>(now-o.born)>=o.ttl);
+    expired.forEach(o=>{o.dead=true;o.flag='del';});
+    draw();
+    const ratio=Math.round(expired.length/s.length*100);
+    setSay('定期任务:随机抽了 '+s.length+' 个,过期 '+expired.length+' 个('+ratio+'%)'+(ratio>25?'—— 超过 25%,再来一轮!':'—— 不超过 25%,本轮收工。'));
+  };
+  $('#ex-access').onclick=()=>{
+    for(let i=0;i<3;i++){const o=pick(K.filter(x=>!x.dead));if(o){if(pol==='lru')o.use=now;else o.hit+=rnd(1,3);}}
+    setSay('制造了几次访问,LRU 的"上次访问"和 LFU 的"命中数"都变了——再触发淘汰,结果会不一样。');draw();
+  };
+  function evict(){
+    const alive=K.filter(o=>!o.dead);
+    const cand=alive.sort((a,b)=>(pol==='lru'?a.use-b.use:a.hit-b.hit)).slice(0,Math.min(5,alive.length));
+    const victim=pol==='lru'?cand[0]:cand[0];
+    cand.forEach(o=>o.flag='sample');draw();
+    setSay('内存打满('+pol+' 策略):随机采样 '+cand.length+' 个候选'+(cand.length<5?'(样本不够就少采)':'')+',挑其中'+(pol==='lru'?'最久未用':'命中最少')+'的淘汰 —— 近似 LRU/LFU 的精髓:不维护全量链表,只跟样本比。');
+    setTimeout(()=>{victim.dead=true;victim.flag='evict';draw();setSay(say.innerHTML+' <b>被淘汰的是 '+victim.k+'</b>。');},1200);
+  }
+  $$('[data-pol]').forEach(b=>{b.onclick=()=>{pol=b.dataset.pol;$$('[data-pol]').forEach(x=>x.classList.toggle('on',x===b));draw();};});
+}
+
+/* =====================================================================
+   7. 缓存三大问题
+===================================================================== */
+function initCache(root){
+  const stage=root;
+  stage.innerHTML='';
+  const clients=h('div',{class:'cc-clients'});
+  for(let i=0;i<8;i++)clients.append(h('span',{class:'cc-client'},'C'+i));
+  const gate=h('div',{class:'cc-gate'},h('span',null,'布隆过滤器'));
+  const cache=h('div',{class:'cc-cache'});
+  const slotEls=[];
+  for(let i=0;i<6;i++){const s=h('div',{class:'cc-slot'},h('div',{class:'cc-key'},'—'),h('div',{class:'bar'},h('i',null)));cache.append(s);slotEls.push(s);}
+  const db=h('div',{class:'cc-db'},h('b',null,'MySQL'),h('div',{class:'bar'},h('i',null)));
+  stage.append(clients,gate,cache,db);
+  const ctrls=$('#cc-ctrls');
+  const solBox=$('#cc-sol');
+  const dbbar=db.querySelector('.bar>i');
+  let scenario='',sol='',busy=false,my=0,mode={validate:false,bloom:false,nullval:false,mutex:false,logical:false,scatter:false,l1:false};
+  const pos=el=>{const r=el.getBoundingClientRect(),s=stage.getBoundingClientRect();return{x:r.left-s.left+r.width/2,y:r.top-s.top+r.height/2};};
+  const tokW=t=>6*t.text.length+12;
+  function token(text,color){const t=h('div',{class:'tok'+(color?' '+color:'')},text);t.text=text;stage.append(t);return t;}
+  async function move(t,p,ms){t.style.transitionDuration=ms+'ms';t.style.left=(p.x-tokW(t)/2)+'px';t.style.top=(p.y-12)+'px';await sleep(ms+10);}
+  function bye(t){t.style.opacity='0';setTimeout(()=>t.remove(),350);}
+  function killAll(){$$('.tok',stage).forEach(t=>t.remove());}
+  function resetBoard(){
+    my++;killAll();gate.classList.remove('on');db.classList.remove('over');dbbar.style.width='8%';
+    slotEls.forEach((s,i)=>{s.classList.remove('hot','flash','hitf');s.querySelector('.cc-key').textContent='—';s.querySelector('.bar>i').style.width='0%';});
+    $$('.cc-client',stage).forEach(c=>c.className='cc-client');
+  }
+  function setSlots(keys){keys.forEach((k,i)=>{if(slotEls[i]){slotEls[i].querySelector('.cc-key').innerHTML=k;}});}
+  const dbLoad=async(x)=>{dbbar.style.width=Math.min(100,x)+'%';if(x>88)db.classList.add('over');};
+  function slotCenter(i){return pos(slotEls[i]);}
+  async function clientReq(i,t){const p=pos($$('.cc-client',stage)[i]);t.style.left=(p.x-tokW(t)/2)+'px';t.style.top=(p.y+14)+'px';}
+
+  async function hitCache(t,slotIdx){const s=slotEls[slotIdx];s.classList.add('hitf');setTimeout(()=>s.classList.remove('hitf'),350);t.className='tok teal';t.textContent='✓ '+t.text;const p=pos($$('.cc-client',stage)[rnd(0,7)]);await move(t,{x:p.x,y:8},400);bye(t);}
+  async function hitDb(t){dbLoad(Math.min(100,8+$$('.tok',stage).length*14));t.className='tok amber';await move(t,pos(db.querySelector('b')),420);const back={x:pos(t).x,y:20};await sleep(120);t.textContent='回'+t.text.slice(0,3);bye(t);}
+
+  /* ---- 剧本 ---- */
+  async function playPenetration(){
+    scenario='pen';sol='';resetBoard();setSlots(['u:1','u:2','u:3','u:4','u:5','u:6']);
+    slotEls.forEach(s=>{s.style.opacity=.5;});
+    solBox.classList.remove('on');
+    solBox.innerHTML='';
+    logSay('【穿透】查的都是库里根本不存在的 user:ghost-xxx,缓存永远没坑位…');
+    const jobs=[];
+    for(let i=0;i<5;i++){
+      const t=token('ghost-'+(i+1));await clientReq(rnd(0,7),t);
+      jobs.push(async()=>{
+        const m=my;
+        await move(t,slotCenter(i%6),360);if(m!==my)return;
+        slotEls.forEach(s=>{s.classList.add('flash');setTimeout(()=>s.classList.remove('flash'),300);});
+        await sleep(260);if(m!==my)return;
+        if(mode.validate&&i>=2){t.className='tok red';t.textContent='✕';bye(t);logSay('参数校验:非法 id 直接拒,连 Redis 都不进。');return;}
+        if(mode.bloom){t.className='tok red';t.textContent='✕布隆';gateFlash();bye(t);return;}
+        await move(t,pos(db),450);if(m!==my)return;
+        if(mode.nullval&&i===0){slotEls[0].style.opacity=1;slotEls[0].querySelector('.cc-key').textContent='∅';slotEls[0].querySelector('.bar>i').style.width='40%';logSay('第一次漏到 DB → 把 <b>空值 ∅ 也缓存</b>(短 TTL)。');}
+        t.className='tok amber';t.textContent='DB:'+t.text.slice(0,5);await sleep(320);if(m!==my)return;
+        const back=pos($$('.cc-client',stage)[0]);await move(t,{x:back.x,y:10},420);bye(t);
+      });
+      t.style.transitionDelay=(i*90)+'ms';
+    }
+    await Promise.all(jobs.map(j=>j()));
+    if(mode.nullval){logSay('第二轮同样的 ghost 查询 → 命中 ∅,直接返回空:');
+      for(let i=0;i<2;i++){const t=token('ghost-'+(i+1));await clientReq(rnd(0,7),t);const m=my;await move(t,slotCenter(0),360);if(m!==my)return;t.className='tok teal';t.textContent='∅✓';const p=pos($$('.cc-client',stage)[0]);await move(t,{x:p.x,y:8},380);bye(t);}}
+  }
+  function gateFlash(){gate.classList.add('on');logSay('<b>布隆过滤器</b>说"这个 key 一定不存在" → 直接拒绝,DB 零负载。(注意:布隆只保证判"不存在",判"存在"有小概率误判)');setTimeout(()=>gate.classList.remove('on'),2000);}
+  async function playBreakdown(){
+    scenario='break';resetBoard();setSlots(['<b style="color:var(--red)">article:1024</b>','u:2','u:3','u:4','u:5','u:6']);
+    slotEls[0].classList.add('hot');slotEls[0].querySelector('.bar>i').style.width='90%';
+    const hot=slotCenter(0);
+    logSay('【击穿】热点 key article:1024 马上过期,而它每秒被问几百次…');
+    const tokens=[];for(let i=0;i<8;i++){const t=token('GET');tokens.push(t);clientReq(i,t);}
+    await Promise.all(tokens.map((t,i)=>move(t,{x:hot.x+(i%2?12:-12),y:hot.y},480)));
+    slotEls[0].querySelector('.bar>i').style.width='0%';slotEls[0].classList.add('flash');setTimeout(()=>slotEls[0].classList.remove('flash'),350);
+    logSay('砰,过期了。此刻 8 个并发全数到场——');
+    if(mode.mutex){
+      logSay('<b>互斥重建</b>:抢到锁的那 1 个去查 DB,其余原地等待。');
+      const m=my;await move(tokens[0],pos(db),450);if(m!==my)return;
+      dbLoad(34);slotEls[0].querySelector('.bar>i').style.width='100%';slotEls[0].querySelector('.bar>i').style.background='var(--teal)';
+      await sleep(400);if(m!==my)return;
+      tokens[0].textContent='回填✓';tokens[0].className='tok teal';await move(tokens[0],hot,400);await move(tokens[0],{x:pos($$('.cc-client',stage)[0]).x,y:8},400);bye(tokens[0]);
+      for(let i=1;i<tokens.length;i++){tokens[i].className='tok gray';await move(tokens[i],{x:hot.x+(i%2?14:-14),y:hot.y+18},100);}
+      logSay('等待者醒来,直接命中刚回填的缓存——DB 只挨了 1 次。');
+      for(const t of tokens.slice(1)){const m=my;if(mode.logical){}t.className='tok';const p=pos($$('.cc-client',stage)[rnd(0,7)]);await move(t,{x:p.x,y:8},350);bye(t);if(m!==my)return;}
+    }else if(mode.logical){
+      logSay('<b>逻辑过期</b>:键"物理上"永不过期,值里带逻辑时间 → 过期瞬间大家先读旧值走人,只派 1 个异步去刷。');
+      tokens.forEach((t,i)=>{const m=my;setTimeout(async()=>{if(m!==my)return;t.className='tok teal';t.textContent='旧值✓';const p=pos($$('.cc-client',stage)[i%8]);await move(t,{x:p.x,y:8},380);bye(t);},i*60);});
+      const bt=token('异步刷新','amber');await clientReq(7,bt);const m=my;await move(bt,pos(db),450);await sleep(100);slotEls[0].querySelector('.bar>i').style.width='100%';bye(bt);
+    }else{
+      logSay('没有防护:8 路全部漏进 DB ——');
+      dbLoad(96);
+      await Promise.all(tokens.map((t,i)=>move(t,{x:pos(db).x+(i-3.5)*16,y:pos(db).y},450)));
+    }
+  }
+  async function playAvalanche(){
+    scenario='snow';resetBoard();setSlots(['u:1','o:7','s:3','cfg','sms','tok']);
+    const ttl=mode.scatter?[3,5,7,9,12,14]:[6,6,6,6,6,6];
+    slotEls.forEach((s,i)=>{s.querySelector('.bar>i').style.width=ttl[i]*7+'%';});
+    logSay(mode.scatter?'【雪崩-已治】TTL 各加随机抖动,到期时间散开…':'【雪崩】整批缓存被约定成同一个 TTL=600s…');
+    const slots=slotEls.map(s=>pos(s));
+    const tokens=[];for(let i=0;i<6;i++){const t=token('GET');tokens.push(t);clientReq(i,t);}
+    await Promise.all(tokens.map((t,i)=>move(t,slots[i],900)));
+    if(!mode.scatter){
+      slotEls.forEach(s=>{s.querySelector('.bar>i').style.width='0%';s.classList.add('flash');setTimeout(()=>s.classList.remove('flash'),400);});
+      logSay('同一秒,全过期。6 路一起漏到 DB,负载直接拉满——');
+      dbLoad(98);
+      await Promise.all(tokens.map((t,i)=>move(t,{x:pos(db).x+(i-2.5)*18,y:pos(db).y},450)));
+    }else{
+      logSay('到期时刻被 [3,5,7,9,12,14] 打散,一波变六波:');
+      const m=my;
+      for(let i=0;i<6;i++){
+        setTimeout(async()=>{if(m!==my)return;slotEls[i].querySelector('.bar>i').style.width='0%';slotEls[i].classList.add('flash');await move(tokens[i],{x:pos(db).x+(i-2.5)*18,y:pos(db).y},400);await sleep(200);if(m!==my)return;tokens[i].textContent='回';bye(tokens[i]);},i*420);
+        dbLoad(26+i*3);
+      }
+      await sleep(2900);
+    }
+  }
+  function logSay(t){solBox.classList.add('on');solBox.innerHTML='<b>旁白 ·</b> '+t;}
+
+  /* ---- 控件 ---- */
+  const scenes=[['穿透',playPenetration],['击穿',playBreakdown],['雪崩',playAvalanche]];
+  const sols={
+    pen:[['参数校验','validate'],['缓存空值','nullval'],['布隆过滤器','bloom']],
+    break:[['互斥重建','mutex'],['逻辑过期','logical']],
+    snow:[['TTL 随机抖动','scatter']]
+  };
+  function renderCtrls(){
+    ctrls.innerHTML='';
+    scenes.forEach(([label,fn],idx)=>{
+      const b=h('button',{class:'btn'+(scenario===['pen','break','snow'][idx]?' on':'')},label);
+      b.onclick=()=>{if(busy)return;busy=true;(async()=>{try{await fn();}finally{busy=false;renderCtrls();}})();};
+      ctrls.append(b);
+    });
+    const gap=h('span',{class:'gap'});ctrls.append(gap);
+    if(!scenario){const tip=h('span',{class:'hint'},'先选一个剧本开演,再点下方的"解法开关"重演对比');ctrls.append(tip);return;}
+    (sols[scenario]||[]).forEach(([label,key])=>{
+      const b=h('button',{class:'btn'+(mode[key]?' on':'')},'💡 '+label);
+      b.onclick=()=>{mode[key]=!mode[key];if(!busy){busy=true;const fn=scenes[['pen','break','snow'].indexOf(scenario)][1];(async()=>{try{await fn();}finally{busy=false;renderCtrls();}})();}else renderCtrls();};
+      ctrls.append(b);
+    });
+    const r=h('button',{class:'btn'},'重置');r.onclick=()=>{resetBoard();sol='';logSay('已重置。选剧本再来。');};ctrls.append(r);
+  }
+  renderCtrls();
+}
+
+/* =====================================================================
+   8. 主从复制
+===================================================================== */
+function initRepl(root){
+  const mo=$('#rp-mo'),so=$('#rp-so'),stateEl=$('#rp-state'),sbox=$('#rp-sbox'),backlogEl=$('#rp-backlog');
+  const mmsg=$('#rp-mmsg'),smsg=$('#rp-smsg'),load=$('#rp-load');
+  const g=runGuard();
+  let offset=0,slaveOffset=0,bl=[],synced=false,conn=true;
+  function drawBL(){backlogEl.innerHTML='';bl.slice(-12).forEach((b,i,arr)=>{const d=h('span',{class:'rp-blk'+(b.kind?' '+(b.kind==='miss'?'':''):''),style:b.kind==='used'?'background:var(--teal)':(b.kind==='lost'?'background:var(--red)':'')},b.cmd||'');backlogEl.append(d);});}
+  drawBL();
+  function setStatus(s){stateEl.textContent=s;}
+  async function packet(from,to,text,cls,ms){
+    const f=from.getBoundingClientRect(),t=to.getBoundingClientRect(),r=root.getBoundingClientRect();
+    const tok=h('div',{class:'tok '+(cls||'blue')},text);
+    tok.style.left=(f.left-r.left+f.width/2-24)+'px';tok.style.top=(f.top-r.top+f.height+4)+'px';tok.style.transitionDuration=ms+'ms';
+    root.append(tok);
+    await sleep(30);tok.style.left=(t.left-r.left+t.width/2-24)+'px';tok.style.top=(t.top-r.top-30)+'px';
+    await sleep(ms+30);tok.remove();
+  }
+  $('#rp-full').onclick=async()=>{
+    const my=g.next();const m=$('#rp-sbox'),mm=$('.rp-box.master');
+    setStatus('CONNECT');sbox.classList.remove('dis');synced=false;conn=true;
+    mmsg.textContent='副本:PSYNC ? -1 → 主库回 +FULLRESYNC replid 0';smsg.textContent='';
+    await packet(mm,m,'PSYNC','blue',600);if(!g.alive(my))return;
+    mm.style.borderColor='var(--amber)';mmsg.textContent='主库:BGSAVE,快照流式传输中…';
+    for(let i=1;i<=8;i++){setStatus('TRANSFER');await packet(mm,m,'RDB','amber',260);if(!g.alive(my))return;load.style.width=(i*12.5)+'%';}
+    setStatus('LOAD');mmsg.textContent='加载完成,进入命令传播(长连接)';
+    await sleep(400);if(!g.alive(my))return;
+    mm.style.borderColor='';load.style.width='100%';synced=true;setStatus('SYNCED ✓');smsg.textContent='已和主库保持一致';
+    offset=0;mo.textContent=0;so.textContent=0;
+  };
+  $('#rp-write').onclick=async()=>{
+    const my=g.next();const mm=$('.rp-box.master');
+    if(!synced){mmsg.textContent='(还没连上副本,先点①)';return;}
+    for(const c of ['SET a 1','INCR cnt','LPUSH q x']){
+      offset++;mo.textContent=offset;bl.push({cmd:c,kind:'used'});drawBL();
+      mmsg.textContent='写命令 '+c+' → offset '+offset;
+      await packet(mm,$('#rp-sbox'),c,'teal',500);if(!g.alive(my))return;
+      slaveOffset++;so.textContent=slaveOffset;
+    }
+    mmsg.textContent='传播正常:每条命令实时推给副本';
+  };
+  $('#rp-short').onclick=async()=>{
+    const my=g.next();if(!synced)return;conn=false;sbox.classList.add('dis');setStatus('DISCONNECTED');
+    mmsg.textContent='断线中…主库继续写,命令滑进 backlog';
+    for(const c of ['SET b 2','HSET h f v']){offset++;mo.textContent=offset;bl.push({cmd:c});drawBL();await sleep(500);if(!g.alive(my))return;}
+    smsg.textContent='副本报 PSYNC <i>replid 7f3a…c1</i> '+slaveOffset+' —— 缺口还在 backlog 里!';
+    conn=true;sbox.classList.remove('dis');setStatus('RECONNECT');
+    const miss=bl.slice(slaveOffset,offset);
+    for(const b of miss){b.kind='used';drawBL();slaveOffset++;so.textContent=slaveOffset;await packet($('.rp-box.master'),sbox,b.cmd,'teal',380);if(!g.alive(my))return;}
+    setStatus('SYNCED ✓');mmsg.textContent='部分复制完成:只补发了断线期间的增量,没走全量';smsg.textContent='✓ 缺口缝合';
+  };
+  $('#rp-long').onclick=async()=>{
+    const my=g.next();if(!synced)return;sbox.classList.add('dis');setStatus('DISCONNECTED');
+    mmsg.textContent='断很久…backlog(环形!)被新命令写满,<b style="color:var(--red)">旧缺口被覆盖</b>';
+    for(let i=0;i<14;i++){offset++;mo.textContent=offset;bl.push({cmd:'w'+offset,kind:i<6?'lost':null});drawBL();await sleep(120);if(!g.alive(my))return;}
+    smsg.textContent='副本 PSYNC…offset 已不在 backlog 窗口内 → 主库:+FULLRESYNC';
+    sbox.classList.remove('dis');synced=false;load.style.width='0';
+    $('#rp-full').dispatchEvent(new Event('click'));
+  };
+  $('#rp-reset').onclick=()=>{g.next();offset=0;slaveOffset=0;bl=[];synced=false;drawBL();mo.textContent=0;so.textContent=0;load.style.width='0';setStatus('DISCONNECTED');sbox.classList.add('dis');mmsg.innerHTML='';smsg.innerHTML='';};
+}
+
+/* =====================================================================
+   9. 哨兵
+===================================================================== */
+function initSentinel(root){
+  const log=mklog($('#sn-log')),hint=$('#sn-hint');
+  const m=$('#sn-m'),mb=$('#sn-mb'),r1=$('#sn-r1'),r2=$('#sn-r2'),s1=$('#sn-s1'),s2=$('#sn-s2'),s3=$('#sn-s3');
+  const stepBtn=$('#sn-step');
+  let step=0;
+  const lines=[
+    ['① 主库挂了',()=>{m.classList.add('dead');mb.textContent='✕ 无响应';return'10.0.0.1:6379 停止心跳响应…'}],
+    ['② 主观下线 SDOWN',()=>{s1.append(h('span',{class:'sn-sdown'},'sdown+1'));return'Sentinel-1 ping 超时 → <b>我</b>认为主库下线( subjective )。另外两个还在正常 ping。'}],
+    ['③ 客观下线 ODOWN',()=>{[s2,s3].forEach(s=>s.append(h('span',{class:'sn-sdown'},'sdown+1')));m.classList.add('evil');return'三个哨兵互相同步 is-master-down-by-addr… 3 ≥ quorum(2) → <b>客观下线</b>,确认丧讯。'}],
+    ['④ 选领头哨兵',()=>{const c=h('span',{class:'sn-leader'},'👑');s2.append(c);return'Sentinel 内部过半票选(failover 授权)→ <b>Sentinel-2</b> 当选领头,只有它能主持切换。'}],
+    ['⑤ 挑新主',()=>{r1.classList.add('promoted');return'副本清单:[R-Slave-1(prio100,offset<b>42</b>), R-Slave-2(prio100,offset40)]→ 优先级同、<b>数据最新的 R-Slave-1 胜出</b>。'}],
+    ['⑥ 切换 + 通知',()=>{mb.textContent='(将以副本身份回来)';r1.classList.add('master');r2.classList.add('dis');r2.innerHTML='R-Slave-2<span class="sn-badge">已改配置 → 复制 R-Slave-1</span>';return'领头者指挥:R-Slave-1 升主、其余副本改挂它、老主复活后降为副本;+switch-master 事件发布,客户端改连 <b>新主</b>。'}],
+  ];
+  let idx=0;
+  stepBtn.onclick=()=>{
+    if(idx>=lines.length){log.add('— 剧本结束,点"重来"再看一遍 —','dim');return;}
+    const [title,fn]=lines[idx];const say=fn();log.add(title+' ▸ '+say,idx===lines.length-1?'ok':null);
+    hint.textContent=idx<lines.length-1?'下一步:'+(lines[idx+1][0]):'演完了';
+    idx++;
+    if(idx===lines.length)stepBtn.textContent='✔ 完成';
+  };
+  $('#sn-reset').onclick=()=>{
+    idx=0;stepBtn.textContent='下一步 ▸';hint.textContent='共 6 步:宕机 → 主观下线 → 客观下线 → 选领头 → 挑新主 → 切换与通知';
+    $('#sn-log').innerHTML='';
+    [m,r1,r2,s1,s2,s3].forEach(n=>n.classList.remove('dead','promoted','master','dis','evil'));
+    $$('.sn-sdown,.sn-leader',root).forEach(e=>e.remove());
+    mb.textContent='10.0.0.1:6379';r1.innerHTML='R-Slave-1<span class="sn-badge">offset 42</span>';r2.innerHTML='R-Slave-2<span class="sn-badge">offset 40</span>';s1.innerHTML='Sentinel-1<span class="sn-badge">10.0.0.4:26379</span>';s2.innerHTML='Sentinel-2<span class="sn-badge">10.0.0.5:26379</span>';s3.innerHTML='Sentinel-3<span class="sn-badge">10.0.0.6:26379</span>';
+  };
+}
+
+/* =====================================================================
+   10. Cluster
+===================================================================== */
+function initCluster(root){
+  const bar=$('#cl-bar'),info=$('#cl-info'),keyIn=$('#cl-key');
+  function crc16(str){let crc=0;for(let i=0;i<str.length;i++){crc^=str.charCodeAt(i)<<8;for(let b=0;b<8;b++)crc=(crc&0x8000)?((crc<<1)^0x1021)&0xffff:(crc<<1)&0xffff;}return crc;}
+  function slotOf(key){let k=key;const s=k.indexOf('{'),e=k.indexOf('}',s+1);if(s>=0&&e>s+1)k=k.slice(s+1,e);return crc16(k)%16384;}
+  const segs=[{id:'cl-m1',from:0,to:5460,color:'#2D5FA6'},{id:'cl-m2',from:5461,to:10922,color:'#0E7C6B'},{id:'cl-m3',from:10923,to:16383,color:'#A9750A'}];
+  bar.innerHTML='';
+  segs.forEach(sg=>{const d=h('div',{class:'cl-seg',id:sg.id,style:`left:${sg.from/16383*100}%;width:${(sg.to-sg.from+1)/16384*100}%;background:${sg.color}`},sg.id.replace('cl-','')+` ${sg.from}–${sg.to}`);bar.append(d);});
+  const cursor=h('div',{class:'cl-cursor'},h('span',null,'0'));bar.append(cursor);
+  function nodeOf(slot){return segs.find(s=>slot>=s.from&&slot<=s.to).id;}
+  $('#cl-route').onclick=()=>{
+    const key=keyIn.value||'foo';const slot=slotOf(key);const nid=nodeOf(slot);
+    $$('.cl-node',root).forEach(n=>n.classList.remove('target'));
+    cursor.style.left=(slot/16383*100)+'%';cursor.querySelector('span').textContent=slot;
+    const node=$('#'+nid,root);node.classList.add('target');
+    $$('.cl-seg',root).forEach(s=>{if(s.id===nid){s.classList.add('blink');setTimeout(()=>s.classList.remove('blink'),600);}});
+    info.innerHTML=`CRC16("<b>${key.replace(/[<>&]/g,'')}</b>") = ${crc16(key.includes('{')&&/\{([^}]+)\}/.exec(key)?RegExp.$1:key)} → %16384 = <b>槽 ${slot}</b> → 归 <b>${nid.replace('cl-','')}</b> 管辖${key.includes('{')?'(只对花括号内容做哈希 → hash tag ✓)':''}`;
+  };
+  $$('[data-k]',root).forEach(b=>{b.onclick=()=>{keyIn.value=b.dataset.k;$('#cl-route').click();};});
+  $('#cl-moved').onclick=()=>{
+    const key=keyIn.value||'user:1001';const slot=slotOf(key);const nid=nodeOf(slot);
+    const wrong=segs.find(s=>s.id!==nid);const wn=$('#'+wrong.id,root);const tg=$('#'+nid,root);
+    $$('.cl-node',root).forEach(n=>n.classList.remove('target'));
+    wn.style.borderColor='var(--amber)';tg.classList.add('target');
+    info.innerHTML=`→ 客户端缓存表过期,把 <b>${key.replace(/[<>&]/g,'')}</b> 发给了 ${wrong.id.replace('cl-','')};它回 <b style="color:var(--red)">MOVED ${slot} ${nid.replace('cl-','')}</b>,客户端更新槽表后重发。(迁移中途则是 ASK 重定向)`;
+    setTimeout(()=>wn.style.borderColor='',1500);
+  };
+  $('#cl-down').onclick=()=>{
+    const m3=$('#cl-m3',root);m3.classList.add('down');m3.querySelector('.cl-slave').innerHTML='<b style="color:var(--teal)">S3 升主成功</b>';
+    info.innerHTML='💥 M3 失联 → 多数主节点判定 + 分片内投票 → <b>S3 升为新主</b>,槽 10923–16383 无缝接管;客户端收到 MOVED 后自愈。<button class="btn" id="cl-rev">恢复 M3</button>';
+    $('#cl-rev').onclick=()=>{m3.classList.remove('down');m3.querySelector('.cl-slave').innerHTML='S3 · 副本(已回来)';info.innerHTML='老 M3 复活 → 自动降级为 S3 的副本,数据走部分复制追平。';};
+  };
+  $('#cl-route').click();
+}
+
+/* =====================================================================
+   11. Pipeline + 事务
+===================================================================== */
+function initPipe(root){
+  const l1=$('#pp-lane1'),l2=$('#pp-lane2'),r1=$('#pp-r1'),r2=$('#pp-r2');
+  const play=$('#pp-play');const g=runGuard();
+  function seg(parent,l,w,cls,label,ms,delay){const s=h('div',{class:'pp-seg '+cls,style:`left:${l}px;width:${w}px`},label);parent.append(s);setTimeout(()=>{s.style.opacity='1';},delay);return s;}
+  const RTT=90,CPU=22,W1=RTT+CPU+RTT,CMD=4;
+  play.onclick=async()=>{
+    const my=g.next();play.disabled=true;l1.innerHTML='';l2.innerHTML='';
+    // sequential
+    let x=4;for(let i=0;i<CMD;i++){const t0=4+i*W1+ i*6;
+      seg(l1,t0,RTT*0.32,'', 'req',0,t0*3);seg(l1,t0+RTT*0.36,CPU,'pp-exec','',0,t0*3+10);seg(l1,t0+RTT*0.36+CPU+3,RTT*0.32,'rep','',0,t0*3+14);}
+    r1.textContent='≈'+(CMD*W1/1000*3).toFixed(1)+'s';
+    await sleep(CMD*W1*3/1000*1000+400);if(!g.alive(my)){play.disabled=false;return}
+    // pipeline
+    const px=4;seg(l2,px,CMD*36,'req','req×4',0,0);seg(l2,px+CMD*36+6,CMD*CPU,'pp-exec','exec×4',0,CMD*36*10);seg(l2,px+CMD*36+CMD*CPU+12,CMD*30,'rep','rep×4',0,(CMD*36+CMD*CPU+12)*10);
+    r2.textContent='≈'+((CMD*36+CMD*CPU+CMD*30)/1000*10).toFixed(1)+'s';
+    r1.innerHTML='2.4 ms<span style="color:var(--red)">(4×RTT)</span>';r2.innerHTML='1.1 ms<span style="color:var(--teal)">(1×RTT)</span>';
+    play.disabled=false;
+  };
+}
+function initTx(root){
+  const q=$('#tx-queue'),ex=$('#tx-exec'),vd=$('#tx-vd');
+  const g=runGuard();
+  function clear(){q.innerHTML='';ex.innerHTML='';vd.innerHTML='';}
+  function item(box,text,cls){const d=h('div',{class:'tx-item '+(cls||'')},text);box.append(d);return d;}
+  async function script(kind){
+    const my=g.next();clear();
+    item(q,'MULTI','');vd.textContent='';
+    await sleep(300);if(!g.alive(my))return;
+    const cmd1=item(q,'SET k1 v1','queued');cmd1.classList.add('queued');
+    await sleep(280);if(!g.alive(my))return;
+    let cmd2;
+    if(kind==='syntax'){cmd2=item(q,'INCR k1 <b style="color:var(--red)">(语法错)</b>','queued');cmd2.innerHTML='INCR (缺 key,语法错)';}
+    else cmd2=item(q,'INCR k1','queued');
+    await sleep(280);if(!g.alive(my))return;
+    const cmd3=item(q,'LPUSH l a','queued');
+    await sleep(280);if(!g.alive(my))return;
+    if(kind==='syntax'){
+      vd.innerHTML='<span style="color:var(--red)">EXEC 被拒绝:入队期发现语法错误 → 整个事务丢弃,一条都没执行</span>';
+      [cmd1,cmd2,cmd3].forEach(c=>c.classList.add('bad'));
+      return;
+    }
+    if(kind==='watch'){
+      await sleep(200);item(q,'WATCH balance','');
+      const other=h('div',{class:'tx-item bad'},'⚡ 客户端 B 此刻改了 balance');q.append(other);
+      await sleep(500);
+      item(q,'MULTI → 队列','');
+      vd.innerHTML='<span style="color:var(--red)">EXEC → (nil):WATCH 的键被外人动过 → 事务放弃,客户端按新版本重试(乐观锁)</span>';
+      return;
+    }
+    if(kind==='runtime'){
+      item(ex,'SET k1 v1 ✓ 已执行','exec');await sleep(400);if(!g.alive(my))return;
+      item(ex,'INCR k1 ✗ ERR not an integer','bad');await sleep(400);if(!g.alive(my))return;
+      item(ex,'LPUSH l a ✓ 照常执行','exec');await sleep(300);if(!g.alive(my))return;
+      vd.innerHTML='<span style="color:var(--red)">注意:报错后的命令依然执行,已执行的不会撤销 —— Redis 事务没有回滚!</span>';
+      return;
+    }
+    item(ex,'SET k1 v1 ✓','exec');await sleep(350);if(!g.alive(my))return;
+    item(ex,'INCR k1 → 1 ✓','exec');await sleep(350);if(!g.alive(my))return;
+    item(ex,'LPUSH l a → 1 ✓','exec');
+    vd.innerHTML='<span style="color:var(--teal)">EXEC:三条连续执行,中间不插别人 —— 隔离 ≠ 原子回滚</span>';
+  }
+  $$('.dctrl [data-c]',root).forEach(b=>{b.onclick=()=>script(b.dataset.c);});
+  script('ok');
+}
+
+/* =====================================================================
+   12. 分布式锁
+===================================================================== */
+function initLock(root){
+  const A=$('#lk-a'),B=$('#lk-b'),as=$('#lk-as'),bs=$('#lk-bs');
+  const holder=$('#lk-holder'),ttlNum=$('#lk-ttlnum'),ttlBar=$('#lk-ttlbar'),ttlBox=$('#lk-ttl'),crit=$('#lk-crit'),note=$('#lk-note');
+  const good=$('#lk-good'),bad=$('#lk-bad');
+  const g=runGuard();
+  function ttl(pct,warn){ttlBar.style.width=pct+'%';ttlBox.classList.toggle('warn',!!warn);}
+  async function playGood(){
+    const my=g.next();good.disabled=bad.disabled=true;
+    holder.textContent='nil';ttl(100,false);crit.className='lk-crit';crit.textContent='临界区:扣减库存 —— 空';as.textContent='idle';bs.textContent='idle';
+    note.innerHTML='A 来了:<code class="k">SET lock:stock uuid-A NX EX 30</code>';A.classList.add('holding');as.textContent='SET NX ✓';holder.textContent='uuid-A';
+    for(let i=0;i<4;i++){ttl(100-i*22,false);await sleep(380);if(!g.alive(my))return finish();}
+    note.innerHTML='B 来了,也抢:<code class="k">SET … NX</code> → <b style="color:var(--red)">(nil) 失败</b> → 退避重试';B.classList.add('waiting');bs.textContent='重试等待…';
+    await sleep(600);if(!g.alive(my))return finish();
+    note.innerHTML='A 业务超时风险 → <b>看门狗</b>把 TTL 续回满';ttl(100,false);
+    await sleep(500);if(!g.alive(my))return finish();
+    ttl(18,true);note.innerHTML='TTL 快到了…看门狗第 2 次续期 ⚡';await sleep(500);if(!g.alive(my))return finish();
+    ttl(100,false);
+    crit.className='lk-crit occupied';crit.textContent='临界区:扣减库存 —— A 工作中';
+    await sleep(900);if(!g.alive(my))return finish();
+    note.innerHTML='A 干完活 → <code class="k">Lua: if get==uuid-A then del</code>';A.classList.remove('holding');holder.textContent='nil';ttl(100,false);
+    B.classList.remove('waiting');B.classList.add('holding');bs.textContent='拿到锁!';as.textContent='已释放';holder.textContent='uuid-B';
+    crit.className='lk-crit occupied';crit.textContent='临界区:扣减库存 —— B 工作中';
+    await sleep(800);if(!g.alive(my))return finish();
+    holder.textContent='nil';crit.className='lk-crit';crit.textContent='临界区:扣减库存 —— 空';B.className='lk-actor';bs.textContent='idle';
+    note.innerHTML='<b>全程任何时刻,临界区里最多只有一个人</b> —— 这就是"正确打开"的一生';
+    finish();
+  }
+  async function playBad(){
+    const my=g.next();good.disabled=bad.disabled=true;
+    holder.textContent='nil';ttl(100,false);crit.className='lk-crit';crit.textContent='临界区:扣减库存 —— 空';
+    note.innerHTML='A 加锁(没设好超时余量):<code class="k">SET lock uuid-A EX 9s</code>,但它这次的业务要 15s…';A.classList.add('holding');holder.textContent='uuid-A';as.textContent='干活 15s…';
+    for(let i=0;i<3;i++){ttl(100-i*32,false);await sleep(420);if(!g.alive(my))return finish();}
+    note.innerHTML='A 还在干活,B 来抢 → <b>(nil) 等…</b>';B.classList.add('waiting');bs.textContent='等待';
+    await sleep(400);if(!g.alive(my))return finish();
+    ttl(8,true);note.innerHTML='⚠ 锁 TTL 快到了,A 还没干完!';await sleep(450);if(!g.alive(my))return finish();
+    holder.textContent='nil';ttl(100,false);note.innerHTML='<b style="color:var(--red)">锁到点自毁,B 立刻 SET NX 成功接盘</b>';B.classList.remove('waiting');B.classList.add('holding');holder.textContent='uuid-B';bs.textContent='持锁干活';
+    await sleep(500);if(!g.alive(my))return finish();
+    note.innerHTML='A 干完了,<b>盲发 DEL lock:stock</b>(没比对 uuid)——它删掉的,<b style="color:var(--red)">是 B 的锁!</b>';holder.textContent='nil';A.classList.remove('holding');as.textContent='DEL 走了…';
+    await sleep(500);if(!g.alive(my))return finish();
+    note.innerHTML='C 趁虚而入拿到锁 → <b style="color:var(--red)">B 和 C 同时在临界区!</b>超卖就在这';
+    crit.className='lk-crit danger';crit.textContent='临界区:扣减库存 —— ⚠⚠ B 和 C 同时在里面';
+    C=h('div');note.innerHTML+='<br>(所以释放锁必须 Lua 比对 uuid;而"比对+删除"不原子,又回到 Lua 的意义)';
+    finish();
+  }
+  function finish(){good.disabled=bad.disabled=false;}
+  good.onclick=playGood;bad.onclick=playBad;
+}
+
+/* =====================================================================
+   附录 速查卡
+===================================================================== */
+function initCards(){
+  const grid=$('#card-grid');
+  const data=[
+    ['Redis 为什么快?','内存 + 单线程执行免锁免切换 + epoll 多路复用 + listpack/跳表等巧结构。','01'],
+    ['Redis 是单线程吗?','命令执行单线程;6.0+ 网络 IO 多线程;定期删除、AOF fsync、UNLINK、lazyfree 都有后台线程。','02'],
+    ['String 底层?','SDS 动态字符串:int / embstr(≤44B)/ raw 三种编码,按内容与长度自动切换。','03'],
+    ['ZSet 为什么跳表+字典?','字典 O(1) 查分,跳表 O(logN) 排名/范围;比红黑树好写、范围查询顺链就走。','04'],
+    ['RDB 和 AOF 怎么选?','都开:AOF 保安全(everysec),RDB 做备份与主从底座;7.0 的混合持久化把两者拧一起。','05'],
+    ['定期删除的规则?','每 100ms 随机抽 20 个带 TTL 的删过期的,过期超 25% 立刻再来一轮,最多用 1ms 时间片。','06'],
+    ['穿透/击穿/雪崩一句话?','查不存在(空值/布隆)· 一个热点过期(互斥/逻辑过期)· 一批同时过期(TTL 打散/多级/高可用)。','07'],
+    ['全量 vs 部分复制?','看 replid+offset:缺口还在 1MB 环形 backlog 里 → 只补增量;否则重来全量。','08'],
+    ['哨兵判死为什么两阶段?','主观下线是一家之言,过半达 quorum 的客观下线才作数;领头哨兵类 Raft 票选。','09'],
+    ['为什么 16384 槽?','心跳带槽位图:16384 位=2KB,65536 位=8KB 太肥;常见部署主节点远小于 2^14,够用。','10'],
+    ['Pipeline 是事务吗?','不是。Pipeline 只打包网络往返不保证隔离;MULTI/EXEC 才保证连续执行——但也没有回滚。','11'],
+    ['Redis 锁能保正确性吗?','只能算"效率锁":主从切换会丢锁。钱相关的"正确性锁"上数据库/共识系统,Redlock 争议大。','12'],
+  ];
+  data.forEach(([q,a,ch])=>{grid.append(h('div',{class:'card'},h('b',null,q),a+' ',h('a',{href:'#ch-'+chId(ch)},'图 '+ch)));});
+  function chId(n){return{01:'intro',02:'loop',03:'types',04:'skip',05:'persist',06:'expire',07:'cache',08:'repl',09:'sentinel',10:'cluster',11:'atomic',12:'lock'}[n];}
+}
+
+/* =====================================================================
+   目录高亮 + 装配
+===================================================================== */
+function initSpy(){
+  const links=$$('.toc a');
+  const secs=links.map(a=>$(a.getAttribute('href'))).filter(Boolean);
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-18% 0px -72% 0px'});
+  secs.forEach(s=>io.observe(s));
+}
+
+function safe(name,fn){try{fn();}catch(e){console.error('[demo:'+name+']',e);}}
+document.addEventListener('DOMContentLoaded',()=>{
+  safe('cli',initCLI);
+  safe('fast',()=>initFast($('#d-fast')));
+  safe('loop',()=>initLoop(document));
+  safe('types',()=>initTypes($('#d-types')));
+  safe('skip',()=>initSkip(document));
+  safe('rdb',()=>initRdb($('#d-rdb')));
+  safe('aof',()=>initAof($('#d-aof')));
+  safe('expire',()=>initExpire($('#d-expire')));
+  safe('cache',()=>initCache($('#d-cache')));
+  safe('repl',()=>initRepl($('#d-repl')));
+  safe('sentinel',()=>initSentinel($('#d-sentinel')));
+  safe('cluster',()=>initCluster($('#d-cluster')));
+  safe('pipe',()=>initPipe($('#d-pipe')));
+  safe('tx',()=>initTx($('#d-tx')));
+  safe('lock',()=>initLock($('#d-lock')));
+  safe('cards',initCards);
+  initSpy();
+});
+</script>
+</body>
+</html>

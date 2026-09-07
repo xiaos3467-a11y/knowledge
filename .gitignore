@@ -1,0 +1,4 @@
+# 本地工具与部署杂项,不进仓库
+.claude/
+.vercel/
+node_modules/

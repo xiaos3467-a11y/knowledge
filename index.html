@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图解讲义馆 · 六册</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F3EF; --ink:#1E232B; --ink2:#5B636F; --line:#D9DCD3;
+  --red:#CE3B24; --blue:#15607E; --green:#3D7A2C; --orange:#B4530A; --purple:#6B3FA0; --teal:#0F6E73;
+  --serif:"Noto Serif SC","STZhongsong","SimSun",serif;
+  --sans:"Noto Sans SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:16px;line-height:1.8;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(30,35,43,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(30,35,43,.045) 1px,transparent 1px);
+  background-size:28px 28px}
+.wrap{max-width:980px;margin:0 auto;padding:64px 24px 80px}
+header h1{font-family:var(--serif);font-weight:900;font-size:clamp(36px,6vw,56px);line-height:1.2}
+header p{color:var(--ink2);margin-top:10px;max-width:62ch}
+.shelf{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:44px}
+@media (max-width:720px){.shelf{grid-template-columns:1fr}}
+a.book{display:block;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px 18px;text-decoration:none;color:inherit;position:relative;transition:transform .18s,box-shadow .18s;overflow:hidden}
+a.book:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(30,35,43,.10)}
+a.book::before{content:"";position:absolute;left:0;top:0;bottom:0;width:10px;background:var(--c)}
+.pen{position:absolute;right:16px;top:12px;font-family:var(--serif);font-weight:900;font-size:64px;line-height:1;color:var(--c);opacity:.14}
+a.book h2{font-family:var(--serif);font-size:24px;font-weight:900}
+.meta{font-size:12.5px;color:var(--c);font-weight:700;letter-spacing:.06em;margin:2px 0 8px}
+a.book p{font-size:13.5px;color:var(--ink2);line-height:1.75}
+.go{display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:var(--c)}
+footer{margin-top:56px;padding-top:16px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--ink2)}
+a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>图解讲义馆</h1>
+    <p>六册手写单文件讲义:每讲一张<b>按得下去</b>的动画。无框架、无构建、无外链依赖,离线可开——也是 Vercel 上最省心的一种项目。</p>
+  </header>
+  <div class="shelf">
+    <a class="book" style="--c:var(--red)" href="redis-illustrated.html">
+      <span class="pen">朱</span>
+      <h2>Redis 图解讲义</h2>
+      <div class="meta">内存缓存 · 十二讲 · 14 图 + mini redis-cli</div>
+      <p>事件循环阻塞实验、穿透击穿雪崩彩排台、三级过期淘汰、RDB 写时复制、跳表查找、Cluster 真算 CRC16… 开篇自带一个能敲命令的迷你 redis。</p>
+      <span class="go">开卷 →</span>
+    </a>
+    <a class="book" style="--c:var(--blue)" href="mysql-illustrated.html">
+      <span class="pen">靛</span>
+      <h2>MySQL 图解讲义</h2>
+      <div class="meta">存储引擎 · 十二讲 · 12 图 + mini mysql</div>
+      <p>B+ 树插入分裂实验室、两棵树看回表、WAL 两阶段断电剧本、MVCC 版本链对照、隔离级别调度台、自增 vs UUID 页分裂实演(1.4 倍膨胀亲眼看)。</p>
+      <span class="go">开卷 →</span>
+    </a>
+    <a class="book" style="--c:var(--green)" href="spring-illustrated.html">
+      <span class="pen">翠</span>
+      <h2>Spring 图解讲义</h2>
+      <div class="meta">IoC · AOP · 事务 · 十二讲 · 12 图 + mini beanFactory</div>
+      <p>三级缓存棋盘三种注入命运、AOP 栈帧压出、自调用绕过代理的红线、注解翻牌墙、传播行为双车道血案、事务失效六开关台、MVC 九步流水线。</p>
+      <span class="go">开卷 →</span>
+    </a>
+    <a class="book" style="--c:var(--orange)" href="spring-boot-illustrated.html">
+      <span class="pen">缃</span>
+      <h2>Spring Boot 图解讲义</h2>
+      <div class="meta">自动装配 · 十一讲 · 10 图 + starter 顾问</div>
+      <p>自动配置漏斗重跑 ConditionEvaluation、BOM 仲裁前后、配置优先级水塔、fat jar 爆炸视图、Actuator 裸奔/收口对比、自研 Starter 五步工坊、启动排障室。</p>
+      <span class="go">开卷 →</span>
+    </a>
+    <a class="book" style="--c:var(--purple)" href="architecture-illustrated.html">
+      <span class="pen">紫</span>
+      <h2>后端架构师 图解讲义</h2>
+      <div class="meta">决策地图 · 十三讲 · 13 图 + 参考架构地图</div>
+      <p>CAP 分区闸刀、一致性哈希环迁移实演、四种限流算法同场竞技、熔断保险丝一生、雪花位段挪挪看、MQ 生死簿、三级缓存脏写、分库基因解码、分布式事务四方案、机房起火演习、Trace 瀑布、交互式容量估算器。</p>
+      <span class="go">开卷 →</span>
+    </a>
+    <a class="book" style="--c:var(--teal)" href="ai-agent-illustrated.html">
+      <span class="pen">青</span>
+      <h2>AI Agent 图解讲义</h2>
+      <div class="meta">从一次调用到一台智能体 · 十二讲 · 11 图 + 会跑的迷你 Agent</div>
+      <p>开场就是真会循环的 Agent(tool_use→执行→回填);温度采样抽签、token 窗口预算、工具报文解剖、四种记忆策略失忆对照、RAG 向量空间、schema 修复循环、多智能体编排、MCP 星型接线、pass@k 评测矩阵、提示注入攻防、成本三策略。</p>
+      <span class="go">开卷 →</span>
+    </a>
+  </div>
+  <footer>手写 vanilla JS/SVG · 字体走 Google Fonts(带系统兜底) · 部署方式见 README —— 拖进 vercel.com/new/drop 即可。</footer>
+</div>
+</body>
+</html>

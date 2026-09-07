@@ -1,0 +1,3 @@
+# vercel CLI 直传时排除的文件
+.claude
+.git
