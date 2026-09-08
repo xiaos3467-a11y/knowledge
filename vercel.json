@@ -12,6 +12,7 @@
     { "source": "/netty", "destination": "/netty-illustrated.html" },
     { "source": "/net", "destination": "/network-illustrated.html" },
     { "source": "/es", "destination": "/elasticsearch-illustrated.html" },
+    { "source": "/k8s", "destination": "/kubernetes-illustrated.html" },
     { "source": "/arch", "destination": "/architecture-illustrated.html" },
     { "source": "/agent", "destination": "/ai-agent-illustrated.html" }
   ]
