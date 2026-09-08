@@ -6,6 +6,7 @@
     { "source": "/mysql", "destination": "/mysql-illustrated.html" },
     { "source": "/spring", "destination": "/spring-illustrated.html" },
     { "source": "/boot", "destination": "/spring-boot-illustrated.html" },
+    { "source": "/kafka", "destination": "/kafka-illustrated.html" },
     { "source": "/juc", "destination": "/java-concurrency-illustrated.html" },
     { "source": "/jvm", "destination": "/jvm-illustrated.html" },
     { "source": "/netty", "destination": "/netty-illustrated.html" },
