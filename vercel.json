@@ -14,6 +14,7 @@
     { "source": "/es", "destination": "/elasticsearch-illustrated.html" },
     { "source": "/k8s", "destination": "/kubernetes-illustrated.html" },
     { "source": "/patterns", "destination": "/design-patterns-illustrated.html" },
+    { "source": "/cloud", "destination": "/spring-cloud-illustrated.html" },
     { "source": "/arch", "destination": "/architecture-illustrated.html" },
     { "source": "/agent", "destination": "/ai-agent-illustrated.html" }
   ]

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>微服务与 Spring Cloud 图解讲义 · 阵型九讲</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F6F2; --card:#FFFFFF; --stage:#FAFBF7;
+  --ink:#1E232B; --ink2:#59616E; --line:#DDE0D8;
+  --pen:#4763A0; --pen-bg:#EBEFF8; --pen-line:#C5D0E8;
+  --warn:#C0392B; --warn-bg:#FAECE9; --warn-line:#EABFB4;
+  --teal:#0E7C6B; --teal-bg:#E8F4F1;
+  --grape:#5B4A96; --grape-bg:#EEEAF8;
+  --amber:#A9750A; --amber-bg:#FAF2DE;
+  --gray:#7A828C;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --serif:"Noto Serif SC","Source Han Serif SC","STZhongsong","SimSun",serif;
+  --sans:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+  --kai:"KaiTi","STKaiti","Kaiti SC",var(--serif);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(30,35,43,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,35,43,.04) 1px,transparent 1px);
+  background-size:28px 28px}
+::selection{background:rgba(71,99,160,.18)}
+a{color:var(--pen);text-decoration:none}
+.wrap{display:grid;grid-template-columns:224px minmax(0,832px);gap:52px;max-width:1180px;margin:0 auto;padding:0 24px}
+main{min-width:0;padding-bottom:96px}
+section.ch{margin-top:96px;scroll-margin-top:24px}
+.kicker{font-family:var(--serif);color:var(--pen);font-weight:600;font-size:14px;letter-spacing:.12em;margin-bottom:6px}
+h1,h2{font-family:var(--serif);font-weight:900;line-height:1.3}
+h2{font-size:32px;margin-bottom:18px}
+p{margin:12px 0;max-width:76ch}
+p.lead{font-size:17px;color:var(--ink2)}
+ul.tight{margin:8px 0 8px 1.4em}
+ul.tight li{margin:6px 0}
+code.k{font-family:var(--mono);font-size:.86em;background:#EBEDE6;border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+mark{background:none;color:var(--pen);font-weight:700}
+.think{font-family:var(--kai);color:var(--pen);background:var(--pen-bg);border:1px dashed var(--pen-line);border-radius:8px;padding:8px 14px;font-size:15px;margin:18px 0}
+.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pen);border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;font-size:15px}
+.note b.tag{color:var(--pen);font-weight:700;margin-right:6px}
+aside.toc{position:sticky;align-self:start;top:24px;height:calc(100vh - 48px);overflow:auto;padding:28px 0;scrollbar-width:thin}
+.toc-brand{font-family:var(--serif);font-weight:900;font-size:19px;line-height:1.4;margin-bottom:14px}
+.toc-brand small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--pen);letter-spacing:.18em;font-weight:600}
+.toc ol{list-style:none}
+.toc li a{display:flex;gap:10px;align-items:baseline;padding:5.5px 10px;border-radius:6px;font-size:13.5px;color:var(--ink2);border-left:2px solid transparent}
+.toc li a i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--gray);width:20px;flex:none}
+.toc li a:hover{background:#ECEEE6;color:var(--ink)}
+.toc li a.active{color:var(--pen);font-weight:700;border-left-color:var(--pen);background:rgba(71,99,160,.07)}
+.toc li a.active i{color:var(--pen)}
+.hero{padding-top:48px}
+.hero-title{font-size:clamp(38px,5.6vw,62px);line-height:1.14}
+.hero-title .stroke{position:relative;display:inline-block}
+.hero-title .stroke svg{position:absolute;left:-4px;right:-4px;bottom:-8px;width:calc(100% + 8px);height:16px;overflow:visible}
+.hero-title .stroke svg path{stroke:var(--pen);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:420;stroke-dashoffset:420;animation:wipe 1s .5s ease-out forwards}
+@keyframes wipe{to{stroke-dashoffset:0}}
+.hero-sub{margin-top:16px;font-size:15.5px;color:var(--ink2);max-width:72ch}
+.hero-kicker{font-family:var(--serif);letter-spacing:.3em;color:var(--pen);font-size:14px;font-weight:600;margin-bottom:10px}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+.caret{display:inline-block;width:9px;height:1.05em;background:var(--pen);vertical-align:-2px;animation:blink 1.1s infinite}
+.reveal{opacity:0;transform:translateY(14px);animation:rv .7s ease-out forwards}
+.reveal.d1{animation-delay:.1s}.reveal.d2{animation-delay:.25s}.reveal.d3{animation-delay:.45s}
+@keyframes rv{to{opacity:1;transform:none}}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+@keyframes slidein{from{transform:translateX(-10px);opacity:0}}
+.demo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin:26px 0;box-shadow:0 2px 0 rgba(30,35,43,.03)}
+.fig-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.fig-no{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--pen);border-radius:4px;padding:2px 8px;flex:none}
+.fig-title{font-family:var(--serif);font-size:17px;font-weight:600}
+.caption{font-family:var(--kai);color:var(--ink2);font-size:14px;line-height:1.7;margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
+.caption::before{content:"图注 · ";color:var(--pen)}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:14px}
+.dctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.dctrl .gap{flex:1}
+.btn{font-family:var(--sans);font-size:13px;color:var(--ink);background:#fff;border:1px solid #C7CCC0;border-radius:7px;padding:5px 14px;cursor:pointer;line-height:1.6;transition:border-color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--pen);color:var(--pen)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.solid:hover:not(:disabled){background:var(--pen);border-color:var(--pen);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{border-color:var(--pen);color:var(--pen);background:var(--pen-bg);font-weight:700}
+.btn.warn-o{border-color:var(--warn);color:var(--warn)}
+.btn.warn-o.on{background:var(--warn-bg)}
+.btn:focus-visible,a:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+.hint{font-size:13px;color:var(--ink2);margin-top:10px}
+.hint b{color:var(--pen)}
+.say{font-size:13.5px;min-height:2.2em;padding:6px 2px;color:var(--ink2);line-height:1.8}
+.say b{color:var(--pen)}
+.say.bad b{color:var(--warn)}
+.pill{display:inline-block;font-size:12px;font-family:var(--mono);border-radius:99px;padding:1px 10px;border:1px solid var(--line);background:#fff}
+.pill.pen{color:var(--pen);border-color:var(--pen-line);background:var(--pen-bg)}
+.pill.teal{color:var(--teal);border-color:#BFDDD5;background:var(--teal-bg)}
+.pill.warn{color:var(--warn);border-color:var(--warn-line);background:var(--warn-bg)}
+svg text{font-family:var(--sans)}
+table.tb{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;background:var(--card)}
+table.tb th,table.tb td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top}
+table.tb th{background:#ECEEE6;font-weight:700;font-size:13px}
+table.tb td.m{font-family:var(--mono);font-size:12.5px}
+/* 阵型图 */
+.tp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tp-c{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:8px 11px;font-size:12px;cursor:pointer;transition:all .2s;text-align:center}
+.tp-c b{display:block;font-size:12.5px}
+.tp-c small{color:var(--gray);font-size:10px}
+.tp-c:hover{border-color:var(--pen)}
+.tp-c.on{border-color:var(--pen);background:var(--pen-bg);box-shadow:0 3px 10px rgba(71,99,160,.15)}
+.tp-desc{border:1px dashed var(--pen-line);border-radius:9px;background:var(--card);padding:8px 12px;font-size:12.5px;min-height:70px;line-height:1.8;margin-top:10px}
+.tp-desc b{color:var(--pen)}
+/* 注册心跳 */
+.hr-tl{position:relative;height:130px;border-bottom:2px solid var(--line);margin:20px 8px 10px}
+.hr-beat{position:absolute;bottom:-7px;width:12px;height:12px;border-radius:50%;background:var(--teal);transition:all .3s}
+.hr-beat.dead{background:var(--warn)}
+.hr-lab{position:absolute;font-size:10px;font-family:var(--mono);color:var(--ink2);transform:translateX(-50%)}
+/* 负载均衡直方图 */
+.lb-bars{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end;height:150px;margin:10px 0}
+.lb-col{display:flex;flex-direction:column;align-items:center;gap:4px;justify-content:flex-end;height:100%}
+.lb-col i{display:block;width:70%;max-width:60px;background:var(--pen);border-radius:5px 5px 0 0;height:0;transition:height .2s}
+.lb-col span{font-size:10.5px;font-family:var(--mono);color:var(--gray)}
+/* 灰度 */
+.gy-flow{display:grid;grid-template-columns:110px 1fr 1fr;gap:10px;align-items:center;font-size:11.5px;font-family:var(--mono);margin:8px 0}
+.gy-box{border:1.5px solid var(--line);border-radius:9px;background:var(--card);padding:6px 10px;text-align:center;transition:all .25s}
+.gy-box.canary{border-color:var(--amber);background:var(--amber-bg)}
+.gy-box.on{box-shadow:0 0 0 4px rgba(71,99,160,.15)}
+/* 重试风暴 */
+.rt-tree{display:grid;gap:8px;font-family:var(--mono);font-size:11.5px;margin:8px 0}
+.rt-node{border:1.5px solid var(--line);border-radius:8px;padding:4px 10px;background:var(--card);display:inline-block;transition:all .3s}
+.rt-node.f{border-color:var(--warn);background:var(--warn-bg)}
+.rt-node.r{border-color:var(--amber);background:var(--amber-bg)}
+.rt-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rt-x{color:var(--warn);font-weight:700;animation:pop .25s}
+/* 配置 */
+.cf-lanes{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:11.5px;font-family:var(--mono);margin:8px 0}
+.cf-box{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:8px 11px;min-height:110px;transition:all .3s}
+.cf-box b{color:var(--pen)}
+.cf-item{border-left:3px solid var(--pen);background:var(--pen-bg);border-radius:4px;padding:2px 8px;margin:4px 0;font-size:10.5px;animation:slidein .3s}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:13.5px;line-height:1.7}
+.card b{display:block;font-family:var(--serif);font-size:14.5px;margin-bottom:4px}
+.card b::before{content:"问 ";color:var(--pen)}
+footer{margin-top:88px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2);font-family:var(--kai);line-height:1.9}
+@media (max-width:1120px){
+  .wrap{grid-template-columns:minmax(0,860px);justify-content:center}
+  aside.toc{position:static;height:auto;order:-1;padding:12px 0 0}
+  .toc ol{display:flex;overflow-x:auto;gap:4px;padding-bottom:8px;scrollbar-width:thin}
+  .toc li a{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;border-radius:4px}
+  .toc li a.active{border-bottom-color:var(--pen);background:none}
+  .toc-brand{padding-left:10px}
+}
+@media (max-width:820px){
+  .tp-grid,.cf-lanes{grid-template-columns:1fr 1fr}
+  h2{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+  .reveal{opacity:1;transform:none}
+  .hero-title .stroke svg path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<aside class="toc" aria-label="目录">
+  <div class="toc-brand"><small>SPRING CLOUD</small>微服务与 Spring Cloud 讲义</div>
+  <nav><ol>
+    <li><a href="#hero"><i>00</i>开篇 · 微服务阵型图</a></li>
+    <li><a href="#ch-why"><i>01</i>什么时候该拆,何时别拆</a></li>
+    <li><a href="#ch-reg"><i>02</i>注册中心与心跳生死</a></li>
+    <li><a href="#ch-call"><i>03</i>OpenFeign 与负载均衡</a></li>
+    <li><a href="#ch-gw"><i>04</i>网关与灰度分流</a></li>
+    <li><a href="#ch-conf"><i>05</i>配置中心与热更新</a></li>
+    <li><a href="#ch-retry"><i>06</i>重试风暴:善意的灾难</a></li>
+    <li><a href="#ch-split"><i>07</i>怎么拆:边界与数据</a></li>
+    <li><a href="#ch-res"><i>08</i>韧性设计总结</a></li>
+    <li><a href="#ch-cards"><i>附</i>面试速查卡</a></li>
+  </ol></nav>
+</aside>
+
+<main>
+
+<section id="hero" class="hero">
+  <p class="hero-kicker reveal d1">阵型九讲</p>
+  <h1 class="hero-title reveal d1">微服务与<br><span class="stroke">Spring Cloud<svg viewBox="0 0 200 12" aria-hidden="true"><path d="M3 8 C 40 2, 70 11, 105 6 S 170 3, 197 7"/></svg></span></h1>
+  <p class="hero-sub reveal d2">单体拆成几十个小进程后,"进程之间"的每一件事都需要一个组件来管。<mark>这张阵型图上的每一块,都对应一类曾经要手写的痛苦</mark>——点开看它们的职责。</p>
+  <div class="demo reveal d2" style="margin-top:24px">
+    <div class="fig-head"><span class="fig-no">序</span><span class="fig-title">微服务阵型图 · Spring Cloud Alibaba 口径(Netflix 系标注在后)</span></div>
+    <div class="stage">
+      <div class="tp-grid" id="tp-grid"></div>
+      <div class="tp-desc" id="tp-desc">点任意一块。</div>
+    </div>
+    <p class="caption">先记住总纲:<b>微服务=分布式系统的工程学费</b>——服务发现、超时重试、配置下发、链路追踪、数据一致性,每样都是单体时代"免费"如今"付费"的能力。阵型摆齐,才谈得上打这场仗。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-why">
+  <p class="kicker">第 一 讲</p>
+  <h2>什么时候该拆:先问发布痛不痛</h2>
+  <p class="lead">拆分的合法理由只有两个:<b>组织规模</b>(一个模块的改动要排队等别人发版、代码权限难隔离)与<b>差异化扩缩</b>(报表服务要 16C,秒杀要弹性百台)。危险信号清单:改一处全量回归 2 小时、一次故障拖垮全站、团队 >20 人共仓。<b>但别反向迷信</b>——"微服务架构的单体"是全球大厂的主流形态:拆分服务数量应与团队人数同数量级(两个披萨原则),否则你得到的不是独立部署,而是<b>分布式泥潭</b>:本地方法调用变 RPC、事务变 saga、调试变链路考古。路线建议:<mark>模块化单体先行(Spring Modulith/包边界+ArchUnit 守门),痛到再拆,且从"接缝最清晰"的模块开刀</mark>——第 11 讲拆分方法论。</p>
+</section>
+
+<section class="ch" id="ch-reg">
+  <p class="kicker">第 二 讲</p>
+  <h2>注册中心:实例名单的生死簿</h2>
+  <p class="lead">服务实例是动态的(扩缩/发布/宕机),调用方凭什么找到它?<mark>注册中心=服务名→实例列表的活账本</mark>:实例启动时<b>注册+周期心跳续约</b>,下线主动注销;注册中心按健康协议把超时未续的标记不健康乃至摘除。两套血统:<b>Eureka</b>(AP:自我保活,客户端每 30s 拉全量,极端时把死实例留着"反正比空列表强")、<b>Nacos/Consul/ZK 系</b>(偏 CP 或可配置,主动健康检查、支持推模式)。Spring Cloud 侧:DiscoveryClient 抽象统一,服务名变成 URI 的一部分——<code class="k">http://order-svc/api/x</code>,由 LoadBalancer 把名字翻成真实实例。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 1</span><span class="fig-title">一条实例的生命线 · 注册→心跳→失联→摘除</span></div>
+    <div class="stage">
+      <div class="hr-tl" id="hr-tl"></div>
+      <div class="say" id="hr-say">时间轴=10s。心跳每 1s,失联 3s 标不健康、5s 摘除(参数为演示压缩,Eureka 默认 30/90s)。</div>
+      <div class="dctrl">
+        <button class="btn solid" id="hr-run">▶ 正常的一生(注册→优雅下线)</button>
+        <button class="btn warn-o" id="hr-crash">🔥 进程猝死(kill -9)</button>
+      </div>
+    </div>
+    <p class="caption">猝死剧本里,<b>"摘除延迟"就是错误窗口</b>:名单还认为它在,打到它的调用会失败——所以调用侧的负载均衡要有"实例熔断"(连续失败临时摘)兜最后一段。两种剧本的对比也是"优雅下线为什么值得做"(K8s 册 preStop 的孪生兄弟)。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-call">
+  <p class="kicker">第 三 讲</p>
+  <h2>OpenFeign 与负载均衡:声明式调用的魔法与算账</h2>
+  <p class="lead">接口上写 <code class="k">@FeignClient("order-svc")</code>+注解路由,调用方像本地方法一样用它——<b>Feign=动态代理(第 14 册英雄)+ 服务发现 + LoadBalancer 的三合一套件</b>:代理把方法翻译成 HTTP 请求,目标地址从注册中心实例表按<b>负载均衡算法</b>选。算法四件套值得实机感受:轮询(公平但无视快慢)、随机+权重、<b>least-active(挑当前在途请求最少的实例)</b>——慢实例被自动少投,异构集群友好。<b>超时预算</b>是这条链的生死线:Feign 的 connectTimeout/readTimeout 必须<b>小于</b>上游给你留的时间,否则上游已超时返回,你还在等下游——重试要配退避,且默认只重试幂等。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 2</span><span class="fig-title">100 次调用各算法落到谁 · 注意有一台是慢实例</b></span></div>
+    <div class="stage">
+      <div class="lb-bars" id="lb-bars"></div>
+      <div class="dctrl" id="lb-btns" style="margin-top:2px"></div>
+      <div class="say" id="lb-say"></div>
+    </div>
+    <p class="caption">四台实例,3 号天生慢。轮询把 1/4 流量继续喂给慢者(雪崩的温床);least-active 看见 3 号在途请求堆积,自动绕开——<mark>负载均衡的"智能"不在于匀,而在于感知谁不配</mark>。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-gw">
+  <p class="kicker">第 四 讲</p>
+  <h2>网关:城门官的三件事与灰度分流</h2>
+  <p class="lead">Spring Cloud Gateway 的世界观=<b>Route + Predicate + Filter</b>:按断言(URL/Header/Cookie/权重)匹配路由,过过滤器链(鉴权、改写、限流、落日志)后转发。<b>三件事守住城门</b>:① 认证统一化(JWT 校验在网关做,业务只消费解析后的用户头);② 流控统一化(网关限总闸,Sentinel 在服务内做细粒度——两层别混);③ <b>流量染色与路由</b>——灰度发布的实现底座:请求带用户标签/比例,网关按标签分流到 canary 版本池,新版本先吃 5% 真实流量,看错误率与 RT 再放量(配合注册中心元数据/双环境)。网关反模式:<b>别在网关塞业务逻辑</b>(它是城门不是大脑)、别让它成为<b>没有水平扩展的单点</b>。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 3</span><span class="fig-title">灰度阀门 · 拖动比例放流量,看新旧版本池表现</span></div>
+    <div class="stage">
+      <div class="gy-flow"><span>用户请求</span><div class="gy-box" id="gy-gw">Gateway<br><small style="color:var(--gray)">按权重+标签分流</small></div><span style="color:var(--gray)">↘ ↗</span></div>
+      <div class="gy-flow"><span>stable v1</span><div class="gy-box" id="gy-stable">稳定池 · <b id="gy-s">100%</b></div><span></span></div>
+      <div class="gy-flow"><span>canary v2</span><div class="gy-box canary" id="gy-canary">灰度池 · <b id="gy-c">0%</b><br><small style="color:var(--gray)">错误率 <span id="gy-err">—</span></small></div><span></span></div>
+      <div class="dctrl">
+        <span style="font-size:13px">灰度比例:</span>
+        <button class="btn on" data-g="0">0%</button>
+        <button class="btn" data-g="5">5%</button>
+        <button class="btn" data-g="25">25%</button>
+        <button class="btn" data-g="50">50%</button>
+        <button class="btn warn-o" data-g="100">100%</button>
+        <button class="btn" id="gy-bug">🐞 模拟 v2 藏了个 bug(错误率 8%)</button>
+      </div>
+      <div class="say" id="gy-say"></div>
+    </div>
+    <p class="caption">先埋 bug 再放量:5% 时错误率已经爬进监控,回滚=网关一个配置。<b>灰度的本质是"用流量比例买信息"</b>——按用户维度分桶(同一用户始终同版本,防体验精神分裂)比随机分桶更讲究。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-conf">
+  <p class="kicker">第 五 讲</p>
+  <h2>配置中心:改配置不再发版</h2>
+  <p class="lead">三层坐标 <code class="k">namespace(环境) / group(业务) / dataId(文件)</code> 把配置摆进 Nacos;应用启动时拉取,<b>并落一份本地快照</b>——注册中心挂了也能靠快照冷启动(这个设计请抄作业)。热更新链路:控制台发布 → 服务端推<b>变更通知(长轮询挂起等变更)</b>→ 客户端拉最新 → 刷新 Spring <code class="k">Environment</code> → 发布 RefreshEvent → <code class="k">@RefreshScope</code> 的 bean 销毁重建,下次调用拿到新值。三个坑:<b>① @Value 的字段不会自动变,要刷的是 bean</b>(所以配置类要 @RefreshScope,或干脆用 @ConfigurationProperties 重绑定);② <b>长连接池/线程池这类"重建很贵"的对象别挂 @RefreshScope</b>;③ 改配置=改行为,<b>和发版同级别的变更纪律</b>(灰度推、审计、回滚)——配置中心把发布成本降到一次点击,也把事故成本降到一次手滑。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 4</span><span class="fig-title">一次热更新的完整链路 · 点发布看通知怎么跑</span></div>
+    <div class="stage">
+      <div class="cf-lanes">
+        <div class="cf-box" id="cf-srv"><b>Nacos Server</b><br><span style="font-size:10px;color:var(--gray)">长轮询挂着的客户端们…</span></div>
+        <div class="cf-box" id="cf-app"><b>order-svc 实例 ×8</b><br><span style="font-size:10px;color:var(--gray)">Environment / @RefreshScope beans</span></div>
+      </div>
+      <div class="dctrl">
+        <button class="btn solid" id="cf-pub">▶ 控制台发布 timeout=500→300</button>
+        <button class="btn warn-o" id="cf-net">🔌 发布瞬间:应用与配置中心网络分区</button>
+      </div>
+      <div class="say" id="cf-say"></div>
+    </div>
+    <p class="caption">分区剧本:变更通知收不到——但服务<b>不炸</b>,继续用内存旧值+落盘快照;恢复后立刻补拉。配置中心是"增强件"不是"依赖件":<mark>它挂了,已启动的服务应该照常活</mark>,这是评估任何配置/注册组件的底线问题。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-retry">
+  <p class="kicker">第 六 讲</p>
+  <h2>重试风暴:每一次善意的重试,都在给火灾浇油</h2>
+  <p class="lead">最温柔的雪崩:下游 RT 升高 → 上游超时重试 → 下游负载 ×2 → 更慢 → 更多层各自重试 → <b>乘法放大</b>:A(重试3)→B(重试3)→C(重试3),C 收到的压力是 <b>27 倍</b>。三原则:<b>① 只有一层重试</b>(通常最靠近用户那一层,内部层快速失败);② <b>指数退避+抖动+重试预算</b>(retry budget:10% 封顶,不是固定次数);③ <b>只重试幂等且值得的</b>(GET/明确幂等键;POST 无幂等重试=重复下单)。配套认知:超时必须<b>逐跳递减构成预算链</b>——网关 3s、服务 2s、DAO 800ms,任何一层把时间用完,下层的成功都已无意义(第 3 册网关/第 10 册 Netty 的超时线在此汇合)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 5</span><span class="fig-title">C 服务到底收到了多少请求?算给你看</span></div>
+    <div class="stage">
+      <div class="rt-tree" id="rt-tree"></div>
+      <div class="dctrl">
+        <button class="btn warn-o" data-rt="naive">▶ 每层都"超时重试 3 次"</button>
+        <button class="btn" data-rt="budget">▶ 只边缘重试+退避+预算</button>
+      </div>
+      <div class="say" id="rt-say"></div>
+    </div>
+    <p class="caption">朴素版:C 被打 27 倍流量,从"变慢"恶化成"彻底倒下"——<b>它的死是上游的关心造成的</b>。治理版:C 只收到 ≤2 倍,慢但活着;用户侧看到的是部分降级而非全站崩。这道乘法题,值得贴在每个服务网关的工位上。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-split">
+  <p class="kicker">第 七 讲</p>
+  <h2>怎么拆:接缝在领域,数据跟服务走</h2>
+  <p class="lead">拆分的北极星不是"服务数量",而是<b>"一次业务动作尽量在一个服务内完成"</b>——跨服务事务是失败设计。方法回到 DDD 语境:<mark>按限界上下文找"天然接缝"</mark>(订单/库存/营销各有各的模型语言),接缝处放 MQ(事件)而不是同步调用(命令链)。数据铁律:<b>一个服务一个库,禁止跨库直连查表</b>——别人的数据要,走它的 API 或它发的订阅;聚合查询用 CQRS(写归业务库、读归 ES/宽表,Canal 搬运——前两册的线头在这里汇齐)。拆完自检三问:改一个需求要动几个服务?某个库挂了会烧到谁?这条调用链有环吗(有的话,那个边界就是假的)。</p>
+</section>
+
+<section class="ch" id="ch-res">
+  <p class="kicker">第 八 讲(终)</p>
+  <h2>韧性设计:假设一切都会坏</h2>
+  <p class="lead">把这套阵型收拢成五问,架构评审直接照抄:<b>① 任何依赖变慢 5 秒,我会怎样?</b>(超时必须显式设,默认值都是赌博;逐跳预算递减)<b>② 任何依赖彻底死,我会怎样?</b>(熔断+降级路径:兜底值/静默跳过/明确拒绝——没有降级预案的熔断只是换个姿势报错)<b>③ 我的重试会不会打死别人?</b>(单层重试+退避+预算+幂等)<b>④ 流量翻十倍,先垮哪个?</b>(限流在网关粗、Sentinel 细、MQ 泄洪;弱点要压测点名)<b>⑤ 出事了我 5 分钟内能定位吗?</b>(traceId 全链贯穿、错误必带上下文、指标四金:延迟/流量/错误/饱和)。<mark>微服务的可靠性不在任何单点,在"故障传播的设计"</mark>——允许坏消息发生,阻断坏消息扩散。</p>
+  <div class="note"><b class="tag">要点</b>毕业检查单一条:<b>把第 15 讲的重试风暴、灰度、心跳、热更四个动画各重放一遍,能给别人讲清楚"为什么会这样"</b>——讲得清,阵型就是你的了;讲不清,你还在使用说明书。</div>
+</section>
+
+<section class="ch" id="ch-cards">
+  <p class="kicker">附 录</p>
+  <h2>面试速查卡</h2>
+  <div class="cards" id="card-grid"></div>
+</section>
+
+<footer>
+  微服务与 Spring Cloud 图解讲义 · 系列第十五册 · 手写 vanilla JS/SVG 无依赖 · 口径 Spring Cloud 2023.x + Alibaba(Nacos/Sentinel),Netflix 系对比标注。
+</footer>
+</main>
+</div>
+
+<script>
+/* ============ 工具 ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+function h(tag,attrs){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k==='text')e.textContent=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)));}return e;}
+function runGuard(){let id=0;return{next(){return++id},alive(my){return my===id}};}
+const safe=(name,fn)=>{try{fn();}catch(e){console.error('[demo:'+name+']',e);}};
+const INIT={};
+const reg=(n,f)=>{INIT[n]=f;};
+
+/* ============ hero 阵型图 ============ */
+function initTopo(){
+  const grid=$('#tp-grid'),desc=$('#tp-desc');
+  const T=[
+    ['网关 Gateway','Spring Cloud Gateway','统一入口:路由/鉴权/限流/灰度。所有横切在城门做一次,别下放到每个服务。'],
+    ['注册中心 Registry','Nacos / Eureka','服务名→实例活账本,心跳续约+健康摘除(第 2 讲)。'],
+    ['配置中心 Config','Nacos Config / Apollo','配置集中放、版本管理、热推送(第 5 讲);本地快照兜底启动。'],
+    ['声明调用 OpenFeign','Feign + LoadBalancer','@FeignClient 接口=HTTP 调用;实例名单+负载均衡(第 3 讲)。'],
+    ['熔断限流','Sentinel / Resilience4j','按 QPS/RT/异常比例断路,配降级 fallback(第 8 讲)。'],
+    ['异步解耦 MQ','RocketMQ / Kafka','削峰、事务最终一致、服务间事件流——强耦合调用关系的解药(第 7 讲)。'],
+    ['链路追踪','Micrometer Tracing + Zipkin','traceId 串起一次请求穿过哪些服务各花多久;排障第一现场(架构册第 11 讲同款)。'],
+    ['Seata 分布式事务','AT/TCC/Saga','跨服务写一致性的重药——默认怀疑自己不需要它(架构册第 9 讲)。'],
+  ];
+  T.forEach(([n,tag,d])=>{
+    const c=h('div',{class:'tp-c'},h('b',null,n),h('small',null,tag));
+    c.onclick=()=>{$$('.tp-c').forEach(x=>x.classList.remove('on'));c.classList.add('on');desc.innerHTML='<b>'+n+' · '+tag+'</b> —— '+d;};
+    grid.append(c);
+  });
+  desc.innerHTML='这八块不是"越多越好",而是"欠的债迟早要还":服务一多,发现/配置/韧性/观测的需求就会自己长出来。';
+}
+reg('topo',initTopo);
+
+/* ============ 图1 心跳生死 ============ */
+function initHeart(){
+  const tl=$('#hr-tl'),say=$('#hr-say');
+  const g=runGuard();
+  function dot(x,dead){tl.append(h('span',{class:'hr-beat'+(dead?' dead':''),style:'left:'+x+'%'}));}
+  async function run(crash){
+    const my=g.next();tl.innerHTML='';
+    const beats=[8,17,25,33,42,50,58,67];
+    for(let i=0;i<beats.length;i++){
+      if(!g.alive(my))return;
+      dot(beats[i],false);
+      if(i<3)say.innerHTML='注册 ✓ 心跳续约中…(实例在名单上状态:UP)';
+      if(i===3&&!crash)say.innerHTML='收到 SIGTERM:<b>主动 deregister + 等存量流量排干</b>再退出——优雅下线。';
+      if(i===3&&crash)say.innerHTML='<b style="color:var(--warn)">💥 kill -9:没来得及注销,心跳从此断供…</b>';
+      if(i===5&&crash){dot(beats[i],true);say.innerHTML='超过失联阈值 → 标记不健康(部分消费方已收到变更推送,部分缓存还没——<b>这段不一致窗口=用户看到的偶发报错</b>)。';}
+      if(i===7&&crash){say.innerHTML='彻底摘除。回看 i=5~7 之间:名单里它"还活着",打到它的调用全失败——注册中心的"死缓期"。';}
+      if(i===7&&!crash){say.innerHTML='名单干净、流量归零、进程体面离场。<b>主动注销把"死缓期"缩短为 0</b>——这就是优雅下线的全部意义。';}
+      await sleep(crash&&i>=4?820:430);
+    }
+  }
+  $('#hr-run').onclick=()=>run(false);
+  $('#hr-crash').onclick=()=>run(true);
+}
+reg('heart',initHeart);
+
+/* ============ 图2 负载均衡 ============ */
+function initLb(){
+  const barsEl=$('#lb-bars'),btnsEl=$('#lb-btns'),say=$('#lb-say');
+  const g=runGuard();
+  const cols=[];
+  for(let i=0;i<4;i++){const col=h('div',{class:'lb-col'},h('i'),h('span',null,'实例'+(i+1)+(i===3?' 慢':'')));barsEl.append(col);cols.push(col);}
+  const ALGOS=['轮询','随机+权重','least-active'];
+  function clear(){cols.forEach(c=>c.firstChild.style.height='0');}
+  async function run(al){
+    const my=g.next();clear();
+    const cnt=[0,0,0,0];
+    const active=[0,0,0,0];
+    for(let t=0;t<100;t++){
+      if(!g.alive(my))return;
+      let pick;
+      if(al===0)pick=t%4;
+      if(al===1){const r=Math.random();pick=r<.3?0:r<.55?1:r<.8?2:3;}
+      if(al===2){const w=active.map((a,i)=>a*(i===3?2.5:1));const m=Math.min(...w);pick=w.indexOf(m);}
+      cnt[pick]++;active[pick]++;
+      if(pick!==3&&Math.random()<.8)setTimeout(()=>active[pick]=Math.max(0,active[pick]-1),al===2?260:120);
+      if(pick===3&&Math.random()<.55)setTimeout(()=>active[3]=Math.max(0,active[3]-1),320);
+      cols.forEach((c,i)=>c.firstChild.style.height=Math.min(100,cnt[i]*3)+'px');
+      await sleep(al===2?36:22);
+    }
+    say.innerHTML=al===2?'<b>least-active</b>:慢实例 3 的在途计数一直高 → 流量自动绕开,1/2/4 均摊。<b>轮询/加权版再点一次看对比</b>。':'轮询:1/4 流量照喂慢实例(排队放大);加权靠人肉拍权重,慢的变化它不知道。<b>静态公平≠动态健康。</b>';
+  }
+  ALGOS.forEach((n,i)=>{const b=h('button',{class:'btn'+(i===0?' solid':'')},n);b.onclick=()=>run(i);btnsEl.append(b);});
+  say.innerHTML='点算法跑 100 次调用。3 号实例响应慢(在途请求会堆积)。';
+}
+reg('lb',initLb);
+
+/* ============ 图3 灰度 ============ */
+function initGray(){
+  const gw=$('#gy-gw'),st=$('#gy-stable'),ca=$('#gy-canary'),sEl=$('#gy-s'),cEl=$('#gy-c'),errEl=$('#gy-err'),say=$('#gy-say');
+  const g=runGuard();
+  let pct=0,bug=false,timer=null;
+  function tick(){
+    sEl.textContent=(100-pct)+'%';cEl.textContent=pct+'%';
+    if(bug&&pct>0){const e=(8*(0.6+Math.random()*0.8)).toFixed(1);errEl.innerHTML='<b style="color:var(--warn)">'+e+'%</b>';}
+    else errEl.textContent='—';
+    gw.classList.toggle('on',pct>0);ca.classList.toggle('on',pct>0&&bug);
+    if(pct>=100&&bug)say.innerHTML='<b style="color:var(--warn)">全量+bug=全站事故。</b>灰度不是"分步部署",是"每步都用监控换信息,信息不足立刻回滚"——阀门永远可以往回拧。';
+    else if(pct>0)say.innerHTML=bug?'v2 开始吃 '+pct+'% 流量,真实错误率 '+errEl.textContent+' 爬升——<b>下一步该:回滚 or 修?先问 bug 多大。</b>':'v2 在 '+pct+'% 流量下表现健康,可以再放一档。按比例放量=按信息买保险。';
+  }
+  $$('[data-g]').forEach(b=>b.onclick=()=>{pct=+b.dataset.g;$$('[data-g]').forEach(x=>x.classList.toggle('on',x===b));tick();});
+  $('#gy-bug').onclick=()=>{bug=!bug;$('#gy-bug').classList.toggle('on',bug);tick();};
+  tick();
+}
+reg('gray',initGray);
+
+/* ============ 图4 配置热更 ============ */
+function initConf(){
+  const srv=$('#cf-srv'),app=$('#cf-app'),say=$('#cf-say');
+  const g=runGuard();
+  function item(t){return h('div',{class:'cf-item'},t);}
+  $('#cf-pub').onclick=async()=>{
+    const my=g.next();srv.innerHTML='<b>Nacos Server</b><br>';srv.append(item('发布 timeout: 500→300 · v=17'));
+    srv.classList.add('on');app.innerHTML='<b>order-svc ×8</b>';
+    await sleep(700);if(!g.alive(my))return;
+    say.innerHTML='长轮询:客户端的挂起请求被服务端"叫醒"→ 立即拉取新配置。';
+    for(let i=0;i<8;i++){if(!g.alive(my))return;app.append(item('实例'+i+' 刷新 ✓'));await sleep(180);}
+    srv.classList.remove('on');
+    say.innerHTML+=' 全程服务不重启、不断流。<b>但注意:</b>重建 @RefreshScope bean 的下一拍有一次构造开销——热点接口别在流量峰值手抖发布。';
+  };
+  $('#cf-net').onclick=async()=>{
+    const my=g.next();srv.innerHTML='<b>Nacos Server</b>已发布 v=18';app.innerHTML='<b>order-svc ×8</b>';
+    await sleep(500);if(!g.alive(my))return;
+    app.append(item('网络分区 ✗ 通知未达'));
+    say.innerHTML='实例继续用<b>内存旧值 + 本地快照</b>运行,业务无感;分区恢复→补拉→对齐。<b>配置中心挂掉 ≠ 应用挂掉</b>——它挂了仍能启动,才配叫基础设施。';
+  };
+  say.innerHTML='点两个按钮:正常热更 vs 分区。';
+}
+reg('conf',initConf);
+
+/* ============ 图5 重试风暴 ============ */
+function initRetry(){
+  const tree=$('#rt-tree'),say=$('#rt-say');
+  function row(label,counts,colorCls){
+    const r=h('div',{class:'rt-line'});
+    r.append(h('span',{style:'width:30px;font-family:var(--mono);color:var(--gray)'},label));
+    counts.forEach(c=>r.append(h('span',{class:'rt-node '+(colorCls||'')},'×'+c)));
+    tree.append(r);
+  }
+  function draw(naive){
+    tree.innerHTML='';
+    if(naive){
+      row('A',[],'');row('A',[],'');row('A',[],'');
+      const a=h('div',{class:'rt-line'});a.append(h('span',{style:'width:30px;color:var(--gray)'},'用户'));a.append(h('span',{class:'rt-node'},'1 次请求'));tree.append(a);
+      row('→A',[1,1,1]);row('→B',[3,3,3]);row('→C',[9,9,9]);
+      const x=h('div',{class:'rt-node f',style:'margin-top:6px'},'C 收到 27 倍流量 · 从慢 → 死');
+      tree.append(x);
+      say.innerHTML='B 超时后 A 重试 3 次;C 超时后 B 重试 3 次再叠 A 的 3 次——<b>乘法在每一跳复利</b>。C 是被"关心"死的。';
+    }else{
+      const a=h('div',{class:'rt-line'});a.append(h('span',{style:'width:30px;color:var(--gray)'},'用户'));a.append(h('span',{class:'rt-node'},'1 次请求'));tree.append(a);
+      row('→A',[1,1,1],'r');
+      const b=h('div',{class:'rt-line'});b.append(h('span',{style:'width:30px'},' '));b.append(h('span',{class:'rt-node'},'A 边缘重试≤2(指数退避)'));b.append(h('span',{class:'rt-node'},'B/C 快速失败不重试'));tree.append(b);
+      row('→C',[2,2],'');
+      const x=h('div',{class:'rt-node',style:'margin-top:6px;border-color:var(--teal);background:var(--teal-bg)'},'C 收到 ≤2 倍 · 慢但活着');
+      tree.append(x);
+      say.innerHTML='只重试一次、只在边缘、带退避与预算;内部层失败立刻上报,由<b>降级逻辑</b>(缓存兜底/跳过非核心)消化——压力曲线从乘法变成加法。';
+    }
+  }
+  $$('[data-rt]').forEach(b=>b.onclick=()=>draw(b.dataset.rt==='naive'));
+  draw(true);
+}
+reg('retry',initRetry);
+
+/* ============ 附录 ============ */
+function initCards(){
+  const grid=$('#card-grid');
+  const data=[
+    ['什么时候该上微服务?','组织墙与扩缩差异是真理由;团队<20 人先模块化单体。拆不动的领域=拆错的边界。'],
+    ['注册中心选型?','Eureka=AP 客户端拉;Nacos=AP/CP 可切+配置一体+推;底线是它挂时已启动服务要能活。'],
+    ['服务下线怎么不丢请求?','优雅下线三步:主动注销/摘流量 → 排干在途 → 退出;配合上游实例级熔断补"死缓期"。'],
+    ['Feign 超时怎么配?','connect 短、read<上游预算;默认 Feign 用 Ribbon/LoadBalancer 选实例,超时重试要配退避与幂等。'],
+    ['网关干什么不干什么?','认证/限流/灰度/协议转换在门;业务不在门;网关自身必须集群化无单点。'],
+    ['灰度发布三要素?','流量分桶按用户维度(一致性体验)+双版本池+秒级回滚阀门;监控指标要提前埋对比基线。'],
+    ['热更新原理?','长轮询挂起等变更→通知→拉取→RefreshEvent→@RefreshScope 重建;重建开销与不可刷字段是两大坑。'],
+    ['重试为什么危险?','多层重试是乘法放大;只边缘重试、指数退避+抖动、重试预算、幂等——四道闸缺一不可。'],
+    ['超时预算怎么设?','逐跳递减:网关 3s>服务 2s>DAO 800ms;下层成功若上层已超时就是白做,全链时间账要显式。'],
+    ['服务间调用同步还是异步?','能事件不同步:接缝处放 MQ(第 7 讲);同步链越长,可用性=各服务成功率连乘。'],
+    ['分布式事务?','默认拒绝:先问能否事件最终一致/对账兜底;真要选:TCC(可预留)>Saga(长流程)>Seata AT(侵入低但隔离弱)。'],
+    ['链路追踪四金指标?','延迟/流量/错误/饱和度;traceId 贯穿日志与指标,定位从"猜哪层"变"看瀑布"。'],
+  ];
+  data.forEach(([q,a])=>{grid.append(h('div',{class:'card'},h('b',null,q),a));});
+}
+reg('cards',initCards);
+
+/* ============ 装配 ============ */
+function initSpy(){
+  const links=$$('.toc a');
+  const secs=links.map(a=>$(a.getAttribute('href'))).filter(Boolean);
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-18% 0px -72% 0px'});
+  secs.forEach(s=>io.observe(s));
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  Object.entries(INIT).forEach(([n,f])=>safe(n,f));
+  initSpy();
+});
+</script>
+</body>
+</html>
