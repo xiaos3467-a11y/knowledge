@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>图解讲义馆 · 九册</title>
+<title>图解讲义馆 · 十册</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --paper:#F2F3EF; --ink:#1E232B; --ink2:#5B636F; --line:#D9DCD3;
-  --red:#CE3B24; --blue:#15607E; --green:#3D7A2C; --orange:#B4530A; --purple:#6B3FA0; --teal:#0F6E73; --navy:#3D5A80; --ochre:#8B5E3C; --gold:#7D6B1E;
+  --red:#CE3B24; --blue:#15607E; --green:#3D7A2C; --orange:#B4530A; --purple:#6B3FA0; --teal:#0F6E73; --navy:#3D5A80; --ochre:#8B5E3C; --gold:#7D6B1E; --jade:#41605C;
   --serif:"Noto Serif SC","STZhongsong","SimSun",serif;
   --sans:"Noto Sans SC","Microsoft YaHei",sans-serif;
 }
@@ -39,7 +39,7 @@ a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:14
 <div class="wrap">
   <header>
     <h1>图解讲义馆</h1>
-    <p>九册手写单文件讲义:每讲一张<b>按得下去</b>的动画。无框架、无构建、无外链依赖,离线可开——也是 Vercel 上最省心的一种项目。</p>
+    <p>十册手写单文件讲义:每讲一张<b>按得下去</b>的动画。无框架、无构建、无外链依赖,离线可开——也是 Vercel 上最省心的一种项目。</p>
   </header>
   <div class="shelf">
     <a class="book" style="--c:var(--red)" href="redis-illustrated.html">
@@ -89,6 +89,13 @@ a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:14
       <h2>计算机网络 图解讲义</h2>
       <div class="meta">从一次请求到一条连接 · 十讲 · 10 图 + 全链路动画</div>
       <p>开篇一次 HTTPS 请求走十站的旅程动画;封装解封装(MAC 换 IP 不换)、三次握手四次挥手+TIME_WAIT 倒计时+SYN Flood、丢包四种抢救、Reno/CUBIC/BBR 拥塞曲线同台、TCP vs QUIC 队头连坐、HTTP 四代排班表、TLS 证书链与自签事故、DNS 问路接力、JWT 现场篡改、curl 时间轴排障。</p>
+      <span class="go">开卷 →</span>
+    </a>
+    <a class="book" style="--c:var(--jade)" href="netty-illustrated.html">
+      <span class="pen">黛</span>
+      <h2>Netty 与 IO 模型 图解讲义</h2>
+      <div class="meta">高性能网络框架 · 十讲 · 8 图 + select/epoll 对照舞台</div>
+      <p>开篇 8 个 fd 三种就绪,select 全量扫 vs epoll 摘名单;Buffer 三步舞、EventLoop 三环(附赠 handler 阻塞全组陪葬)、Pipeline 双河与断链事故、refCnt 僵尸内存、零拷贝四式同台、粘包两种喝法、拔线心跳时间轴、私有协议解码台。</p>
       <span class="go">开卷 →</span>
     </a>
     <a class="book" style="--c:var(--purple)" href="architecture-illustrated.html">
