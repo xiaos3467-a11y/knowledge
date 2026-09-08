@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>计算机网络 图解讲义 · 从一次请求到一条连接</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F6F2; --card:#FFFFFF; --stage:#FAFBF7;
+  --ink:#1E232B; --ink2:#59616E; --line:#DDE0D8;
+  --pen:#7D6B1E; --pen-bg:#F4F0DE; --pen-line:#DED3AA;
+  --warn:#C0392B; --warn-bg:#FAECE9; --warn-line:#EABFB4;
+  --teal:#0E7C6B; --teal-bg:#E8F4F1;
+  --blue:#2D5FA6; --blue-bg:#EBF0F8;
+  --grape:#5B4A96; --grape-bg:#EEEAF8;
+  --amber:#A9750A; --amber-bg:#FAF2DE;
+  --gray:#7A828C;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --serif:"Noto Serif SC","Source Han Serif SC","STZhongsong","SimSun",serif;
+  --sans:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+  --kai:"KaiTi","STKaiti","Kaiti SC",var(--serif);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(30,35,43,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,35,43,.04) 1px,transparent 1px);
+  background-size:28px 28px}
+::selection{background:rgba(125,107,30,.18)}
+a{color:var(--pen);text-decoration:none}
+.wrap{display:grid;grid-template-columns:224px minmax(0,832px);gap:52px;max-width:1180px;margin:0 auto;padding:0 24px}
+main{min-width:0;padding-bottom:96px}
+section.ch{margin-top:96px;scroll-margin-top:24px}
+.kicker{font-family:var(--serif);color:var(--pen);font-weight:600;font-size:14px;letter-spacing:.12em;margin-bottom:6px}
+h1,h2{font-family:var(--serif);font-weight:900;line-height:1.3}
+h2{font-size:32px;margin-bottom:18px}
+h3{font-size:18px;margin:30px 0 10px;font-weight:700}
+p{margin:12px 0;max-width:76ch}
+p.lead{font-size:17px;color:var(--ink2)}
+ul.tight{margin:8px 0 8px 1.4em}
+ul.tight li{margin:6px 0}
+code.k{font-family:var(--mono);font-size:.86em;background:#EBEDE6;border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+mark{background:none;color:var(--pen);font-weight:700}
+mark.w{color:var(--warn)}
+.think{font-family:var(--kai);color:var(--pen);background:var(--pen-bg);border:1px dashed var(--pen-line);border-radius:8px;padding:8px 14px;font-size:15px;margin:18px 0}
+.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pen);border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;font-size:15px}
+.note b.tag{color:var(--pen);font-weight:700;margin-right:6px}
+aside.toc{position:sticky;align-self:start;top:24px;height:calc(100vh - 48px);overflow:auto;padding:28px 0;scrollbar-width:thin}
+.toc-brand{font-family:var(--serif);font-weight:900;font-size:19px;line-height:1.4;margin-bottom:14px}
+.toc-brand small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--pen);letter-spacing:.18em;font-weight:600}
+.toc ol{list-style:none}
+.toc li a{display:flex;gap:10px;align-items:baseline;padding:5.5px 10px;border-radius:6px;font-size:13.5px;color:var(--ink2);border-left:2px solid transparent}
+.toc li a i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--gray);width:20px;flex:none}
+.toc li a:hover{background:#ECEEE6;color:var(--ink)}
+.toc li a.active{color:var(--pen);font-weight:700;border-left-color:var(--pen);background:rgba(125,107,30,.07)}
+.toc li a.active i{color:var(--pen)}
+.hero{padding-top:48px}
+.hero-title{font-size:clamp(40px,6vw,66px);line-height:1.14}
+.hero-title .stroke{position:relative;display:inline-block}
+.hero-title .stroke svg{position:absolute;left:-4px;right:-4px;bottom:-8px;width:calc(100% + 8px);height:16px;overflow:visible}
+.hero-title .stroke svg path{stroke:var(--pen);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:420;stroke-dashoffset:420;animation:wipe 1s .5s ease-out forwards}
+@keyframes wipe{to{stroke-dashoffset:0}}
+.hero-sub{margin-top:16px;font-size:15.5px;color:var(--ink2);max-width:72ch}
+.hero-kicker{font-family:var(--serif);letter-spacing:.3em;color:var(--pen);font-size:14px;font-weight:600;margin-bottom:10px}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+.caret{display:inline-block;width:9px;height:1.05em;background:var(--pen);vertical-align:-2px;animation:blink 1.1s infinite}
+.reveal{opacity:0;transform:translateY(14px);animation:rv .7s ease-out forwards}
+.reveal.d1{animation-delay:.1s}.reveal.d2{animation-delay:.25s}.reveal.d3{animation-delay:.45s}
+@keyframes rv{to{opacity:1;transform:none}}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+@keyframes slidein{from{transform:translateX(-10px);opacity:0}}
+.demo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin:26px 0;box-shadow:0 2px 0 rgba(30,35,43,.03)}
+.fig-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.fig-no{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--pen);border-radius:4px;padding:2px 8px;flex:none}
+.fig-title{font-family:var(--serif);font-size:17px;font-weight:600}
+.caption{font-family:var(--kai);color:var(--ink2);font-size:14px;line-height:1.7;margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
+.caption::before{content:"图注 · ";color:var(--pen)}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:14px}
+.dctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.dctrl .gap{flex:1}
+.btn{font-family:var(--sans);font-size:13px;color:var(--ink);background:#fff;border:1px solid #C7CCC0;border-radius:7px;padding:5px 14px;cursor:pointer;line-height:1.6;transition:border-color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--pen);color:var(--pen)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.solid:hover:not(:disabled){background:var(--pen);border-color:var(--pen);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{border-color:var(--pen);color:var(--pen);background:var(--pen-bg);font-weight:700}
+.btn.warn-o{border-color:var(--warn);color:var(--warn)}
+.btn.warn-o.on{background:var(--warn-bg)}
+.btn:focus-visible,a:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+.hint{font-size:13px;color:var(--ink2);margin-top:10px}
+.hint b{color:var(--pen)}
+.say{font-size:13.5px;min-height:2.2em;padding:6px 2px;color:var(--ink2);line-height:1.8}
+.say b{color:var(--pen)}
+.say.bad b{color:var(--warn)}
+.pill{display:inline-block;font-size:12px;font-family:var(--mono);border-radius:99px;padding:1px 10px;border:1px solid var(--line);background:#fff}
+.pill.pen{color:var(--pen);border-color:var(--pen-line);background:var(--pen-bg)}
+.pill.teal{color:var(--teal);border-color:#BFDDD5;background:var(--teal-bg)}
+.pill.warn{color:var(--warn);border-color:var(--warn-line);background:var(--warn-bg)}
+.pill.blue{color:var(--blue);border-color:#C6D5EC;background:var(--blue-bg)}
+svg text{font-family:var(--sans)}
+table.tb{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;background:var(--card)}
+table.tb th,table.tb td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top}
+table.tb th{background:#ECEEE6;font-weight:700;font-size:13px}
+table.tb td.m{font-family:var(--mono);font-size:12.5px}
+/* journey */
+.jn-row{display:flex;gap:0;align-items:stretch;flex-wrap:wrap}
+.jn-st{flex:1;min-width:86px;border:1.5px solid var(--line);border-radius:9px;background:var(--card);text-align:center;padding:7px 4px;font-size:11.5px;margin:3px;transition:all .2s}
+.jn-st b{display:block;font-size:12px}
+.jn-st small{color:var(--ink2);font-size:10px}
+.jn-st.hot{border-color:var(--pen);background:var(--pen-bg);transform:translateY(-2px)}
+.jn-log{font-family:var(--mono);font-size:11.5px;background:#1E232B;color:#C9D0DA;border-radius:8px;padding:9px 13px;margin-top:10px;min-height:130px;max-height:200px;overflow:auto;line-height:1.75}
+.jn-log .q{color:#9AD1E8}.jn-log .a{color:#6FC2AE}.jn-log .w{color:#E8B54A}
+.jn-tk{position:absolute;width:52px;height:22px;border-radius:6px;background:var(--pen);color:#fff;font-size:9.5px;font-family:var(--mono);display:grid;place-items:center;z-index:8;transition:left .7s,top .7s}
+/* 封装 */
+.en-col{display:grid;gap:6px}
+.en-layer{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px}
+.en-h{border-radius:5px;padding:3px 8px;color:#fff;white-space:nowrap;transition:all .4s;opacity:0;transform:translateX(-14px)}
+.en-h.show{opacity:1;transform:none}
+.en-pl{border:1.5px dashed var(--line);border-radius:5px;padding:3px 9px;background:var(--card)}
+/* tcp stations */
+.tc-wrap{display:flex;gap:16px;align-items:stretch}
+.tc-side{flex:1;border:2px solid var(--pen-line);border-radius:12px;background:var(--card);padding:8px 12px;font-size:12.5px;text-align:center}
+.tc-side b{font-family:var(--mono);font-size:13px}
+.tc-side .st{font-family:var(--mono);font-size:11.5px;color:var(--teal);margin-top:3px;min-height:20px}
+.tc-mid{flex:1.4;position:relative;min-height:150px}
+.tc-msg{position:absolute;width:96px;height:24px;border-radius:6px;font-size:10px;font-family:var(--mono);color:#fff;display:grid;place-items:center;transition:left .55s,opacity .3s;opacity:0}
+.tw-bar{height:12px;border-radius:6px;background:#E9EBE4;overflow:hidden;margin-top:8px}
+.tw-bar i{display:block;height:100%;width:0;background:var(--warn)}
+/* 包网格 */
+.pkt-grid{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}
+.pkt{width:40px;height:30px;border-radius:6px;border:1.5px solid var(--line);background:var(--card);display:grid;place-items:center;font-family:var(--mono);font-size:11px;transition:all .3s;position:relative}
+.pkt.sent{border-color:var(--blue);background:var(--blue-bg)}
+.pkt.lost{border-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
+.pkt.acked{border-color:var(--teal);background:var(--teal-bg)}
+.pkt.rt{outline:2px solid var(--grape)}
+.pkt small{position:absolute;top:-9px;right:-4px;font-size:8.5px;color:var(--grape)}
+/* 拥塞 */
+.cg-svg{border:1px solid var(--line);border-radius:8px;background:var(--card)}
+/* hol */
+.hol-lane{display:flex;gap:4px;align-items:center;margin:6px 0;font-family:var(--mono);font-size:11px}
+.hol-lab{width:66px;flex:none;color:var(--ink2)}
+.hol-blk{width:34px;height:24px;border-radius:5px;display:grid;place-items:center;color:#fff;font-size:9.5px;transition:all .3s}
+.hol-blk.s1{background:var(--blue)}.hol-blk.s2{background:var(--grape)}.hol-blk.s3{background:var(--teal)}
+.hol-blk.blocked{background:var(--warn)}
+/* http 时间线 */
+.hp-row{display:grid;grid-template-columns:130px 1fr 90px;gap:10px;align-items:center;font-size:12px;margin-bottom:9px}
+.hp-track{position:relative;height:30px;background:#EDEFEA;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.hp-seg{position:absolute;height:22px;top:3px;border-radius:4px;font-size:8.5px;color:#fff;display:grid;place-items:center;font-family:var(--mono);white-space:nowrap;overflow:hidden}
+.hp-seg.conn{background:var(--warn)}.hp-seg.req{background:var(--blue)}.hp-seg.resp{background:var(--teal)}
+/* tls */
+.tl-chain{display:flex;gap:10px;justify-content:center;align-items:center;margin:8px 0;font-size:12px;flex-wrap:wrap}
+.tl-cert{border:2px solid var(--line);border-radius:10px;background:var(--card);padding:7px 12px;text-align:center;min-width:130px;transition:all .3s}
+.tl-cert.ok{border-color:var(--teal);background:var(--teal-bg)}
+.tl-cert.bad{border-color:var(--warn);background:var(--warn-bg)}
+/* dns */
+.dn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-size:11.5px;margin:8px 0}
+.dn-node{border:2px solid var(--line);border-radius:10px;background:var(--card);padding:6px 11px;text-align:center;transition:all .25s;min-width:90px}
+.dn-node b{display:block;font-size:12px}
+.dn-node small{color:var(--gray);font-size:9.5px}
+.dn-node.hot{border-color:var(--pen);background:var(--pen-bg)}
+.dn-node.ans{border-color:var(--teal);background:var(--teal-bg)}
+/* auth */
+.au-box{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.au-card{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:8px 11px;font-size:11.5px;cursor:pointer;transition:all .2s}
+.au-card h5{font-size:12.5px;font-family:var(--mono);color:var(--pen)}
+.au-card .rt{display:none;font-size:11.5px;line-height:1.8;margin-top:5px;color:var(--ink2)}
+.au-card.open{border-color:var(--pen)}
+.au-card.open .rt{display:block}
+.jwt-seg{display:flex;gap:2px;font-family:var(--mono);font-size:9px;margin:6px 0;flex-wrap:wrap}
+.jwt-seg span{border-radius:4px;padding:2px 5px;color:#fff}
+/* debug 时序 */
+.db-bar{display:flex;height:30px;border-radius:8px;overflow:hidden;margin:10px 0;font-size:9.5px;color:#fff;font-family:var(--mono)}
+.db-bar>div{display:grid;place-items:center;transition:width .8s}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:13.5px;line-height:1.7}
+.card b{display:block;font-family:var(--serif);font-size:14.5px;margin-bottom:4px}
+.card b::before{content:"问 ";color:var(--pen)}
+footer{margin-top:88px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2);font-family:var(--kai);line-height:1.9}
+@media (max-width:1120px){
+  .wrap{grid-template-columns:minmax(0,860px);justify-content:center}
+  aside.toc{position:static;height:auto;order:-1;padding:12px 0 0}
+  .toc ol{display:flex;overflow-x:auto;gap:4px;padding-bottom:8px;scrollbar-width:thin}
+  .toc li a{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;border-radius:4px}
+  .toc li a.active{border-bottom-color:var(--pen);background:none}
+  .toc-brand{padding-left:10px}
+}
+@media (max-width:820px){
+  .au-box{grid-template-columns:1fr 1fr}
+  h2{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+  .reveal{opacity:1;transform:none}
+  .hero-title .stroke svg path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<aside class="toc" aria-label="目录">
+  <div class="toc-brand"><small>COMPUTER NETWORK</small>计算机网络 图解讲义</div>
+  <nav><ol>
+    <li><a href="#hero"><i>00</i>开篇 · 一次请求的旅程</a></li>
+    <li><a href="#ch-osi"><i>01</i>封装与解封装</a></li>
+    <li><a href="#ch-tcp"><i>02</i>握手与挥手</a></li>
+    <li><a href="#ch-loss"><i>03</i>可靠传输:丢了怎么办</a></li>
+    <li><a href="#ch-cong"><i>04</i>拥塞控制:探路的艺术</a></li>
+    <li><a href="#ch-hol"><i>05</i>队头阻塞与 QUIC</a></li>
+    <li><a href="#ch-http"><i>06</i>HTTP 版本演进</a></li>
+    <li><a href="#ch-tls"><i>07</i>HTTPS:TLS 握手与证书链</a></li>
+    <li><a href="#ch-dns"><i>08</i>DNS:问路的世界</a></li>
+    <li><a href="#ch-auth"><i>09</i>身份:Cookie·JWT·SSO</a></li>
+    <li><a href="#ch-debug"><i>10</i>排障:慢在哪个环节</a></li>
+    <li><a href="#ch-cards"><i>附</i>面试速查卡</a></li>
+  </ol></nav>
+</aside>
+
+<main>
+
+<section id="hero" class="hero">
+  <p class="hero-kicker reveal d1">从一次请求到一条连接 · 十讲</p>
+  <h1 class="hero-title reveal d1">计算机网络<br><span class="stroke">图解讲义<svg viewBox="0 0 200 12" aria-hidden="true"><path d="M3 8 C 40 2, 70 11, 105 6 S 170 3, 197 7"/></svg></span></h1>
+  <p class="hero-sub reveal d2">地址栏敲下 <code class="k">blog.example.com</code> 回车的 200 毫秒里, packets 走过了十站。放一遍旅程,后面的每一讲都是其中一站的特写。</p>
+  <div class="demo reveal d2" style="margin-top:24px">
+    <div class="fig-head"><span class="fig-no">序</span><span class="fig-title">一次 HTTPS 请求的全链路 · 每一跳的报文都给你看</span></div>
+    <div class="stage" id="d-journey" style="min-height:330px">
+      <div class="jn-row" id="jn-stations"></div>
+      <div class="jn-log" id="jn-log"></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="jn-play">▶ GET https://blog.example.com/post/42</button>
+      <span class="hint">这一条链路就是全册目录:每站一句追问都有专讲接住</span>
+    </div>
+    <p class="caption">看日志里的四次"生面孔":DNS 的逐层问路(第 8 讲)、TCP 三次握手(第 2 讲)、TLS 的证书链(第 7 讲)、CDN MISS 回源(第 6 讲)。"打开网站慢"的锅,就藏在这排站点的某一站。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-osi">
+  <p class="kicker">第 一 讲</p>
+  <h2>封装:每一层只认自己的信封装</h2>
+  <p class="lead">数据从应用往下走,每层包一个自己的头(<mark>封套子</mark>):HTTP 报文 → TCP 段(端口对+序号) → IP 包(IP 对) → 以太网帧(MAC 对+FCS)。两个关键直觉:<b>IP 端到端不变,MAC 逐跳必换</b>——每过一个路由器,二层头重写一次,像快递在分拨中心换面单而收件地址不动;<b>层与层是服务契约</b>:TCP 不在乎底下是以太网还是 Wi-Fi,IP 不在乎谁给自己装帧——分层才能各自演化(所以 HTTP/3 能整体搬去 QUIC/UDP)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 1</span><span class="fig-title">HTTP 报文的下楼与上楼 · 留意换 MAC 不换 IP</span></div>
+    <div class="stage">
+      <div class="en-col" id="en-down"></div>
+      <div class="dctrl">
+        <button class="btn solid" id="en-play">▶ 发送:从 L7 装到 L2</button>
+        <button class="btn warn-o" id="en-hop">▶ 过一台路由器(看谁变了)</button>
+        <button class="btn" id="en-up">▶ 接收:逐层拆封</button>
+      </div>
+      <div class="say" id="en-say">TCP 头里 443→52144 端口对全程不变;IP 头 blog(93.1.2.3)↔本机(10.0.0.7)不变;帧头 MAC 从"网关"变"下一跳"。</div>
+    </div>
+    <p class="caption">ARP 彩蛋:每换一跳都要先"吼一嗓子 谁是 10.0.0.1?"拿到新 MAC——这就是为什么抓包分析第一步总先看 ARP。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-tcp">
+  <p class="kicker">第 二 讲</p>
+  <h2>三次握手与四次挥手:先对表,再散伙</h2>
+  <p class="lead">握手的本质是<b>双向确认"我能发、你能收"</b>:SYN(我提议 seq=x)→ SYN+ACK(收到;我提议 seq=y)→ ACK(也收到)。两次不够——服务端无法确认自己的发送+对方的接收这一方向;四次可以但第三次 ACK 常与数据合并,于是省成三次。seq 各自随机(ISN,防旧包串门+防猜序号)。<br>挥手为什么四步:<b>TCP 是全双工,两条方向各自关门</b>——客户端 FIN,服务端 ACK(我别急,还有货没发完),发完再 FIN,客户端 ACK。最后主动关的客户端进 <mark>TIME_WAIT 等 2MSL</mark>:① 让最后一个 ACK 可达(丢了服务端会重发 FIN,还能重答);② 让网络里本连接的旧包自然死透,别污染同端口号的新连接。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 2</span><span class="fig-title">两台机器对报文 · 三场景:握手 / 挥手 / SYN 攻击</span></div>
+    <div class="stage" id="d-tcp">
+      <div class="tc-wrap">
+        <div class="tc-side"><b>Client</b><div class="st" id="tc-cst">CLOSED</div></div>
+        <div class="tc-mid" id="tc-mid"></div>
+        <div class="tc-side"><b>Server</b><div class="st" id="tc-sst">LISTEN</div></div>
+      </div>
+      <div class="tw-bar" id="tw-bar" style="display:none"><i id="tw-fill"></i></div>
+      <div class="say" id="tc-say"></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" data-tc="syn">▶ 三次握手</button>
+      <button class="btn" data-tc="fin">▶ 四次挥手(带 2MSL 倒计时)</button>
+      <button class="btn warn-o" data-tc="flood">▶ SYN Flood:光发 SYN 不回 ACK</button>
+      <span class="hint" id="tc-hint">SYN 态连接吃服务端半连接队列;syncache 是 Linux 的应对</span>
+    </div>
+    <p class="caption">Flood 剧本:队列打满 → 正常用户 SYN 被丢 → 网站"连不上"。解法三层:<b>syncookies</b>(无状态编码 SYN 进序号)、上游清洗、缩短重试。追问"TIME_WAIT 太多怎么办"——先问为什么短连接这么多(没 keepalive?连接池配错?),而不是先调 tcp_tw_reuse。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-loss">
+  <p class="kicker">第 三 讲</p>
+  <h2>可靠传输:一个丢包的四次抢救</h2>
+  <p class="lead">网络只尽力而为,TCP 的可靠靠<b>序号 + 确认 + 重传</b>三件套。ACK 是累积式:"ACK 6" 意为 6 之前我全收了——但如果 5 丢了,后面收得再多也只能重复 ACK 4。第 4 讲的重传演进:① <b>超时重传 RTO</b>:等定时器到(至少一个 RTT 起)才反应,慢;② <b>快重传</b>:收 3 个重复 ACK 不等超时直接补发丢的;③ <b>SACK</b>(TCP 选项):告诉对方"5 没收到但 6,7 收到了",精确只补 5,一次到位。QUIC 把这套全部内建且 SACK 更强(每个包的收丢状态可上报)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 3</span><span class="fig-title">12 个报文段,5 号失踪 · 三种发现方式三种救援速度</span></div>
+    <div class="stage">
+      <div class="mono" style="font-size:11.5px;color:var(--ink2)">发送序列(seq 相对):</div>
+      <div class="pkt-grid" id="ls-grid"></div>
+      <div class="dctrl">
+        <button class="btn warn-o" data-ls="rto">▶ 超时重传(等 RTO)</button>
+        <button class="btn" data-ls="fast">▶ 快重传(3×dupACK)</button>
+        <button class="btn" data-ls="sack">▶ 带 SACK 的重传</button>
+        <button class="btn" data-ls="gbn">▶ 对照:无 SACK 的成批重传(数据链路层老路)</button>
+      </div>
+      <div class="say" id="ls-say">每段 1KB;5 号在网络上失踪。</div>
+    </div>
+    <p class="caption">dupACK 的本质是"我还在收包,但缺一个"——重复次数暴露空洞;SACK 直接报洞的位置;而超时是唯一"确定失联"的宣告,也是拥塞控制眼里的<b>网络重度拥堵信号</b>(下一讲它要变本加厉地砍窗)。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-cong">
+  <p class="kicker">第 四 讲</p>
+  <h2>拥塞控制:在"探到边"和"别挤爆"之间</h2>
+  <p class="lead">丢包是网络的"堵车报告":TCP 据此动态调<b>拥塞窗 cwnd</b>。经典四动作:<b>慢启动</b>不是慢,是每个 RTT 翻倍 exponential 探路(指数);到 ssthresh 转<b>拥塞避免</b>每 RTT +1(加法,AIMD 的 A);丢包则<b>乘法减</b>(Reno 砍半)——AIMD 的公平收敛美点:所有连接同涨同跌。Reno 的 sawtooth 太保守;CUBIC 用三次函数:丢后冲高更快、高位平台更宽(高带宽延迟网络不怂);BBR 掀桌:<b>不等丢包</b>,持续估计链路带宽和 RTT,主动贴着容量跑——但它是"不礼让"的,和 CUBIC 同场要靠配额共存。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 4</span><span class="fig-title">cwnd-时间曲线 · 三个算法同一条网络各跑一局(中途丢一次包)</span></div>
+    <div class="stage" id="d-cong">
+      <svg id="cg-chart" class="cg-svg" viewBox="0 0 640 240" width="100%"></svg>
+      <div class="dctrl">
+        <button class="btn on" data-al="reno">Reno</button>
+        <button class="btn" data-al="cubic">CUBIC</button>
+        <button class="btn" data-al="bbr">BBR</button>
+        <span class="gap"></span>
+        <span class="hint">虚线=慢启动门限,红点=丢包时刻</span>
+      </div>
+      <div class="say" id="cg-say"></div>
+    </div>
+    <p class="caption">Reno:翻倍→碰线→+1 爬坡→丢包砍半→锯齿永动;CUBIC:砍后不立刻回原位,沿三次曲线先快后慢地拱回去,带宽利用率更高;BBR:一路爬到实测带宽线附近稳成一条马路,几乎不等丢包——三种哲学,<mark>"把丢包当信号"还是"把带宽当目标"</mark>。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-hol">
+  <p class="kicker">第 五 讲</p>
+  <h2>队头阻塞:一根管子拴死所有请求</h2>
+  <p class="lead">TCP 对应用只呈现一条<b>有序字节流</b>——这是 HTTP/1.1 pipelining 和 HTTP/2 多路复用共同的天花板:<mark>哪怕应用层拆成 100 个流,丢一个包,后面所有流的数据都得在 TCP 层排队等重传</mark>(有序交付语义)。HTTP/2 缓解了应用层队头(帧交错),但传输层队头依旧——一次丢包,100 个 stream 齐卡。<b>QUIC 的破局</b>:把"流"下放到传输协议,每条流<b>独立序号空间独立重传独立交付</b>——丢 3 号流的包,7 号照收;握手还合并了 TLS1.3(0/1-RTT),连接迁移用 Connection ID 不吃四元组(Wi-Fi 切 4G 不断线)。代价:UDP 上重建 TCP 全部可靠性,拥塞控制变成<b>可插拔用户态代码</b>(浏览器可以内置 BBR)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 5</span><span class="fig-title">同一个"stream1 丢一包":TCP 与 QUIC 的两种连坐</span></div>
+    <div class="stage" id="d-hol">
+      <div style="font-size:12px;color:var(--ink2);font-family:var(--mono)">HTTP/2 over TCP(一条有序字节流)</div>
+      <div class="hol-lane"><span class="hol-lab">到达序→</span><div id="hl-tcp" style="display:flex;gap:4px"></div></div>
+      <div style="font-size:12px;color:var(--ink2);font-family:var(--mono)">HTTP/3 over QUIC(每流独立)</div>
+      <div class="hol-lane"><span class="hol-lab">到达序→</span><div id="hl-quic" style="display:flex;gap:4px"></div></div>
+      <div class="say" id="hl-say"></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="hl-play">▶ 三个流各发四包,stream1 第二包丢失</button>
+      <span class="hint">灰=未到 色块=已交付 ⚠=空洞 红=被连坐阻塞</span>
+    </div>
+    <p class="caption">TCP 车道:空洞之后全红——管你哪个 stream,有序性一票否决;QUIC:stream2/3 继续交卷,只有 stream1 自己等重传。<mark>"多路复用"在 H2 是复用连接,到 H3 才是真复用流</mark>。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-http">
+  <p class="kicker">第 六 讲</p>
+  <h2>HTTP 演进:每版都在省往返</h2>
+  <p class="lead">HTTP 是"请求-响应"的语义层,版本史就半部网络演进史:<b>0.9/1.0</b> 一问一答关连接(TTFT 里白送三次握手);<b>1.1</b> keep-alive 长连接复用 + pipelining 管道(请求可以连着发,但响应必须按序回——<b>应用层队头诞生</b>),外加 Host/Range/Chunked 与一堆缓存头(Cache-Control/ETag 撑起 CDN);浏览器为绕 6 连接上限搞域名分片/雪碧图;<b>2</b> 二进制分帧+单连接多流+HPACK 头压缩,连接数危机解除,但 TCP 队头仍阴魂;2 与 QUIC 合体成 <b>3</b>。状态码三记:<b>3xx 你去哪儿 / 4xx 你错了 / 5xx 我炸了</b>(502 网关探到后端死、504 网关等后端超时——负载均衡时代的两兄弟要能分辨)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 6</span><span class="fig-title">加载 6 个资源:四代连接的排班表</span></div>
+    <div class="stage" id="d-http"></div>
+    <p class="caption">红=建连 蓝=请求 绿=响应。1.0 六次握手排排站;1.1 一条管子串行但省了握手;pipelining 请求连发、响应仍按序(第一块慢拖全场);2 全部交错。这张排班表就是"为什么网页加速从合并域名到 HTTP/2 全在折腾连接"。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-tls">
+  <p class="kicker">第 七 讲</p>
+  <h2>HTTPS:不对称锁门,对称运货</h2>
+  <p class="lead">TLS 要解决两件事:<b>把一对对称密钥安全地送到双方手里</b>(对称快但密钥没法裸传),以及<b>证明"对面是 baidu.com 不是路霸"</b>(公钥基础设施 PKI)。流程:ClientHello(随机数 A+套件)→ ServerHello(随机数 B+<b>证书链</b>:站点←中间 CA←根,浏览器内置根公钥逐级验签)→ <b>ECDHE 密钥交换</b>:双方用各自的临时公私钥+两个随机数算出同一把会话密钥——<mark>密钥从未上网</mark>,且前向安全(私钥日后泄露也解不开旧流量)。之后全是对称的快车道。TLS1.3 的狠活:把 RSA 密钥交换这类旧路删了,只留 ECDHE,<b>握手从 2-RTT 压到 1-RTT</b>,会话恢复 0-RTT(有重放风险,只许幂等首包)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 7</span><span class="fig-title">证书链验签 + 握手时序 · 换张"自签证书"试试</span></div>
+    <div class="stage" id="d-tls">
+      <div class="tl-chain" id="tl-chain"></div>
+      <div class="tl-flow mono" id="tl-flow" style="display:grid;gap:5px;font-size:11.5px;margin-top:6px"></div>
+      <div class="dctrl">
+        <button class="btn solid" id="tl-play">▶ TLS1.3 完整握手(1-RTT)</button>
+        <button class="btn warn-o" id="tl-bad">▶ 服务器改用自签证书</button>
+        <button class="btn" id="tl-rtt">▶ 对照:TLS1.2 要 2-RTT</button>
+      </div>
+      <div class="say" id="tl-say"></div>
+    </div>
+    <p class="caption">自签剧本:链第一环就验不过(没有受信 CA 的签)——浏览器弹红色警告,<b>不是"不安全"而是"无法确认他是谁"</b>。中间人攻击的成本=骗过 CA 或让用户装根证书,这也是企业代理能解密流量的原因(它成了你信任的 CA)。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-dns">
+  <p class="kicker">第 八 讲</p>
+  <h2>DNS:一次问路的接力</h2>
+  <p class="lead">你的机器只问了<b>本地解析器</b>(recursive,替你把事办成),但解析器自己要走<b>迭代</b>路:问根(不答,指 .com)→ 问 .com(不答,指权威)→ 问权威(答 A 记录)。层层都是"我只知道下一步该问谁"。缓存策略撑起了这套系统不崩:<b>TTL</b> 决定每层能记多久,负缓存(NXDOMAIN)同样有 TTL;这也是 DNS 切换慢的原因——<mark>改记录只是源头变了,全网还得等各缓存过期</mark>(提前调低 TTL 是迁站第一课)。记录家族:A/AAAA、CNAME(别名,链的尽头还得 A)、MX、TXT(域名验证/SPF)、NS、SRV。<b>DNS 的软肋</b>:明文 UDP(可窃听可投毒)、慢路径(首次解析几百 ms)——催生了 DoH(HTTPS 里问)/DoT,以及 HTTP/2 push 时代的 EDNS client-subnet… 还有 GFW 的众所周知章节。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 8</span><span class="fig-title">问路动画 · 递归的委托与迭代的跑腿</span></div>
+    <div class="stage" id="d-dns">
+      <div class="dn-row" id="dn-nodes"></div>
+      <div class="say" id="dn-say" style="min-height:3.4em"></div>
+      <div class="dctrl">
+        <button class="btn solid" id="dn-play">▶ 解析 blog.example.com(冷缓存)</button>
+        <button class="btn" id="dn-cache">▶ 再解析一次(命中缓存)</button>
+        <button class="btn warn-o" id="dn-ttl">▶ TTL=10s 的 A 记录改了 IP,谁先看见?</button>
+      </div>
+    </div>
+    <p class="caption">冷缓存四跳;热缓存一跳直返(浏览器/OS/解析器层层皆 cache)。TTL 那题:新请求按旧 TTL 分布被旧 IP 黏住——<b>迁移前先把 TTL 调小</b>,发布完再调回,这是运维的肌肉记忆。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-auth">
+  <p class="kicker">第 九 讲</p>
+  <h2>身份四件套:Cookie·Session·JWT·SSO</h2>
+  <p class="lead">HTTP 本身无状态,身份是后来"贴"上去的。<b>Cookie</b>:Set-Cookie 存浏览器,同源请求自动携带(HttpOnly 防脚本偷、Secure 防明文、SameSite 防 CSRF——三件套背全)。<b>Session</b>:服务端存会话,Cookie 只带 session id——水平扩展就遇到"会话在哪台机器":粘滞会话(IP hash)→ 中央会话(Redis,主流)→ 干脆<b>无状态:JWT</b>,把身份自包含进令牌(header.payload.signature),任何节点拿公钥就能验签,不用回中心问——代价是<b>吊销难</b>(短过期 + 黑名单补救)、payload 别放敏感料(Base64 不是加密,现场点一下"篡改"就懂)。<b>SSO</b>=多应用共享一次登录:中心域发全局会话,子系统换发自己的票(OIDC/CAS 流派)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 9</span><span class="fig-title">四张方案卡 · 现场篡改一个 JWT 看看</span></div>
+    <div class="stage au-box" id="d-auth"></div>
+    <div class="say" id="au-say"></div>
+  </div>
+</section>
+
+<section class="ch" id="ch-debug">
+  <p class="kicker">第 十 讲</p>
+  <h2>排障:把"慢"拆成时间轴</h2>
+  <p class="lead">"网站好慢"永远要先拆段:<code class="k">curl -w @fmt</code> 或浏览器 Performance 面板把一次请求切成 <mark>DNS → TCP → TLS → TTFB(服务端) → 下载</mark>。哪段红查哪:<b>DNS 慢</b>→换 local resolver/预解析;<b>连不上</b>→安全组/路由/队列满;<b>TLS 慢</b>→证书链没带全(要再下载中间证书!)、握手 2-RTT;<b>TTFB 高</b>→服务端/DB/缓存,与网络无关;<b>下载慢</b>→带宽/分片/TLS record size。<b>工具阶梯</b>:ping(通不通+RTT)→ traceroute/mtr(路径断在哪跳)→ dig(解析对不对)→ curl -v(握手细节全露)→ openssl s_client(证书链体检)→ tcpdump(终极显微镜)。面试标准句:"先分段定位,再谈优化"。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 10</span><span class="fig-title">一条真实投诉的时间轴 · "打开商品页要 3 秒"</span></div>
+    <div class="stage" id="d-debug">
+      <div class="db-bar" id="db-bar"></div>
+      <div class="dctrl">
+        <button class="btn solid" id="db-play">▶ curl -w 分解这次请求</button>
+        <button class="btn warn-o" id="db-bad">▶ 换个案:这次 TLS 段异常</button>
+      </div>
+      <div class="say" id="db-say"></div>
+    </div>
+    <p class="caption">案一:TTFB 2.4s 一家独大 → 网络无罪,去查缓存穿透(Redis 那本第 7 讲等你)。案二:TLS 段红 → 服务器<b>没下发中间证书</b>,浏览器自己跑去找 CA 补链——"curl 快浏览器慢"的经典错位。时间轴不骗人,玄学才骗人。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-cards">
+  <p class="kicker">附 录</p>
+  <h2>面试速查卡</h2>
+  <div class="cards" id="card-grid"></div>
+</section>
+
+<footer>
+  计算机网络 图解讲义 · 系列第九册 · 手写 vanilla JS/SVG 无依赖 · 口径主流 RFC + Linux 默认栈。
+</footer>
+</main>
+</div>
+
+<script>
+/* ============ 工具 ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+function h(tag,attrs){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k==='text')e.textContent=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)));}return e;}
+const svgNS='http://www.w3.org/2000/svg';
+function S(tag,attrs){const e=document.createElementNS(svgNS,tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='text')e.textContent=v;else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c)e.append(c);}return e;}
+function runGuard(){let id=0;return{next(){return++id},alive(my){return my===id}};}
+const safe=(name,fn)=>{try{fn();}catch(e){console.error('[demo:'+name+']',e);}};
+const INIT={};
+const reg=(n,f)=>{INIT[n]=f;};
+
+/* ============ hero 一次请求的旅程 ============ */
+function initJourney(){
+  const stEl=$('#jn-stations'),logEl=$('#jn-log'),stage=$('#d-journey');
+  const ST=[['浏览器','缓存查询'],['DNS','域名→IP'],['TCP','三次握手'],['TLS','证书校验'],['CDN','边缘节点'],['负载均衡','L4/L7'],['网关','鉴权/限流'],['应用服务','动态逻辑'],['数据层','缓存/DB']];
+  const g=runGuard();
+  let tk=h('div',{class:'jn-tk',style:'left:0;top:64px;opacity:0'},'HTTPS');
+  stage.append(tk);
+  ST.forEach(([n,s])=>{stEl.append(h('div',{class:'jn-st'},h('b',null,n),h('small',null,s)));});
+  function log(html,cls){logEl.append(h('div',{class:cls||''},html));logEl.scrollTop=logEl.scrollHeight;}
+  function lineLog(i){
+    const L=[
+      '<span class="a">✓ 内存/hosts 缓存无命中 → 递归问本地解析器</span>',
+      '<span class="a">DNS: 迭代链 根→.com→权威 → blog.example.com = 93.1.2.3 (A, TTL 300)</span>',
+      '<span class="a">TCP: SYN seq=8211… → SYN,ACK seq=4402… → ACK ✔ (RTT 31ms)</span>',
+      '<span class="a">TLS1.3: ServerHello+证书链校验✓ → ECDHE 握手密钥 → 加密开始 (1-RTT)</span>',
+      '<span class="a">CDN: edge MISS → 回源拉 /post/42;顺手让源站认了个缓存</span>',
+      '<span class="a">LB: 轮询选中 app-2;健康检查它刚 UP</span>',
+      '<span class="w">GW: 限流令牌桶扣 1,鉴权 token 校验 ✓</span>',
+      '<span class="a">App: 查缓存命中 60% → 未命中查库,拼 HTML</span>',
+      '<span class="a">200 OK,18KB 回流;渲染再来一轮子资源请求 →</span>',
+    ];
+    return L[i];
+  }
+  async function play(){
+    const my=g.next();logEl.innerHTML='';
+    const els=$$('.jn-st',stEl);els.forEach(e=>e.classList.remove('hot'));
+    for(let i=0;i<els.length;i++){
+      if(!g.alive(my))return;
+      els[i].classList.add('hot');
+      const r=els[i].getBoundingClientRect(),sr=stage.getBoundingClientRect();
+      tk.style.opacity=1;tk.style.left=(r.left-sr.left+r.width/2-26)+'px';tk.style.top=(r.top-sr.top-26)+'px';
+      await sleep(430);if(!g.alive(my))return;
+      log(lineLog(i));
+      await sleep(260);
+    }
+    if(!g.alive(my))return;
+    tk.style.opacity=0;
+    log('<span class="a">🧭 刚才每一站都可能是"慢"的原因——全册目录。</span>');
+  }
+  $('#jn-play').onclick=play;
+}
+reg('journey',initJourney);
+
+/* ============ 图1 封装 ============ */
+function initOsi(){
+  const col=$('#en-down'),say=$('#en-say');
+  const L=[
+    ['L7','HTTP','GET /post/42 Host:blog…','var(--pen)'],
+    ['L4','TCP 段',':52144→443 seq=1 len=182','var(--blue)'],
+    ['L3','IP 包','10.0.0.7→93.1.2.3 (不变)','var(--teal)'],
+    ['L2','以太网帧','MAC→网关 (逐跳变)','var(--grape)'],
+  ];
+  let shown=0,hop=0;
+  function draw(){
+    col.innerHTML='';
+    L.forEach((l,i)=>{
+      const row=h('div',{class:'en-layer'});
+      const pl=h('span',{class:'en-pl'},i===0?'HTTP 报文':'payload');
+      const hh=h('span',{class:'en-h'+(i<shown?' show':''),style:'background:'+l[3]},l[1]+(i===3&&hop>0?' ·MAC 已换!':'')+' '+l[2]);
+      row.append(h('b',{style:'width:34px;color:var(--gray);font-size:10.5px'},l[0]),hh,pl);
+      col.append(row);
+    });
+  }
+  draw();
+  $('#en-play').onclick=async()=>{const my=g.next();shown=0;hop=0;draw();
+    for(let i=0;i<4;i++){if(!g.alive(my))return;shown++;draw();
+      if(i===2)say.innerHTML='<b>IP 对(10.0.0.7↔93.1.2.3)端到端不换</b>;MAC 对先写"网关"——出门先交给路由器。';
+      await sleep(520);}};
+  $('#en-hop').onclick=()=>{hop=1;draw();say.innerHTML='路由器剥掉旧帧、查路由表、<b>重写新帧头</b>(src=新出口 MAC,dst=下一跳)——IP 纹丝不动。<mark>MAC 管下一跳,IP 管目的地</mark>。';};
+  $('#en-up').onclick=async()=>{const my=g.next();
+    for(let i=3;i>=0;i--){if(!g.alive(my))return;shown=i;draw();
+      if(i===0)say.innerHTML='拆到最内层:HTTP 报文交给内核 socket,TLS 再拆一层密——应用拿到响应体。';
+      await sleep(430);}};
+}
+reg('osi',initOsi);
+
+/* ============ 图2 握手/挥手 ============ */
+function initTcp(){
+  const mid=$('#tc-mid'),cst=$('#tc-cst'),sst=$('#tc-sst'),say=$('#tc-say'),hint=$('#tc-hint');
+  const twb=$('#tw-bar'),twf=$('#tw-fill');
+  const g=runGuard();
+  function msg(text,from,to,color,dur){
+    return new Promise(res=>{
+      const m=h('div',{class:'tc-msg',style:'background:'+color},text);
+      const y=to==='r'?0:1;
+      m.style.top=(28+y*44)+'px';
+      mid.append(m);
+      requestAnimationFrame(()=>{m.style.opacity=1;m.style.left=from==='l'?'0%':'62%';m.style.left=from==='l'?'4%':'58%';
+        requestAnimationFrame(()=>{m.style.left=from==='l'?'64%':'4%';});});
+      setTimeout(()=>{m.style.opacity=.25;res();},dur||620);
+      setTimeout(()=>m.remove(),dur+400||1020);
+    });
+  }
+  async function play(kind){
+    const my=g.next();cst.textContent='';sst.textContent='';twb.style.display='none';
+    if(kind==='syn'){
+      cst.textContent='SYN_SENT';sst.textContent='SYN_RCVD';
+      await msg('SYN seq=x','l','r','var(--blue)');if(!g.alive(my))return;
+      say.innerHTML='客户端:我要建连,我的起始序号 x(随机,防猜防旧串)。';
+      await msg('SYN+ACK seq=y,ack=x+1','r','l','var(--teal)');if(!g.alive(my))return;
+      say.innerHTML='服务端:收到了!我的 y,ack 你的 x+1——<b>它还没确认我能不能收</b>,所以还得第三次。';
+      await msg('ACK ack=y+1','l','r','var(--pen)');if(!g.alive(my))return;
+      cst.textContent='ESTABLISHED';sst.textContent='ESTABLISHED';
+      say.innerHTML='双方"我能发你能收、我能收你能发"都验完,握手成。<b>两次永远差"服务端收没收到客户端的确认"这条腿。</b>';
+      hint.textContent='三次也能合并?第三次可以带数据(连接复用/TFO 已把这条路走软)。';
+    }
+    if(kind==='fin'){
+      await msg('FIN','l','r','var(--blue)');if(!g.alive(my))return;
+      cst.textContent='FIN_WAIT_1';sst.textContent='CLOSE_WAIT';
+      say.innerHTML='客户端:我说完了。服务端:知道了(ACK)——<b>但我可能还有货要发</b>,所以 ACK 和 FIN 分开,这就是四次的第一步半。';
+      await msg('ACK','r','l','var(--teal)');if(!g.alive(my))return;
+      cst.textContent='FIN_WAIT_2';
+      await sleep(500);await msg('FIN(货发完了)','r','l','var(--teal)');if(!g.alive(my))return;
+      sst.textContent='LAST_ACK';
+      await msg('ACK','l','r','var(--pen)');if(!g.alive(my))return;
+      cst.textContent='TIME_WAIT';
+      twb.style.display='block';twf.style.width='0';
+      say.innerHTML='客户端进 TIME_WAIT,等 <b>2MSL</b> 才彻底关——倒数开始(演示 4s=真 120s)。为什么?① 这个 ACK 丢了,服务端会再 FIN,我还得能答;② 本连接的旧包在网络里烂掉,别串到新连接。';
+      const t0=performance.now();
+      (function tick(){const p=(performance.now()-t0)/4000;twf.style.width=Math.min(100,p*100)+'%';
+        if(p<1&&g.alive(my))requestAnimationFrame(tick);else if(g.alive(my)){cst.textContent='CLOSED';say.innerHTML+=' 时间到,CLOSED。';}})();
+      hint.textContent='服务端秒 CLOSED;半关(CLOSE_WAIT 卡住)= 应用没调 close,是"TIME_WAIT/CLOSE_WAIT 堆积"题的分水岭。';
+    }
+    if(kind==='flood'){
+      let q=0;
+      cst.textContent='SYN 洪水发送中…';
+      sst.textContent='半连接队列 0/1024';
+      for(let i=0;i<8;i++){
+        if(!g.alive(my))return;
+        q+=rnd(150,240);sst.textContent='半连接队列 '+Math.min(q,1024)+'/1024';
+        await msg('SYN (伪造源IP,没人回ACK)','l','r','var(--warn)',420);
+        if(q>=1024){
+          await msg('正常用户的 SYN → 被丢','r','l','var(--gray)',600);
+          say.innerHTML='队列满,新 SYN <b style="color:var(--warn)">直接丢</b>——网站"连不上"的现场。防御:<b>syncookies</b>(把半连接状态编码进 seq 重造,队列清零)、上游流量清洗。';
+          return;}
+      }
+    }
+  }
+  $$('[data-tc]').forEach(b=>b.onclick=()=>play(b.dataset.tc));
+}
+reg('tcp',initTcp);
+
+/* ============ 图3 丢包抢救 ============ */
+function initLoss(){
+  const grid=$('#ls-grid'),say=$('#ls-say');
+  const g=runGuard();
+  function build(){
+    grid.innerHTML='';
+    for(let i=1;i<=12;i++)grid.append(h('span',{class:'pkt',id:'pk'+i},String(i)));
+  }
+  build();
+  async function mark(ids,cls){for(const i of ids){const p=$('#pk'+i,grid);p.classList.add(cls);await sleep(90);}}
+  async function play(kind){
+    const my=g.next();build();
+    const normal=[1,2,3,4,6,7,8,9];
+    await mark(normal,'sent');if(!g.alive(my))return;
+    $('#pk5').classList.add('lost');$('#pk5').classList.remove('sent');
+    say.innerHTML='5 号在网络上失踪。此刻:1-4 被 ACK,6-9 到达但"乱序占坑",ACK 只能停在 5。';
+    await sleep(700);if(!g.alive(my))return;
+    if(kind==='rto'){
+      say.innerHTML='接收端反复 ACK 5?不——<b>超时剧本:发送端啥也没等到,只能盯着 RTO 计时器</b>(约 1 个 RTT 起,可能几百 ms)。';
+      let r=3;const iv=setInterval(()=>{r--;},0);clearInterval(iv);
+      for(let i=0;i<10;i++){if(!g.alive(my))return;say.innerHTML+=' ⏳';await sleep(110);}
+      $('#pk5').classList.add('rt');$('#pk5').append(h('small',null,'重传'));
+      say.innerHTML+=' 超时到!重传 5 ——<b style="color:var(--warn)">慢,而且拥塞窗口被砸回慢启动(RTO 视为严重信号)</b>。';
+    }
+    if(kind==='fast'){
+      say.innerHTML='接收端每再吞一个乱序包就回一次"ACK 5"——3 个重复 ACK 是"空洞"的报警。';
+      for(let i=0;i<3;i++){if(!g.alive(my))return;await msgDup(i);await sleep(340);}
+      $('#pk5').classList.add('rt');$('#pk5').append(h('small',null,'快重传'));
+      say.innerHTML+=' 不傻等 RTO,立刻补发 5;<b>快恢复</b>把窗口减半而不是清零——比超时温和得多。';
+    }
+    if(kind==='sack'){
+      say.innerHTML='TCP 选项 SACK 上场:ACK 旁边附小纸条"已收 6-9"。';
+      $('#pk6').classList.add('acked');$('#pk7').classList.add('acked');$('#pk8').classList.add('acked');$('#pk9').classList.add('acked');
+      await sleep(600);if(!g.alive(my))return;
+      $('#pk5').classList.add('rt');$('#pk5').append(h('small',null,'精确重传'));
+      say.innerHTML+='发送端照纸条补 5 就完事——<b>不用猜"哪些要重发",一个都不冤枉</b>。';
+    }
+    if(kind==='gbn'){
+      say.innerHTML='老式回 N 帧/无 SACK:既然 5 没到,';
+      await mark([5,6,7,8,9],'rt');
+      for(let i=5;i<=9;i++){$('#pk'+i).append(h('small',null,'重发'));}
+      say.innerHTML='<b style="color:var(--warn)">5-9 全推倒重发</b>——带宽一半喂了重复包。SACK 的存在让这一幕只留在教科书里。';
+    }
+  }
+  function msgDup(i){return new Promise(res=>{const d=h('span',{class:'pill warn',style:'position:absolute;right:-6px;top:-14px'},'ACK 5 ×'+(i+1));$('#pk9',grid).style.position='relative';$('#pk9',grid).append(d);setTimeout(res,300);});}
+  $$('[data-ls]').forEach(b=>b.onclick=()=>play(b.dataset.ls));
+}
+reg('loss',initLoss);
+
+/* ============ 图4 拥塞 ============ */
+function initCong(){
+  const chart=$('#cg-chart'),say=$('#cg-say');
+  const g=runGuard();
+  const W=640,H=240,PAD=30;
+  const MAXT=48,MAXC=100;
+  function curve(al){
+    const pts=[];
+    if(al==='reno'){let c=1,ss=32;for(let t=0;t<MAXT;t++){pts.push(c);
+      if(t===20){ss=Math.max(6,c/2);c=ss;pts.pop();pts.push(c);continue;}
+      c = c<ss? c*2 : c+1; if(c>MAXC)c=MAXC;}}
+    if(al==='cubic'){let c=1,ss=32,K=0;for(let t=0;t<MAXT;t++){pts.push(c);
+      if(t===20){ss=Math.max(8,c*.7);K=Math.cbrt((ss*.7)/.3);c=ss;pts.pop();pts.push(c);continue;}
+      c = c<2? c*2 : (c<ss? c+ (1.5-t)*.6+.4 : 48+(t-20)*(3.2-Math.max(0,(t-26)*.32)));
+      if(c>MAXC)c=MAXC;if(c<1)c=1;}}
+    if(al==='bbr'){let c=6;for(let t=0;t<MAXT;t++){pts.push(c);
+      c = c<64? c*1.35 : Math.min(MAXC,64+Math.sin(t/4)*2);}}
+    return pts;
+  }
+  function draw(al){
+    const pts=curve(al);
+    chart.innerHTML='';
+    chart.append(S('line',{x1:PAD,y1:20,x2:PAD,y2:H-20,stroke:'#DDE0D8'}));
+    chart.append(S('line',{x1:PAD,y1:H-20,x2:W-10,y2:H-20,stroke:'#DDE0D8'}));
+    chart.append(S('text',{x:8,y:26,'font-size':9,fill:'#7A828C',text:'cwnd'}));
+    chart.append(S('text',{x:W-58,y:H-8,'font-size':9,fill:'#7A828C',text:'RTT 轮数'}));
+    const ssx=(20)/MAXT*(W-40-PAD)+PAD, ssy=H-20-32/MAXC*(H-40);
+    if(al!=='bbr')chart.append(S('line',{x1:ssx,y1:20,x2:ssx,y2:H-20,stroke:'#DED3AA','stroke-dasharray':'3 3'}));
+    let d='';pts.forEach((c,i)=>{const x=PAD+i/MAXT*(W-40-PAD)+PAD*0;y=H-20-c/MAXC*(H-40);d+=(i?'L':'M')+x+' '+y+' ';});
+    const path=S('path',{d,fill:'none',stroke:'#7D6B1E','stroke-width':2.2});
+    chart.append(path);
+    const len=path.getTotalLength?path.getTotalLength():1000;
+    path.style.strokeDasharray=len;path.style.strokeDashoffset=len;
+    path.getBoundingClientRect();
+    path.style.transition='stroke-dashoffset 2.2s linear';
+    path.style.strokeDashoffset=0;
+    if(al!=='bbr')chart.append(S('circle',{cx:PAD+20/MAXT*(W-40-PAD),cy:H-20-curve(al)[20]/MAXC*(H-40),r:4,fill:'#C0392B'}));
+    say.innerHTML={
+      reno:'<b>Reno</b>:指数探路→碰 ssthresh 转 +1→丢包(红点)砍半锯齿。公平但"怕挤",高带宽下永远填不满管子。',
+      cubic:'<b>CUBIC</b>:丢包后按三次曲线拱回高位(先快后慢+平台),Linux 默认;和邻居共存靠"乘性减"。',
+      bbr:'<b>BBR</b>:不拿丢包当信号——测带宽×RTT 得 BDP,把窗口钉在"刚好填满管子",曲线是平路;对随机丢包链路友好,但对同场老算法不礼让。'}[al];
+  }
+  $$('[data-al]').forEach(b=>{b.onclick=()=>{$$('[data-al]').forEach(x=>x.classList.toggle('on',x===b));draw(b.dataset.al);};});
+  draw('reno');
+}
+reg('cong',initCong);
+
+/* ============ 图5 队头阻塞 ============ */
+function initHol(){
+  const tcpEl=$('#hl-tcp'),quicEl=$('#hl-quic'),say=$('#hl-say');
+  const g=runGuard();
+  const SEQ=[['s1','1a'],['s1','1b'],['s2','2a'],['s3','3a'],['s1','1c'],['s2','2b'],['s3','3b'],['s2','2c'],['s3','3c']];
+  function build(el){el.innerHTML='';SEQ.forEach(([s,n])=>el.append(h('span',{class:'hol-blk '+s,id:el.id+'-'+n},n)));}
+  async function play(){
+    const my=g.next();build(tcpEl);build(quicEl);
+    say.innerHTML='三流交错共用一条有序字节流;1b 在网络上失踪。';
+    for(let i=0;i<SEQ.length;i++){
+      if(!g.alive(my))return;
+      const [s,n]=SEQ[i];
+      if(n==='1b'){$('#hl-tcp-1b').classList.add('blocked');$('#hl-quic-1b').classList.add('blocked');
+        say.innerHTML='💥 <b>1b 丢了</b>。';await sleep(500);continue;}
+      $('#hl-quic-'+n).style.background='';$('#hl-quic-'+n).classList.add('hol-blk');
+      if(s==='s1'&&i>1){$('#hl-tcp-'+n).classList.add('blocked');$('#hl-quic-'+n).style.opacity=1;}
+      else{$('#hl-tcp-'+n).style.boxShadow='inset 0 0 0 2px #0E7C6B';}
+      $('#hl-quic-'+n).style.boxShadow='inset 0 0 0 2px #0E7C6B';
+      await sleep(320);if(!g.alive(my))return;
+      if(i===4){
+        say.innerHTML='TCP:s1 后续全红还算轻的——<b style="color:var(--warn)">有序交付意味着 s2/s3 的数据虽然到了,也卡在 TCP 重组缓冲不能上交给 stream</b>。QUIC:s2/s3 照常交付。';
+      }
+    }
+    say.innerHTML+=' 最终:TCP 等 1b 重传成功才放行全部;QUIC 只有 stream1 慢了一拍。<mark>H2 的"多路复用"复用的是连接,H3 才复用到流</mark>。';
+  }
+  $('#hl-play').onclick=play;
+}
+reg('hol',initHol);
+
+/* ============ 图6 HTTP 排班表 ============ */
+function initHttp(){
+  const stage=$('#d-http');
+  const V=[
+    ['HTTP/1.0 短连接',[['conn',0,14],['req',14,6],['resp',20,22],['conn',50,14],['req',64,6],['resp',70,22],['conn',100,14],['req',114,6],['resp',120,22],['…×6',150,20]],'每个资源都付三次握手税,连接用完即弃'],
+    ['HTTP/1.1 keep-alive 串行',[['conn',0,14],['req',14,6],['resp',20,22],['req',42,6],['resp',48,22],['req',70,6],['resp',76,22],['req',98,6],['resp',104,22]],'一条线省了握手,但请求-响应仍要成对排队'],
+    ['HTTP/1.1 pipelining',[['conn',0,14],['req',14,4],['req',18,4],['req',22,4],['resp',26,20],['resp',46,14],['resp',60,14],['note',26,34]],'请求连发,响应必须按序——第一个慢,后面全等(应用层队头)'],
+    ['HTTP/2 单连接多流',[['conn',0,14],['req',14,4],['req',18,4],['req',22,4],['resp',26,12],['resp',28,12],['resp',30,14],['note',14,44]],'帧交错任意序返回;但 TCP 层丢包仍全员连坐(第 5 讲)'],
+  ];
+  stage.innerHTML='';
+  V.forEach(([name,segs,note])=>{
+    const row=h('div',{class:'hp-row'});
+    row.append(h('span',{class:'mono',style:'font-size:11.5px'},name));
+    const track=h('div',{class:'hp-track'});
+    segs.forEach(([t,x,w])=>{
+      const c=t==='conn'?'var(--warn)':t==='req'?'var(--blue)':t==='resp'?'var(--teal)':'transparent';
+      const st=`left:${x/1.7}%;width:${w/1.7}%;`+(t==='note'?'background:none;color:var(--gray);font-size:9px;place-items:start;padding-left:6px':'background:'+c);
+      track.append(h('span',{class:'hp-seg',style:st},t==='note'?'':(t==='conn'?'握手':t==='req'?'req':t==='resp'?'resp':'')));
+    });
+    row.append(track,h('span',{class:'mono',style:'font-size:10.5px;color:var(--ink2)'},note));
+    stage.append(row);
+  });
+  stage.append(h('p',{class:'caption',html:'横条=时间轴(非严格刻度)。一句话版本:<b>1.1 拼复用,2 拼复用流,3 拼"丢包不连坐"</b>——每代优化的都是"等待"。'}));
+}
+reg('http',initHttp);
+
+/* ============ 图7 TLS ============ */
+function initTls(){
+  const chain=$('#tl-chain'),flow=$('#tl-flow'),say=$('#tl-say');
+  const g=runGuard();
+  const MSGS13=['ClientHello: 随机A + 支持 X25519','ServerHello: 随机B + 选套件','← 证书链 + CertVerify(临时私钥签)','→ Finished(握手完整性) ✂ 此刻已可发数据','双方各自算出会话密钥 = f(随机A,B,ECDHE共享)'];
+  function certs(self){
+    chain.innerHTML='';
+    [['根 CA(浏览器内置)'],['中间 CA'],['站点: blog.example.com']].reverse().forEach((c,i)=>{
+      chain.append(h('div',{class:'tl-cert',id:'tl-c'+i},c[0],h('div',{style:'font-size:10px;color:var(--gray)'},i===2?(self?'⚠ 自签,无人背书':'CA 签名 ✓'):'签名 ✓')));
+    });
+  }
+  certs(false);
+  async function play(self){
+    const my=g.next();certs(self);flow.innerHTML='';say.innerHTML='';
+    for(let i=0;i<MSGS13.length;i++){
+      if(!g.alive(my))return;
+      flow.append(h('div',{style:'animation:slidein .3s'},'🔑 '+MSGS13[i]));
+      if(i===1){say.innerHTML='拿到证书,开始<b>验链</b>:';}
+      if(i===1)await sleep(100);
+      if(self){
+        $('#tl-c2').classList.add('bad');$('#tl-c1').classList.add('bad');$('#tl-c0').classList.add('bad');
+        flow.innerHTML+='<div style="color:var(--warn)">✗ 验签失败:签名者不在信任库 → 浏览器红牌</div>';
+        say.innerHTML='自签证书:<b style="color:var(--warn)">加密本身没问题</b>,坏在"对面是谁"无法证实——PKI 的价值是把你浏览器的信任锚(CA)接进来。';return;
+      }
+      $('#tl-c'+(2-i)).classList.add('ok');
+      if(i===4){
+        flow.innerHTML+='<div>→ 之后全部流量:AES-GCM 对称加密,0-RTT 恢复可省掉这回合</div>';
+        say.innerHTML='ECDHE 保证<b>前向安全</b>:服务器长期私钥只用来签临时参数——日后私钥泄露,录到的旧流量依然解不开。';
+      }
+      await sleep(650);
+    }
+  }
+  $('#tl-play').onclick=()=>play(false);
+  $('#tl-bad').onclick=()=>play(true);
+  $('#tl-rtt').onclick=()=>{
+    flow.innerHTML='<div>TLS1.2: ClientHello → ServerHello+证书 → ClientKeyExchange → ChangeCipherSpec ×2 = <b>2-RTT</b></div><div>TLS1.3: ClientHello(直接带密钥share) → ServerHello+Finished = <b>1-RTT</b>;复访 0-RTT</div>';
+    say.innerHTML='1.3 还删了 RSA 密钥交换(无前向安全)、弱套件——<b>更安全且更快,双杀</b>。';
+  };
+}
+reg('tls',initTls);
+
+/* ============ 图8 DNS ============ */
+function initDns(){
+  const nodesEl=$('#dn-nodes'),say=$('#dn-say');
+  const g=runGuard();
+  const N=[['browser','浏览器/OS','缓存'],['resolver','本地解析器','递归'],['root','根 .','迭代'],['tld','.com','迭代'],['auth','权威 NS','答案']];
+  function build(){nodesEl.innerHTML='';N.forEach(n=>nodesEl.append(h('div',{class:'dn-node',id:'dn-'+n[0]},h('b',null,n[1]),h('small',null,n[2]))));}
+  build();
+  async function play(cold){
+    const my=g.next();build();
+    if(!cold){$('#dn-browser').classList.add('hot');await sleep(400);if(!g.alive(my))return;
+      $('#dn-browser').classList.add('ans');say.innerHTML='命中缓存,TTL 内白捡。<b>缓存层级:浏览器→OS→本地解析器→...</b>——每一层都在省钱,也都在制造"改了不立刻生效"。';return;}
+    const seq=['browser','resolver','root','tld','auth'];
+    say.innerHTML='浏览器把问题<b>递归</b>委托给本地解析器("你帮我办到底"):';
+    for(let i=0;i<seq.length;i++){
+      if(!g.alive(my))return;
+      $('#dn-'+seq[i]).classList.add('hot');
+      if(i===2)say.innerHTML+=' 解析器<b>迭代</b>跑腿:问根,根说"去问 .com";';
+      if(i===3)say.innerHTML+=' .com 说"去问 example.com 的权威";';
+      if(i===4)say.innerHTML+=' 权威给出 <b>93.1.2.3 (A, TTL 300)</b> → 逐级缓存并回给浏览器。';
+      await sleep(i>1?700:520);
+      if(i>0&&i<4)$('#dn-'+seq[i]).classList.remove('hot');
+    }
+  }
+  $('#dn-play').onclick=()=>play(true);
+  $('#dn-cache').onclick=()=>play(false);
+  $('#dn-ttl').onclick=()=>{say.innerHTML='改记录瞬间:权威已新,但<b>各层缓存按各自存的旧 TTL(可能 86400s)继续供旧 IP</b>——迁移 SOP:提前一天把 TTL 降到 60,切完再升回。顺带:CNAME 链每多一环多一次往返,DNS 也是性能项。';};
+}
+reg('dns',initDns);
+
+/* ============ 图9 身份四卡 ============ */
+function initAuth(){
+  const box=$('#d-auth'),say=$('#au-say');
+  const CARDS=[
+    ['Cookie + Session','<h5>Cookie+Session</h5>服务端存会话,Cookie 只带 ID。<div class="rt"><b>HttpOnly</b>:JS 读不到(XSS 偷不走);<b>Secure</b>:HTTPS 才发;<b>SameSite=Lax/Strict</b>:跨站请求不带 → CSRF 主防线。<br>坑:session 存哪台机器?→ 看粘滞/中央两张卡。</div>'],
+    ['JWT 无状态令牌','<h5>JWT</h5>身份自包含,谁都能验签。<div class="rt">下方现场篡改试试。<br>代价:<b>吊销难</b>——短过期+黑名单双保险;payload 只是 Base64,<b>别放敏感数据</b>。</div>'],
+    ['SSO 单点登录','<h5>SSO</h5>一次登录,全站通行。<div class="rt">跳登录中心(全局会话)→ 领子系统票据 → 各应用互信。<br>协议:OIDC(OAuth2 上长身份层)/CAS/SAML(老企业)。</div>'],
+    ['为什么需要 HTTPS','<h5>为什么 HTTPS</h5>明文 Cookie=裸奔。<div class="rt">窃听(内容)+ 篡改(响应注入)+ 冒充(钓鱼)三连防:加密+完整性+身份(第 7 讲证书链)。HTTP/2 push 已弃、SameSite 要 Secure——安全属性全绑在 TLS 上。</div>'],
+  ];
+  CARDS.forEach(([t,html],i)=>{
+    const c=h('div',{class:'au-card',id:'au-c'+i});
+    c.innerHTML=html;
+    c.onclick=()=>{document.querySelectorAll('.au-card').forEach(x=>{if(x!==c)x.classList.remove('open')});c.classList.toggle('open');say.innerHTML='';};
+    box.append(c);
+  });
+  const jc=$('#au-c1');
+  const jwt=h('div',{class:'jwt-seg'});
+  jwt.append(h('span',{style:'background:var(--blue)'},'eyJhbGciOi…'));
+  jwt.append(h('span',{style:'background:var(--teal)'},'{"sub":"u123","role":"user"}'));
+  jwt.append(h('span',{style:'background:var(--grape)',id:'jwt-sig'},'签名=sig(H+P,服务端密钥)'));
+  const tamper=h('button',{class:'btn',style:'margin-top:6px;font-size:11px;padding:2px 10px'},'把 role 改成 admin 再发出去');
+  tamper.onclick=(e)=>{e.stopPropagation();
+    jwt.children[1].textContent='{"sub":"u123","role":"admin"}';
+    jwt.children[1].style.background='var(--warn)';
+    say.innerHTML='payload 改了——<b style="color:var(--warn)">但签名对不上</b>:验签方一算 hash 不匹配 → 401。<b>这就是签名的"防改"</b>;防偷看要靠加密(JWE),JWT 默认只签不加密。';};
+  const verify=h('button',{class:'btn',style:'margin-top:6px;margin-left:6px;font-size:11px;padding:2px 10px'},'✔ 合法原样请求');
+  verify.onclick=(e)=>{e.stopPropagation();say.innerHTML='签名校验 ✓ → 放行,无需回中心查会话——<b>每个服务自己就能验</b>,这是 JWT 撑住微服务横向扩展的原理。';};
+  jc.append(jwt,tamper,verify);
+}
+reg('auth',initAuth);
+
+/* ============ 图10 排障时间轴 ============ */
+function initDebug(){
+  const bar=$('#db-bar'),say=$('#db-say');
+  const CASES={
+    ttfb:[['DNS',3,'#0E7C6B'],['TCP',5,'#2D5FA6'],['TLS',7,'#5B4A96'],['TTFB 2.4s  元凶',78,'#C0392B'],['下载',7,'#7D6B1E']],
+    tls:[['DNS',3,'#0E7C6B'],['TCP',4,'#2D5FA6'],['TLS 1.6s ⬅ 元凶',34,'#C0392B'],['TTFB',30,'#A9750A'],['下载',6,'#7D6B1E']],
+  };
+  function draw(caseName){
+    bar.innerHTML='';
+    CASES[caseName].forEach(([n,w,c])=>{
+      const d=h('div',{style:'width:0;background:'+c},n);bar.append(d);
+      requestAnimationFrame(()=>setTimeout(()=>d.style.width=w+'%',50));
+    });
+  }
+  $('#db-play').onclick=()=>{draw('ttfb');
+    say.innerHTML='<b>网络无罪</b>:DNS/TCP/TLS 共 150ms 都健康,2.4s 耗在 TTFB → 查服务端:慢 SQL?缓存击穿?下游超时?<b>curl 分段与浏览器 Performance 互证</b>,然后才是 jstack/慢日志的事。';};
+  $('#db-bad').onclick=()=>{draw('tls');
+    say.innerHTML='TLS 段红:常见三因——① 服务器<b>没下发中间证书</b>,浏览器自行补链(curl 不补链所以"curl 快");② 证书链太长/OCSP 拉取;③ 握手 2-RTT(上 1.3)。openssl s_client -connect 一验便知。';};
+  draw('ttfb');
+}
+reg('debug',initDebug);
+
+/* ============ 附录 ============ */
+function initCards(){
+  const grid=$('#card-grid');
+  const data=[
+    ['为什么三次握手不是两次?','两次无法确认"服务端发→客户端收"方向;三次恰好双向各验一遍,且防历史失效 SYN 建幽灵连接。'],
+    ['为什么挥手四次?','全双工两路各自关;被动方 ACK 与 FIN 之间有"还有数据要发"的间隔,不能合并。'],
+    ['TIME_WAIT 为什么 2MSL?','① 最后 ACK 丢了还能重答(对方会重发 FIN);② 让本连接旧包在网络中死绝,不污染新连接。'],
+    ['流量控制 vs 拥塞控制?','滑窗 rwnd=接收端说"我吃得下多少";cwnd=发送端猜"网络堵不堵"。取小者开窗。'],
+    ['丢包 TCP 都干啥?','快重传(3 dupACK/SACK 精确定位)+ 乘性减窗(RTO 更狠:慢启动重来)。'],
+    ['QUIC 相对 TCP+TLS 赢哪?','0/1-RTT 握手、每流独立无队头重传、CID 连接迁移(切网不断)、用户态可插拥塞算法。'],
+    ['301 vs 302?','301 永久(浏览器缓存跳转,SEO 权重迁移);302 临时(每次问服务器)。'],
+    ['502 和 504?','都是网关/负载均衡报的:502=后端连不上/回了非法响应;504=连上了但等后端超时。'],
+    ['HTTPS 为什么混合加密?','非对称慢,只用来在握手期安全协商一把对称会话密钥;数据全程对称加密。ECDHE 给前向安全。'],
+    ['DNS 递归/迭代各是谁在用?','客户端→本地解析器=递归(帮我办到底);解析器→根/域/权威=迭代(我只告诉你下一步问谁)。'],
+    ['SameSite 三种值干嘛?','Lax:跨站顶层 GET 才带(默认,防 CSRF 主力);Strict:全不带;None:必须配 Secure(跨域携带场景)。'],
+    ['keep-alive 解决了什么没解决什么?','省握手与慢启动、复用连接;没解决 1.1 串行请求与后来的 TCP 队头——分别由 pipelining(失败)、H2/H3 接力。'],
+  ];
+  data.forEach(([q,a])=>{grid.append(h('div',{class:'card'},h('b',null,q),a));});
+}
+reg('cards',initCards);
+
+/* ============ 装配 ============ */
+function initSpy(){
+  const links=$$('.toc a');
+  const secs=links.map(a=>$(a.getAttribute('href'))).filter(Boolean);
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-18% 0px -72% 0px'});
+  secs.forEach(s=>io.observe(s));
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  Object.entries(INIT).forEach(([n,f])=>safe(n,f));
+  initSpy();
+});
+</script>
+</body>
+</html>

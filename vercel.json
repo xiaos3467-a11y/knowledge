@@ -8,6 +8,7 @@
     { "source": "/boot", "destination": "/spring-boot-illustrated.html" },
     { "source": "/juc", "destination": "/java-concurrency-illustrated.html" },
     { "source": "/jvm", "destination": "/jvm-illustrated.html" },
+    { "source": "/net", "destination": "/network-illustrated.html" },
     { "source": "/arch", "destination": "/architecture-illustrated.html" },
     { "source": "/agent", "destination": "/ai-agent-illustrated.html" }
   ]
