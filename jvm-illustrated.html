@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JVM 图解讲义 · 虚拟机十一讲</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F6F2; --card:#FFFFFF; --stage:#FAFBF7;
+  --ink:#1E232B; --ink2:#59616E; --line:#DDE0D8;
+  --pen:#8B5E3C; --pen-bg:#F4EBE2; --pen-line:#E0CBB6;
+  --warn:#C0392B; --warn-bg:#FAECE9; --warn-line:#EABFB4;
+  --teal:#0E7C6B; --teal-bg:#E8F4F1;
+  --gr:#3D7A2C; --gr-bg:#EDF4E7;
+  --blue:#2D5FA6; --blue-bg:#EBF0F8;
+  --amber:#A9750A; --amber-bg:#FAF2DE;
+  --gray:#7A828C;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --serif:"Noto Serif SC","Source Han Serif SC","STZhongsong","SimSun",serif;
+  --sans:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+  --kai:"KaiTi","STKaiti","Kaiti SC",var(--serif);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(30,35,43,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,35,43,.04) 1px,transparent 1px);
+  background-size:28px 28px}
+::selection{background:rgba(139,94,60,.18)}
+a{color:var(--pen);text-decoration:none}
+.wrap{display:grid;grid-template-columns:224px minmax(0,832px);gap:52px;max-width:1180px;margin:0 auto;padding:0 24px}
+main{min-width:0;padding-bottom:96px}
+section.ch{margin-top:96px;scroll-margin-top:24px}
+.kicker{font-family:var(--serif);color:var(--pen);font-weight:600;font-size:14px;letter-spacing:.12em;margin-bottom:6px}
+h1,h2{font-family:var(--serif);font-weight:900;line-height:1.3}
+h2{font-size:32px;margin-bottom:18px}
+h3{font-size:18px;margin:30px 0 10px;font-weight:700}
+p{margin:12px 0;max-width:76ch}
+p.lead{font-size:17px;color:var(--ink2)}
+ul.tight{margin:8px 0 8px 1.4em}
+ul.tight li{margin:6px 0}
+code.k{font-family:var(--mono);font-size:.86em;background:#EBEDE6;border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+mark{background:none;color:var(--pen);font-weight:700}
+mark.w{color:var(--warn)}
+.think{font-family:var(--kai);color:var(--pen);background:var(--pen-bg);border:1px dashed var(--pen-line);border-radius:8px;padding:8px 14px;font-size:15px;margin:18px 0}
+.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pen);border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;font-size:15px}
+.note b.tag{color:var(--pen);font-weight:700;margin-right:6px}
+aside.toc{position:sticky;align-self:start;top:24px;height:calc(100vh - 48px);overflow:auto;padding:28px 0;scrollbar-width:thin}
+.toc-brand{font-family:var(--serif);font-weight:900;font-size:19px;line-height:1.4;margin-bottom:14px}
+.toc-brand small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--pen);letter-spacing:.18em;font-weight:600}
+.toc ol{list-style:none}
+.toc li a{display:flex;gap:10px;align-items:baseline;padding:5.5px 10px;border-radius:6px;font-size:13.5px;color:var(--ink2);border-left:2px solid transparent}
+.toc li a i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--gray);width:20px;flex:none}
+.toc li a:hover{background:#ECEEE6;color:var(--ink)}
+.toc li a.active{color:var(--pen);font-weight:700;border-left-color:var(--pen);background:rgba(139,94,60,.07)}
+.toc li a.active i{color:var(--pen)}
+.hero{padding-top:48px}
+.hero-title{font-size:clamp(40px,6vw,66px);line-height:1.14}
+.hero-title .stroke{position:relative;display:inline-block}
+.hero-title .stroke svg{position:absolute;left:-4px;right:-4px;bottom:-8px;width:calc(100% + 8px);height:16px;overflow:visible}
+.hero-title .stroke svg path{stroke:var(--pen);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:420;stroke-dashoffset:420;animation:wipe 1s .5s ease-out forwards}
+@keyframes wipe{to{stroke-dashoffset:0}}
+.hero-sub{margin-top:16px;font-size:15.5px;color:var(--ink2);max-width:72ch}
+.hero-kicker{font-family:var(--serif);letter-spacing:.3em;color:var(--pen);font-size:14px;font-weight:600;margin-bottom:10px}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+.caret{display:inline-block;width:9px;height:1.05em;background:var(--pen);vertical-align:-2px;animation:blink 1.1s infinite}
+.reveal{opacity:0;transform:translateY(14px);animation:rv .7s ease-out forwards}
+.reveal.d1{animation-delay:.1s}.reveal.d2{animation-delay:.25s}.reveal.d3{animation-delay:.45s}
+@keyframes rv{to{opacity:1;transform:none}}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+@keyframes slidein{from{transform:translateX(-10px);opacity:0}}
+/* 通用 */
+.demo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin:26px 0;box-shadow:0 2px 0 rgba(30,35,43,.03)}
+.fig-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.fig-no{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--pen);border-radius:4px;padding:2px 8px;flex:none}
+.fig-title{font-family:var(--serif);font-size:17px;font-weight:600}
+.caption{font-family:var(--kai);color:var(--ink2);font-size:14px;line-height:1.7;margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
+.caption::before{content:"图注 · ";color:var(--pen)}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:14px}
+.dctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.dctrl .gap{flex:1}
+.btn{font-family:var(--sans);font-size:13px;color:var(--ink);background:#fff;border:1px solid #C7CCC0;border-radius:7px;padding:5px 14px;cursor:pointer;line-height:1.6;transition:border-color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--pen);color:var(--pen)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.solid:hover:not(:disabled){background:var(--pen);border-color:var(--pen);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{border-color:var(--pen);color:var(--pen);background:var(--pen-bg);font-weight:700}
+.btn.warn-o{border-color:var(--warn);color:var(--warn)}
+.btn.warn-o.on{background:var(--warn-bg)}
+.btn:focus-visible,a:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+.hint{font-size:13px;color:var(--ink2);margin-top:10px}
+.hint b{color:var(--pen)}
+.say{font-size:13.5px;min-height:2.2em;padding:6px 2px;color:var(--ink2);line-height:1.8}
+.say b{color:var(--pen)}
+.say.bad b{color:var(--warn)}
+.pill{display:inline-block;font-size:12px;font-family:var(--mono);border-radius:99px;padding:1px 10px;border:1px solid var(--line);background:#fff}
+.pill.pen{color:var(--pen);border-color:var(--pen-line);background:var(--pen-bg)}
+.pill.teal{color:var(--teal);border-color:#BFDDD5;background:var(--teal-bg)}
+.pill.warn{color:var(--warn);border-color:var(--warn-line);background:var(--warn-bg)}
+svg text{font-family:var(--sans)}
+table.tb{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;background:var(--card)}
+table.tb th,table.tb td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top}
+table.tb th{background:#ECEEE6;font-weight:700;font-size:13px}
+table.tb td.m{font-family:var(--mono);font-size:12.5px}
+.boxes{display:grid;gap:10px}
+.bx{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:8px 12px;font-size:12.5px;transition:all .3s}
+.bx b{font-family:var(--mono)}
+.bx.hot{border-color:var(--pen);background:var(--pen-bg)}
+.bx.bad{border-color:var(--warn);background:var(--warn-bg)}
+.bx.good{border-color:var(--teal);background:var(--teal-bg)}
+.bx.dim{opacity:.4}
+.tval{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--pen)}
+.stp{display:grid;grid-template-columns:1fr 290px;gap:12px;padding:14px}
+.stp-list{display:grid;gap:3px;align-content:start}
+.stp-item{display:flex;gap:10px;align-items:baseline;font-size:12.5px;border:1px solid transparent;border-radius:7px;padding:4px 10px;color:var(--ink2);cursor:pointer}
+.stp-item i{font-style:normal;font-family:var(--mono);font-size:10.5px;width:22px;flex:none;color:var(--gray)}
+.stp-item.cur{background:var(--pen-bg);border-color:var(--pen-line);color:var(--ink);font-weight:700}
+.stp-item.cur i{color:var(--pen)}
+.stp-item.done{color:var(--teal)}
+.stp-card{background:var(--stage);border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:12.5px;align-self:start;line-height:1.8}
+.stp-card b{color:var(--pen)}
+.stp-card .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;border-radius:4px;padding:1px 7px;margin:2px 4px 2px 0;background:#ECEEE6;color:var(--ink2)}
+/* 内存标尺 hero */
+.mm-stack{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.mm-band{border-radius:7px;height:38px;display:flex;align-items:center;padding:0 12px;font-size:11.5px;font-family:var(--mono);color:#fff;transition:width .4s;white-space:nowrap;overflow:hidden}
+/* 小球 */
+.balls{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0;min-height:34px}
+.ball{width:22px;height:22px;border-radius:50%;background:#CFD3CA;border:1.5px solid #B4B9AE;transition:all .3s}
+.ball.alive{background:#4E9F3D;border-color:#3D7A2C}
+.ball.moved{background:#2D5FA6;border-color:#1E4577}
+.ball.hole{background:repeating-linear-gradient(45deg,#EDEFEA,#EDEFEA 3px,#DDE0D8 3px,#DDE0D8 6px)}
+.ball.scan{box-shadow:0 0 0 4px rgba(192,57,43,.28)}
+.meters{display:flex;gap:16px;font-size:12.5px;flex-wrap:wrap;margin-top:6px}
+.meters b{font-family:var(--mono)}
+/* 水槽 */
+.tank-row{display:flex;gap:14px;align-items:flex-end;margin:10px 0}
+.tank{flex:1;border:2px solid var(--ink);border-top:none;border-radius:0 0 10px 10px;height:150px;position:relative;background:linear-gradient(#fff,#fff)}
+.tank i{position:absolute;left:2px;right:2px;bottom:2px;border-radius:0 0 8px 8px;background:var(--pen);transition:height .5s,background .5s;display:block}
+.tank label{position:absolute;top:-24px;left:0;right:0;text-align:center;font-size:11.5px;font-family:var(--mono);color:var(--ink2)}
+.tank .ages{position:absolute;left:0;right:0;bottom:4px;font-size:9.5px;text-align:center;color:#fff;font-family:var(--mono);z-index:2}
+/* 卡表 */
+.ct-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;margin:8px 0}
+.ct-cell{height:16px;border-radius:3px;background:#E9EBE4;transition:all .25s}
+.ct-cell.dirty{background:var(--warn)}
+.ct-cell.scanlit{background:var(--blue)}
+/* 终端 */
+.term{background:#161A20;border-radius:12px;overflow:hidden;box-shadow:0 14px 34px rgba(30,35,43,.18);margin-top:34px}
+.term-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#1E242C;border-bottom:1px solid #2A313B}
+.term-bar .dot{width:11px;height:11px;border-radius:50%}
+.term-bar .t{font-family:var(--mono);font-size:12px;color:#8E97A5;margin-left:6px}
+.term-body{padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.75}
+#jv-out{max-height:320px;overflow:auto;scrollbar-width:thin}
+.jv-p{color:#D29E72;font-weight:600}
+.jv-cmd{color:#F2F4F0}
+.jv-ok{color:#67B7A3}.jv-w{color:#E8B54A}.jv-e{color:#F08A72}.jv-d{color:#7A8283}
+.jv-in{color:#9AD1E8}
+.term-inputline{display:flex;align-items:center;gap:8px;margin-top:4px}
+#jv-input{flex:1;background:transparent;border:none;outline:none;color:#F2F4F0;font:inherit;caret-color:#D29E72}
+.jv-chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 16px}
+.jv-chip{font-family:var(--mono);font-size:11px;color:#B9C2CF;background:#232A33;border:1px solid #303945;border-radius:99px;padding:3px 12px;cursor:pointer;transition:border-color .15s,color .15s}
+.jv-chip:hover{border-color:#D29E72;color:#fff}
+/* 对象布局 */
+.obj-layout{display:flex;gap:3px;font-family:var(--mono);font-size:11px;margin:8px 0;align-items:stretch}
+.obj-cell{border:1.5px solid var(--pen-line);border-radius:6px;padding:6px 9px;background:var(--card);text-align:center;line-height:1.7;transition:all .3s}
+.obj-cell.mk{background:var(--pen-bg);border-color:var(--pen)}
+.obj-cell.kp{background:var(--blue-bg);border-color:#C6D5EC}
+.obj-cell.da{background:var(--teal-bg);border-color:#BFDDD5}
+.obj-cell.pad{background:repeating-linear-gradient(45deg,#F0F1EC,#F0F1EC 4px,#E2E4DC 4px,#E2E4DC 8px);color:var(--gray)}
+.ruler{display:flex;gap:2px}
+.ruler i{flex:1;height:10px;border-radius:2px;background:#E4E6DE}
+.ruler i.on{background:var(--teal)}
+.ruler i.pad2{background:var(--gray)}
+/* 类加载链 */
+.cl-chain{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px}
+.cl-node{border:2px solid var(--pen-line);border-radius:10px;padding:6px 12px;background:var(--card);text-align:center;min-width:110px;transition:all .3s}
+.cl-node b{font-size:12.5px}
+.cl-node small{display:block;color:var(--gray);font-size:10.5px}
+.cl-node.hot{border-color:var(--pen);background:var(--pen-bg)}
+.cl-node.pass{border-color:var(--teal);background:var(--teal-bg)}
+.cl-arr{color:var(--gray)}
+/* 调优场景卡 */
+.tu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tu-card{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:9px 13px;font-size:12.5px;cursor:pointer;transition:all .2s}
+.tu-card h5{font-family:var(--mono);font-size:12px;color:var(--warn)}
+.tu-card .rx{display:none;margin-top:6px;font-size:12px;line-height:1.9;color:var(--ink2)}
+.tu-card.open{border-color:var(--pen)}
+.tu-card.open .rx{display:block}
+/* jit */
+.jit-bar{height:26px;border-radius:13px;background:#E9EBE4;position:relative;overflow:hidden;margin:8px 0}
+.jit-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--gray);display:block;transition:width .3s,background .3s}
+.jit-marks{position:relative;height:20px;font-family:var(--mono);font-size:10px;color:var(--ink2)}
+.jit-marks span{position:absolute;transform:translateX(-50%)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:13.5px;line-height:1.7}
+.card b{display:block;font-family:var(--serif);font-size:14.5px;margin-bottom:4px}
+.card b::before{content:"问 ";color:var(--pen)}
+footer{margin-top:88px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2);font-family:var(--kai);line-height:1.9}
+@media (max-width:1120px){
+  .wrap{grid-template-columns:minmax(0,860px);justify-content:center}
+  aside.toc{position:static;height:auto;order:-1;padding:12px 0 0}
+  .toc ol{display:flex;overflow-x:auto;gap:4px;padding-bottom:8px;scrollbar-width:thin}
+  .toc li a{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;border-radius:4px}
+  .toc li a.active{border-bottom-color:var(--pen);background:none}
+  .toc-brand{padding-left:10px}
+}
+@media (max-width:820px){
+  .stp,.tu-grid{grid-template-columns:1fr}
+  h2{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+  .reveal{opacity:1;transform:none}
+  .hero-title .stroke svg path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<aside class="toc" aria-label="目录">
+  <div class="toc-brand"><small>JVM · ILLUSTRATED</small>JVM 图解讲义</div>
+  <nav><ol>
+    <li><a href="#hero"><i>00</i>开篇 · 内存标尺</a></li>
+    <li><a href="#ch-regs"><i>01</i>运行时数据区</a></li>
+    <li><a href="#ch-obj"><i>02</i>对象怎么躺在内存里</a></li>
+    <li><a href="#ch-alive"><i>03</i>对象死活与四种引用</a></li>
+    <li><a href="#ch-gcalg"><i>04</i>四种收集器搬球赛</a></li>
+    <li><a href="#ch-gen"><i>05</i>分代:对象的一生</a></li>
+    <li><a href="#ch-ct"><i>06</i>卡表与写屏障</a></li>
+    <li><a href="#ch-cl"><i>07</i>类加载与双亲委派</a></li>
+    <li><a href="#ch-tune"><i>08</i>调优四场景处方</a></li>
+    <li><a href="#ch-matrix"><i>09</i>诊断命令终端</a></li>
+    <li><a href="#ch-jit"><i>10</i>JIT 与逃逸分析</a></li>
+    <li><a href="#ch-cgroup"><i>11</i>容器里的 JVM</a></li>
+    <li><a href="#ch-cards"><i>附</i>面试速查卡</a></li>
+  </ol></nav>
+</aside>
+
+<main>
+
+<section id="hero" class="hero">
+  <p class="hero-kicker reveal d1">虚拟机 · 十一讲</p>
+  <h1 class="hero-title reveal d1">JVM<br><span class="stroke">图解讲义<svg viewBox="0 0 200 12" aria-hidden="true"><path d="M3 8 C 40 2, 70 11, 105 6 S 170 3, 197 7"/></svg></span></h1>
+  <p class="hero-sub reveal d2">一把能拉动的内存标尺:<code class="k">-Xmx</code> 一改,堆里新生代/老年生的份额、方法区与每根线程栈的开销随之重排——先对手感,再讲原理。</p>
+  <div class="demo reveal d2" style="margin-top:24px">
+    <div class="fig-head"><span class="fig-no">序</span><span class="fig-title">JVM 进程内存全景 · 拉这两个滑块</span></div>
+    <div class="stage" id="d-hammer">
+      <div class="dctrl" style="margin-top:0">
+        <label class="mono" style="font-size:12.5px">-Xmx <input type="range" min="3" max="8" value="6" id="hm-xmx"><b id="hm-xmxv" style="color:var(--pen)">4G</b></label>
+        <label class="mono" style="font-size:12.5px">线程数 <input type="range" min="50" max="800" value="200" step="50" id="hm-th"><b id="hm-thv" style="color:var(--pen)">200</b></label>
+      </div>
+      <div class="mm-stack" id="mm-stack"></div>
+      <div class="say" id="hm-say"></div>
+    </div>
+    <p class="caption">堆只是 JVM 内存的一部分:每根线程还有 1MB 的虚拟机栈(200 线程=200MB!),Metaspace 在堆外。生产上"<b>堆设多大</b>"之前先算清"进程总共要吃多少"——Xmx + Metaspace + 线程×栈 + 直接内存 + GC/JIT 自身开销。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-regs">
+  <p class="kicker">第 一 讲</p>
+  <h2>运行时数据区:五块地的归属</h2>
+  <p class="lead">线程私有三块:<b>程序计数器</b>(当前字节码行号,唯一不 OOM 的区域)、<b>虚拟机栈</b>(每方法一帧:局部变量表/操作数栈/动态链接/返回地址)、本地方法栈。线程共享两块:<b>堆</b>(对象们,GC 主战场)、<b>方法区</b>(JDK8 起用 Metaspace 实现:类元数据+运行时常量池;字符串常量表和静态变量随类走,HotSpot 里其实放堆中)。堆里再分代:Eden + 两个 Survivor + 老年代,默认 8:1:1。</p>
+  <p>异常对号入座:栈太深→<code class="k">StackOverflowError</code>;堆尽→<code class="k">OutOfMemoryError: Java heap space</code>;类加载不止→<code class="k">OOM: Metaspace</code>;DirectByteBuffer→<code class="k">Direct buffer memory</code>。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 1</span><span class="fig-title">数据区巡览 · 五块地各管什么、各得什么病</span></div>
+    <div class="stage stp" id="d-regs"></div>
+  </div>
+</section>
+
+<section class="ch" id="ch-obj">
+  <p class="kicker">第 二 讲</p>
+  <h2>对象的一生:分配、布局、对齐</h2>
+  <p class="lead">new 一个对象:TLAB(每线程私有分配缓冲,免锁)里<b>指针碰撞</b>切一块(内存规整时)或<b>空闲列表</b>找洞(碎片多时)。对象本体三段式:<b>Mark Word</b>(hashcode/GC 年龄/锁状态——第 3 册锁升级的开关就埋在这 8 字节)、<b>类型指针</b>、<b>实例数据</b>,末尾<b>填充对齐到 8 字节</b>的倍数。开了<b>压缩类指针</b>(默认,&lt;32GB 堆),类型指针 8→4B,整对象普遍省 40%——这也是"堆别过 32G"传说的由来(跨过 32G 压缩失效,可用内存反而可能倒退)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 2</span><span class="fig-title">User{long id; int age;} 的字节解剖 · 开关压缩指针</span></div>
+    <div class="stage">
+      <div class="obj-layout" id="ob-layout"></div>
+      <div class="ruler" id="ob-ruler" style="margin:4px 0 10px"></div>
+      <div class="dctrl">
+        <button class="btn on" id="ob-cc">压缩类指针(-XX:+UseCompressedClassPointers)</button>
+        <button class="btn" id="ob-free">分配方式:指针碰撞 ⇄ 空闲列表</button>
+        <span class="gap"></span><span>对象总大小 <span class="tval" id="ob-size">24B</span></span>
+      </div>
+      <div class="say" id="ob-say"></div>
+    </div>
+    <p class="caption">long(8)+int(4)=12B 数据,但对象头 12B+填充 4B → 24B。<b>空对象也要 16 字节</b>——所以"用一百个小对象攒缓存"往往不如一个大数组。空闲列表模式下,点它看 CMS 碎片的分配方式(找洞→切块→剩洞)。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-alive">
+  <p class="kicker">第 三 讲</p>
+  <h2>死活判定与四种引用强度</h2>
+  <p class="lead">Java 不用<b>引用计数</b>判死(循环引用直接判不了:a↔b 互指,各自归零却永远回收不掉——图中演一遍),用<b>可达性分析</b>:从 GC Roots(栈上引用、静态变量、常量、JNI、活线程…)出发遍历,走不到的即死。四种引用是一档档"求生的姿态":<b>强引用</b>宁死不回收;<b>软引用</b>内存紧张时最后一捞(缓存);<b>弱引用</b>下次 GC 必回收(ThreadLocalMap 的 key!);<b>虚引用</b>等于没引用,只为回收时收张回执(清理堆外内存)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 3</span><span class="fig-title">a↔b 循环:计数器的冤案与 DFS 的明断</span></div>
+    <div class="stage">
+      <div class="boxes" style="grid-template-columns:repeat(3,1fr)">
+        <div class="bx" style="text-align:center" id="al-root"><b>GC Roots</b><br><small style="font-family:var(--sans);color:var(--ink2)">栈引用 · 静态变量 · 常量</small></div>
+        <div class="bx" style="text-align:center" id="al-a"><b>a</b><br>refs=<span class="tval" id="al-ca">1</b></div>
+        <div class="bx" style="text-align:center" id="al-b"><b>b</b><br>refs=<span class="tval" id="al-cb">1</span></div>
+      </div>
+      <div class="dctrl">
+        <button class="btn warn-o" id="al-null">a=null; b=null;</button>
+        <button class="btn" id="al-count">🔢 用引用计数判:回收得掉吗?</button>
+        <button class="btn" id="al-dfs">🌲 用可达性分析判:GC 的视角</button>
+      </div>
+      <div class="say" id="al-say"></div>
+    </div>
+    <p class="caption">置空后计数仍 1↔1(互相顶着),计数法判不了——<b>内存泄漏</b>。DFS 从 Roots 出发走不到 a/b,判死回收。JDK9+ 局部变量还有"<b>活跃范围</b>优化":方法内最后一用之后即算不可达,不必等方法返回。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-gcalg">
+  <p class="kicker">第 四 讲</p>
+  <h2>四种收集器:一场"搬球赛"</h2>
+  <p class="lead">回收就两步:<mark>标记存活 → 整理/清理</mark>。Serial=一个人搬(暂停长,客户端默认);Parallel=四个人一起搬(<b>吞吐优先</b>,堆不太大的批处理服务首选,JDK8 默认);CMS=应用程序和保洁员<b>并发</b>干活(标记阶段业务照跑,只最后短暂 remark),但<b>不整理 → 碎片</b>,碎片塞不下大对象就退化成 Serial Old 大长脸,且并发阶段用户线程还在造垃圾——浮动垃圾+Concurrent Mode Failure 是它的病根;G1=把堆划成<b> Region 网格</b>,每次挑"垃圾最多"的几格回收(-XX:MaxGCPauseMillis 给个暂停预算,回收计划按预期收益排优先级)——大堆(6G+)低延迟通吃的现代默认,ZGC/Shenandoah 再把暂停压到亚毫秒(着色指针/读屏障,几乎与堆大小无关)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 4</span><span class="fig-title">GC 搬球赛 · 同一片堆,四种做法,三项成绩单</span></div>
+    <div class="stage">
+      <div class="balls" id="gc-balls"></div>
+      <div class="meters" id="gc-meters">
+        <span>STW 暂停 <b id="gc-stw" style="color:var(--warn)">—</b></span>
+        <span>吞吐 <b id="gc-thr" style="color:var(--teal)">—</b></span>
+        <span>整理后碎片 <b id="gc-frag">—</b></span>
+      </div>
+      <div class="say" id="gc-say"></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" data-c="serial">Serial</button>
+      <button class="btn solid" data-c="parallel">Parallel</button>
+      <button class="btn solid" data-c="cms">CMS</button>
+      <button class="btn solid" data-c="g1">G1</button>
+      <button class="btn" id="gc-reset">重新造堆</button>
+      <span class="hint">绿球=活 灰球=死 蓝球=搬了 条纹=空洞碎片</span>
+    </div>
+    <p class="caption">CMS 的"并发标记"球一个个亮而<b>没有停顿条</b>(业务在跑)——但收尾没整理,条纹空洞留着;G1 只搬"格子",快而不全。成绩单对比的就是三者的设计取舍。<b>11 讲里 G1/ZGC 的落地参数,是这图之后该背的</b>。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-gen">
+  <p class="kicker">第 五 讲</p>
+  <h2>分代假说与对象的一生</h2>
+  <p class="lead">分代赌的是<b>弱分代假说</b>:越新的对象越容易死。对象生在 Eden;minor GC 活下来的进 Survivor(from↔to 每次翻转,不复制不整理),年龄 +1;到阈值(默认 15)晋升老年代。三个插队机制:<b>动态年龄判定</b>(同龄总和&gt;Survivor 一半,≥该年龄直接晋升)、<b>大对象直入老年</b>(避免在 Survivor 间搬砖)、<b>空间分配担保</b>(老年剩余&lt;历次晋升均值→提前 Full GC)。老年代满=Full GC:全堆扫描+整理,长暂停之源。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 5</span><span class="fig-title">三个水槽的一生 · 生、翻转、晋升</span></div>
+    <div class="stage">
+      <div class="tank-row" id="gn-tanks">
+        <div class="tank"><label>Eden</label><i id="gn-eden" style="height:0"></i></div>
+        <div class="tank"><label>From ↔ To</label><i id="gn-s0" style="height:0"></i><span class="ages" id="gn-age">age 0</span></div>
+        <div class="tank"><label>Old</label><i id="gn-old" style="height:0;background:var(--amber)"></i></div>
+      </div>
+      <div class="say" id="gn-say"></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn solid" id="gn-alloc">▶ 批量 new 对象</button>
+      <button class="btn" id="gn-minor">▶ minor GC(10% 存活)</button>
+      <button class="btn warn-o" id="gn-big">▶ 突然一个大对象</button>
+      <button class="btn warn-o" id="gn-full">▶ 老年代满 → Full GC</button>
+      <button class="btn" id="gn-reset">重置</button>
+    </div>
+    <p class="caption">按剧本连按:几轮 minor 后 Survivor 越来越挤→动态年龄→晋升加速→老年水位爬升→Full GC 长暂停。"线上偶发卡顿"的案底,多半就在这条水位线上。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-ct">
+  <p class="kicker">第 六 讲</p>
+  <h2>卡表:跨代引用的记账本</h2>
+  <p class="lead">minor GC 只想扫年轻代,可老年代对象可能指着年轻代(<b>跨代引用</b>)——不把老年代全扫一遍,怎么知道哪些 young 对象还活着?答案:<b>卡表(Card Table)</b>。堆按 512B 切"卡",老年代对象<b>写</b>一个年轻代引用时,写屏障顺手把对应卡标"脏"(一条机器指令的事)。minor GC 时:GC Roots + <b>脏卡里的老年对象</b>一起当根,老年代本体免扫。一次写开销,换全堆免扫——<b>用空间(512 卡:1 字节省时间)</b>的典范。G1 在此基础上加 RSet(反向表:谁指着我),换 Mixed GC 时免扫他区。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 6</span><span class="fig-title">64 张卡的账本 · 写一笔记一刀,minor GC 只看账</span></div>
+    <div class="stage">
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:280px">
+          <div style="font-size:11.5px;font-family:var(--mono);color:var(--ink2);margin-bottom:4px">老年代(卡表 8×8)</div>
+          <div class="ct-grid" id="ct-grid"></div>
+        </div>
+        <div class="bx" style="min-width:150px;text-align:center"><b style="color:var(--teal)">Young</b><br>minor GC 的<br>扫描范围</div>
+      </div>
+      <div class="dctrl">
+        <button class="btn warn-o" id="ct-write">▶ 老年对象 X 写引用 → 年轻代 y</button>
+        <button class="btn solid" id="ct-minor">▶ 来一次 minor GC(带卡表)</button>
+        <button class="btn" id="ct-noct">▶ 不带卡表重演(对照组)</button>
+      </div>
+      <div class="say" id="ct-say"></div>
+    </div>
+    <p class="caption">写一笔:某张卡变红。带卡表 GC:roots + 3 张红卡(蓝闪)收工;不带:老年代 64 卡逐格点亮全扫——<b>minor GC 的快,一半是卡表给的</b>。</p>
+  </div>
+</section>
+
+<!--MORE-->
+
+<section class="ch" id="ch-cl">
+  <p class="kicker">第 七 讲</p>
+  <h2>类加载五阶段与双亲委派</h2>
+  <p class="lead">一个类进入 JVM 要过五关:<b>加载</b>(全限定名→字节码→方法区元数据+堆中 Class 对象)→ <b>验证</b>(文件格式/元数据/字节码/符号引用四道安检)→ <b>准备</b>(静态变量分配内存给<b>零值</b>——<code class="k">static int x=7</code> 此刻 x 还是 0,7 在初始化阶段才写;但 <code class="k">static final int X=7</code> 编译期常量直接上)→ <b>解析</b>(符号引用→直接引用)→ <b>初始化</b>(执行 <code class="k">&lt;clinit&gt;</code>:静态赋值+静态块,父类先行,JVM 保证线程安全——单例的"静态内部类"写法就赌这个)。</p>
+  <p><b>双亲委派</b>:收到加载请求先<b>向上问</b>(App→Platform(9 前叫 Ext)→Bootstrap),父能加载则child不动手;父都不行才自己load。收益:<b>核心类不被篡改</b>(你写个 java.lang.String 永远轮不到加载)、复用不重复。破功现场:SPI(JDBC)要"父接口、子实现",用线程上下文类加载器<b>反委派</b>;Tomcat 每应用一 Loader 优先自载(webapp 隔离);OSGi/9 的模块也是受控破坏。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 7</span><span class="fig-title">五关打卡 + 委派链实测 · 换个类名问一次</span></div>
+    <div class="stage stp" id="d-cl"></div>
+    <div class="demo" style="margin:14px 0 0;box-shadow:none">
+      <div class="cl-chain" id="dl-chain" style="justify-content:center;padding:8px 0"></div>
+      <div class="dctrl" style="justify-content:center">
+        <button class="btn solid" data-l="java/lang/String">加载 java.lang.String</button>
+        <button class="btn" data-l="com/demo/Biz">加载 com.demo.Biz</button>
+        <button class="btn warn-o" data-l="SPI">JDBC Driver(SPI 反委派)</button>
+      </div>
+      <div class="say" id="dl-say" style="text-align:center"></div>
+    </div>
+    <p class="caption">String:一路向上,<b>Bootstrap 亲自出手</b> Biz:三层都摇头,App 自己 load;SPI:Bootstrap 的 DriverManager 用<b>线程上下文加载器</b>反向摸到 jar 里的实现——委派是主干,破例处皆是场景题。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-tune">
+  <p class="kicker">第 八 讲</p>
+  <h2>调优四场景:先对症,再开药</h2>
+  <p class="lead">调优第一原则:<b>没有指标不动手</b>。四张常见病卡(点开看诊断路径):Full GC 频繁、单次 STW 过长、OOM 现场、CPU 全红。参数不求多,记住主线:<b>-Xms=-Xmx 免抖动</b>、堆大小给足但留非堆余量、<b>先选对收集器再微调</b>(大堆低延迟 G1/ZGC,吞吐批处理 Parallel)、GC 日志常开(-Xlog:gc*)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 8</span><span class="fig-title">四张门诊卡 · 点击展开"现象→诊断→处方"</span></div>
+    <div class="stage tu-grid" id="d-tune"></div>
+  </div>
+</section>
+
+<section class="ch" id="ch-matrix">
+  <p class="kicker">第 九 讲</p>
+  <h2>诊断命令:线上救火的一套工具</h2>
+  <p class="lead">jps 找进程 → jstat 看 GC 水位趋势 → jmap 看对象分布/导出堆 → jstack 看线程在干嘛 → 一把梭 <b>Arthas</b>(dashboard/thread/trace/watch 不重启热诊断)。下面是模拟终端,命令都"能跑"。</p>
+  <div class="term">
+    <div class="term-bar">
+      <span class="dot" style="background:#E05C4B"></span><span class="dot" style="background:#E0B13E"></span><span class="dot" style="background:#5FBF77"></span>
+      <span class="t">jdk-toolkit — 本机模拟(pid=12345,订单服务)</span>
+    </div>
+    <div class="term-body">
+      <div id="jv-out"></div>
+      <div class="term-inputline">
+        <span class="jv-p">admin@prod-01:~$</span>
+        <input id="jv-input" autocomplete="off" spellcheck="false" aria-label="JDK 诊断命令输入框">
+      </div>
+    </div>
+    <div class="jv-chips" id="jv-chips"></div>
+  </div>
+  <div class="note"><b class="tag">要点</b>面试连招背下来:<b>CPU 100%→</b> top -H 找最热线程 id→printf %x→jstack 搜 nid 定位代码行;<b>内存泄漏→</b> jstat 老年代只涨不跌→jmap -dump→MAT 看 Dominator Tree 的 Leaked Set;<b>频繁 Full GC→</b> gc 日志看 cause(Promotion Failed/Metaspace/System.gc)。</div>
+</section>
+
+<section class="ch" id="ch-jit">
+  <p class="kicker">第 十 讲</p>
+  <h2>JIT:热点变机器码,对象可以"不存在"</h2>
+  <p class="lead">Java 半解释半编译:方法越热,分层编译越往上爬——<b>解释器起步</b>(启动快)、<b>C1</b>(简单编译+profiling 埋点)、<b>C2</b>(按热度画像激进优化:内联、逃逸分析、锁消除、标量替换)。所以"跑热了才快",预热/压测差一个数量级是常态。<b>逃逸分析</b>最魔幻:方法里 new 的对象若从不逃出(不被返回/存静态/作参数漏出去),<mark>根本不在堆上实例化</mark>——拆成寄存器里的标量,栈帧退场即销毁,连 GC 都省了。"别为 new 对象纠结,尽量方法内造小对象"的现代依据就在这。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 9</span><span class="fig-title">方法热度爬梯 + 逃逸分析开关</span></div>
+    <div class="stage">
+      <div style="font-size:12.5px;font-family:var(--mono);color:var(--ink2)">calc() 调用计数</div>
+      <div class="jit-bar"><i id="jt-fill"></i></div>
+      <div class="jit-marks"><span style="left:15%">C1 编译线</span><span style="left:62%">C2 重编译线</span></div>
+      <div class="dctrl">
+        <button class="btn solid" id="jt-run">▶ 调用 ×20000(压测它)</button>
+        <span class="gap"></span>
+        <button class="btn" id="jt-escape">🔬 逃逸分析:对象上堆 ⇄ 标量替换</button>
+      </div>
+      <div class="say" id="jt-say"></div>
+      <div class="boxes" style="grid-template-columns:repeat(3,1fr);margin-top:6px" id="jt-obj"></div>
+    </div>
+    <p class="caption">热度推过两条线时,条带颜色从灰→蓝→赭(优化等级上升)。点开逃逸分析:方法内的 StringBuilder 从不逃出——三个小盒"碎裂"成两个寄存器变量,<b>堆上从未存在过</b>。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-cgroup">
+  <p class="kicker">第 十一 讲</p>
+  <h2>容器里的 JVM:你以为的内存不是你的</h2>
+  <p class="lead">老 JDK(8u131 前无容器感知)在容器里<b>看的是宿主机资源</b>:8C32G 的机子给 512M limit 的容器,JVM 照宿主机算默认堆(1/4=8G!)、GC 线程数、JIT 编译线程——水位一路涨到 cgroup 红线,<b>内核直接 SIGKILL,事件日志只有 Exit 137</b>,连 OOM 异常都来不及抛。现代方案:8u191+/10 默认 <code class="k">UseContainerSupport</code> 读 cgroup limit,或用 <code class="k">-XX:MaxRAMPercentage=75</code> 按百分比留头寸;CPU 同理限 <code class="k">ActiveProcessorCount</code>。<b>第二课</b>:堆内泄漏 JVM 会自己抛 OOM 给你堆转储,堆外(DirectBuffer/Mmap/native 库)超限是<b>容器杀进程</b>——两种死法现场完全不同,排查路线也不同。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 10</span><span class="fig-title">cgroup 天花板 vs JVM 视野 · 两种起法两种命</span></div>
+    <div class="stage">
+      <div style="position:relative;height:180px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:4px 0 10px">
+        <div id="cg-view" style="position:absolute;left:14px;right:14px;top:14px;bottom:14px"></div>
+        <div id="cg-ceiling" style="position:absolute;left:0;right:0;border-top:3px dashed var(--warn);z-index:3"><span style="position:absolute;right:8px;top:-20px;font-size:11px;color:var(--warn);font-family:var(--mono)">cgroup limit = 512M</span></div>
+      </div>
+      <div class="dctrl">
+        <button class="btn warn-o" id="cg-blind">▶ 老 JDK 无感知:-Xmx1g 起跑</button>
+        <button class="btn" id="cg-fix">▶ 容器感知 + MaxRAMPercentage=75 重起</button>
+        <button class="btn" id="cg-load">📦 加载大缓存,灌内存</button>
+        <span class="gap"></span>
+        <span class="mono" id="cg-code" style="font-size:13px;font-weight:700">exit —</span>
+      </div>
+      <div class="say" id="cg-say"></div>
+    </div>
+    <p class="caption">无感知版:JVM 以为自己拥有 32G 世界,堆慢慢越过 512M 红线——<b>Killed(137)</b>,没有 Java 异常没有日志。容器感知版:堆按 limit 的 75% 画线,到线抛 OOME 留全尸(配 HeapDumpOnOOM 可验尸)。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-cards">
+  <p class="kicker">附 录</p>
+  <h2>面试速查卡</h2>
+  <div class="cards" id="card-grid"></div>
+</section>
+
+<footer>
+  JVM 图解讲义 · 系列第八册 · 手写 vanilla JS/SVG 无依赖 · 口径 HotSpot JDK 8-21(默认收集器/元空间等版本差异已标注)。
+</footer>
+</main>
+</div>
+
+<script>
+/* ============ 工具 ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+function h(tag,attrs){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k==='text')e.textContent=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)));}return e;}
+function runGuard(){let id=0;return{next(){return++id},alive(my){return my===id}};}
+const safe=(name,fn)=>{try{fn();}catch(e){console.error('[demo:'+name+']',e);}};
+const INIT={};
+const reg=(n,f)=>{INIT[n]=f;};
+function stepper(stage,data){
+  const listEl=h('div',{class:'stp-list'});const card=h('div',{class:'stp-card'});
+  stage.append(listEl,card);
+  let idx=-1;
+  const items=data.map((d,i)=>{
+    const it=h('div',{class:'stp-item'},h('i',null,d.n||String(i+1)),h('span',null,d.t));
+    it.onclick=()=>go(i);listEl.append(it);return it;
+  });
+  function go(i){
+    idx=i;
+    items.forEach((el,j)=>{el.classList.toggle('cur',j===i);el.classList.toggle('done',j<i);});
+    const d=data[i];
+    card.innerHTML='<b>'+(d.n?d.n+' ':'')+d.h+'</b><br>'+d.d+(d.tags?'<div style="margin-top:6px">'+d.tags.map(t=>'<span class="tag">'+t+'</span>').join('')+'</div>':'');
+  }
+  go(0);
+  return {next(){if(idx<data.length-1){go(idx+1);return true}return false},prev(){if(idx>0)go(idx-1)},go,restart(){go(0)},count(){return data.length}};
+}
+
+/* ============ hero 内存标尺 ============ */
+function initHammer(){
+  const stack=$('#mm-stack'),say=$('#hm-say');
+  function draw(){
+    const xmx=[1,2,4,8,16,32,64][+$('#hm-xmx').value-3]||4;$('#hm-xmxv').textContent=xmx+'G';
+    const th=+$('#hm-th').value;$('#hm-thv').textContent=th;
+    $('#hm-xmx').value; const xi=+$('#hm-xmx').value;
+    const total=xmx+0.25+th/1000;
+    const segs=[
+      ['Young 区 (-XX:NewRatio=2 → 1/3)',xmx/3,'#8B5E3C'],
+      ['老年代 2/3',xmx*2/3,'#A8794F'],
+      ['Metaspace(堆外,类元数据)',0.25,'#2D5FA6'],
+      ['线程栈 '+th+'×1M = '+(th/1000).toFixed(1)+'G',th/1000,'#0E7C6B'],
+    ];
+    stack.innerHTML='';
+    segs.forEach(s=>{
+      const bar=h('div',{class:'mm-band',style:'width:'+Math.max(6,s[1]/total*100)+'%;background:'+s[2]},s[0]+' '+(s[1]<1?(s[1]*1024).toFixed(0)+'M':s[1].toFixed(1)+'G'));
+      stack.append(bar);
+    });
+    say.innerHTML='进程 RSS 粗估 ≈ <b>'+total.toFixed(2)+'G</span>(未含直接内存/JIT/符号/GC 结构)。堆 ' + xmx + 'G + 元空间 + ' + th + ' 线程栈——容器 limit 只给了 ' + (Math.ceil(total*1.1)) + 'G 的话,第 11 讲的 OOMKilled 就在路上。';
+  }
+  $('#hm-xmx').oninput=draw;$('#hm-th').oninput=draw;draw();
+}
+reg('hammer',initHammer);
+
+/* ============ 图1 数据区 ============ */
+function initRegs(){
+  const stage=$('#d-regs');
+  const DATA=[
+    {n:'①',t:'程序计数器',h:'当前字节码行号',d:'每线程一份,记录正在执行的字节码指令地址;唯一<b>不会 OOM</b> 的区域。执行 native 方法时为空(UNDEFINED)。',tags:['线程私有']},
+    {n:'②',t:'虚拟机栈',h:'方法调用的帧栈',d:'每调用一个方法压一帧:<b>局部变量表</b>(参数+局部变量,slots)、<b>操作数栈</b>(字节码的工作台)、动态链接(指向运行时常量池该方法引用)、返回地址。递归过深=栈溢出 StackOverflowError;-Xss 调大小(默认约 1M)。',tags:['线程私有','SOE']},
+    {n:'③',t:'本地方法栈',h:'native 版',d:'为 native 方法服务;HotSpot 与虚拟机栈合二为一。',tags:['线程私有']},
+    {n:'④',t:'堆',h:'对象的城',d:'GC 最大战场。分代:Young(Eden 8 : S0 1 : S1 1)+ Old;-Xms/-Xmx 定生死。字符串常量池、数组/普通对象都在这。',tags:['线程共享','OOM: heap']},
+    {n:'⑤',t:'方法区 → Metaspace',h:'类的档案室',d:'JDK8 起永久代退役,<b>Metaspace 搬到本地内存</b>:类结构、字段方法元数据、运行时常量池、静态变量(JDK7 静态变量已回堆)。不再"必然"受 -Xmx 约束,但会 OOM: Metaspace——动态生成类大户(CGLib/Groovy)盯紧。',tags:['线程共享','堆外']},
+  ];
+  stepper(stage,DATA);
+}
+reg('regs',initRegs);
+
+/* ============ 图2 对象布局 ============ */
+function initObj(){
+  const lay=$('#ob-layout'),ruler=$('#ob-ruler'),size=$('#ob-size'),say=$('#ob-say');
+  let cc=true,freelist=false;
+  function draw(){
+    const mk=cc?8:8,kp=cc?4:8,id=8,ag=4,pad=(8-((mk+kp+id+ag)%8))%8;
+    lay.innerHTML='';
+    lay.append(h('div',{class:'obj-cell mk'},'Mark Word '+mk+'B',h('div',{style:'font-size:9.5px;color:var(--ink2)'},'hash|age|锁标志(第3册的开关)')));
+    lay.append(h('div',{class:'obj-cell kp'},'类指针 '+kp+'B',h('div',{style:'font-size:9.5px;color:var(--ink2)'},cc?'压缩 4B(<32G 堆)':'未压缩 8B')));
+    lay.append(h('div',{class:'obj-cell da'},'long id 8B',h('div',{style:'font-size:9.5px;color:var(--ink2)'},'实例数据')));
+    lay.append(h('div',{class:'obj-cell da'},'int age 4B'));
+    if(pad)lay.append(h('div',{class:'obj-cell pad'},'填充 '+pad+'B'));
+    const tot=mk+kp+id+ag+pad;
+    size.textContent=tot+'B';
+    ruler.innerHTML='';
+    for(let i=0;i<32;i++){ruler.append(h('i',{class:(i<id+ag?'on':'')+(i>=id+ag&&i<tot?' pad2':'')}));}
+  }
+  $('#ob-cc').onclick=function(){cc=!cc;this.classList.toggle('on',cc);draw();say.innerHTML=cc?'压缩开:类指针 4 字节,对象 24B。<b>堆一旦过 32G,寻址超出 2³²×8B,压缩失效</b>——类指针回 8B,同一堆配置反而可能不如 31G。':'压缩关:类指针 8B,对象 28B(对齐后 32B)。';};
+  $('#ob-free').onclick=function(){freelist=!freelist;this.classList.toggle('on',freelist);
+    say.innerHTML=freelist?'<b>空闲列表</b>:内存有碎片时(如 CMS 之后),分配=找够大的洞→切一块→剩的记回列表。慢,且制造更多洞。':'<b>指针碰撞</b>:内存规整(带整理的收集器,Serial/G1/Parallel),分配=把"当前指针"往前推一格,O(1)+TLAB 免锁。';};
+  draw();
+}
+reg('obj',initObj);
+
+/* ============ 图3 死活与引用 ============ */
+function initAlive(){
+  const ca=$('#al-ca'),cb=$('#al-cb'),say=$('#al-say');
+  const ra=$('#al-a'),rb=$('#al-b'),rr=$('#al-root');
+  const g=runGuard();
+  $('#al-null').onclick=()=>{const my=g.next();ra.classList.add('dim');rb.classList.add('dim');
+    say.innerHTML='局部变量 a、b 指向断开——但 a 与 b <b>互相</b>指着,计数停在 1↔1。外部再无人能碰到它们。';};
+  $('#al-count').onclick=()=>{ra.classList.remove('dim');rb.classList.remove('dim');
+    ra.classList.add('bad');rb.classList.add('bad');
+    say.innerHTML='🔢 引用计数:count 都是 1,≠0,"还活着!"——<b style="color:var(--warn)">冤案</b>:这对循环体永远回收不掉,且应用再也摸不到它们=纯泄漏。这就是 Java 不用计数法的原因(Python 主用计数+循环探测器补救)。';};
+  $('#al-dfs').onclick=async()=>{const my=g.next();[ra,rb,rr].forEach(x=>x.classList.remove('bad','hot','good'));
+    rr.classList.add('good');say.innerHTML='🌲 可达性分析:从 GC Roots 出发 DFS…';
+    await sleep(700);if(!g.alive(my))return;
+    ra.classList.add('hot');await sleep(600);
+    rb.classList.add('hot');await sleep(600);if(!g.alive(my))return;
+    ra.classList.remove('hot');rb.classList.remove('hot');
+    ra.classList.add('dim');rb.classList.add('dim');
+    say.innerHTML='走遍了所有根,抵达不了 a、b——<b style="color:var(--teal)">判死,回收</b>。循环引用在可达性视角下不存在。';};
+}
+reg('alive',initAlive);
+
+/* ============ 图4 GC 搬球 ============ */
+function initGc(){
+  const ballsEl=$('#gc-balls'),stw=$('#gc-stw'),thr=$('#gc-thr'),frag=$('#gc-frag'),say=$('#gc-say');
+  const g=runGuard();
+  let flags=[];
+  function make(){ballsEl.innerHTML='';flags=[];
+    for(let i=0;i<20;i++){const b=h('span',{class:'ball'});if(Math.random()<.4){b.classList.add('alive');flags.push(true);}else flags.push(false);ballsEl.append(b);}
+    stw.textContent='—';thr.textContent='—';frag.textContent='—';say.innerHTML='一片堆,四成活。点收集器开赛。';}
+  make();
+  const balls=()=>$$('.ball',ballsEl);
+  async function play(kind){
+    const my=g.next();make();await sleep(200);
+    const B=balls();let t=0;
+    if(kind==='serial'){
+      say.innerHTML='Serial:单线程,STW 从头停到尾——球一个个慢慢搬(老年代同理=Serial Old)。';
+      for(let i=0;i<B.length;i++){if(!g.alive(my))return;if(flags[i])B[i].classList.add('moved');stw.textContent=(t+=100)+'ms';await sleep(90);}
+      thr.textContent='中(单核)';frag.textContent='0(紧凑)';stw.textContent=t+'ms ⚠';
+    }
+    if(kind==='parallel'){
+      say.innerHTML='Parallel Scavenge:多线程分头搬,总时长 ÷ 线程数;STW 依旧,但短得多——<b>吞吐优先</b>。';
+      for(let r=0;r<5;r++){if(!g.alive(my))return;
+        for(let c=0;c<4;c++){const idx=c*5+r;if(B[idx]&&flags[idx])B[idx].classList.add('moved');}
+        stw.textContent=(t+=25)+'ms';await sleep(120);}
+      thr.textContent='高 ✅';frag.textContent='0(紧凑)';
+    }
+    if(kind==='cms'){
+      say.innerHTML='CMS 初标记(短停)→ <b>并发标记:业务照跑,球一个个被点亮,不暂停</b> → 重新标记(停,补漏网之鱼)→ 并发清除(<b>不整理!</b>)。';
+      stw.textContent='20ms';await sleep(500);if(!g.alive(my))return;
+      for(let i=0;i<B.length;i++){if(!g.alive(my))return;if(flags[i]){B[i].classList.add('scan');}await sleep(40);}
+      stw.textContent='50ms';await sleep(400);if(!g.alive(my))return;
+      for(let i=0;i<B.length;i++){if(!flags[i])B[i].classList.add('hole');}
+      thr.textContent='中(并发耗 CPU,怕浮动垃圾)';frag.textContent='⚠ 一片空洞(退化成 Serial Old 整理时,大长脸)';
+    }
+    if(kind==='g1'){
+      say.innerHTML='G1:堆切成格子(Region),每次只回收垃圾最多的几格——<b>预算内的短停</b>(MaxGCPauseMillis)。';
+      for(let blk=0;blk<4;blk++){if(!g.alive(my))return;
+        for(let i=blk*5;i<blk*5+5;i++){if(!g.alive(my))return;const b=B[i];if(!flags[i])b.style.opacity=.15;else b.classList.add('moved');}
+        stw.textContent=(t+=120)+'ms';await sleep(330);}
+      thr.textContent='高';frag.textContent='0(区域整理)';stw.textContent='分次共 '+t+'ms,但<b>每次都很短</b>';
+    }
+  }
+  $$('[data-c]').forEach(b=>b.onclick=()=>play(b.dataset.c));
+  $('#gc-reset').onclick=make;
+}
+reg('gc',initGc);
+
+/* ============ 图5 分代水槽 ============ */
+function initGen(){
+  const eden=$('#gn-eden'),s0=$('#gn-s0'),old=$('#gn-old'),agesEl=$('#gn-age'),say=$('#gn-say');
+  const g=runGuard();
+  let age=1,swap=0,edenH=0,sH=0,oH=0,round=0;
+  function draw(){eden.style.height=edenH+'px';s0.style.height=sH+'px';old.style.height=oH+'px';agesEl.textContent='age '+age;}
+  draw();
+  $('#gn-alloc').onclick=()=>{edenH=Math.min(140,edenH+rnd(35,55));draw();say.innerHTML='Eden 进货中…(' + edenH + '/140)——绝大多数对象在这里生,也期待在这里死。';};
+  $('#gn-minor').onclick=()=>{
+    const surv=edenH*.10+sH*.78;
+    edenH=0;swap++;age++;
+    if(surv>105||age>15){
+      const promo=Math.min(60,surv*.72);
+      oH=Math.min(140,oH+promo);
+      sH=Math.max(16,surv-promo);
+      say.innerHTML='minor GC #'+swap+':<b style="color:var(--amber)">晋升 '+Math.round(promo)+' 单位进老年代</b>('+(age>15?'满 15 岁':'动态年龄:同龄总和过半 Survivor')+');Survivor 翻转,age 重置。';
+      age=1;
+    }else{
+      sH=Math.min(140,surv);
+      say.innerHTML='minor GC #'+swap+':Eden 清空,幸存者复制进另一块 Survivor(<b>翻转只是换名字</b>),age='+age+'。Old 几乎不动——"minor 快、老年代不陪跑"。';
+    }
+    draw();
+  };
+  $('#gn-big').onclick=()=>{oH=Math.min(140,oH+45);draw();say.innerHTML='一个 int[100000] → <b>大对象直入老年代</b>(PretenureSizeThreshold):免得在 Eden 生、又在两块 Survivor 间来回搬砖。';};
+  $('#gn-full').onclick=async()=>{
+    if(oH<60){say.innerHTML='老年代还没到线,不必 Full GC——先攒着(水位涨到 60%+ 再试)。';return;}
+    const my=g.next();
+    say.innerHTML='<b style="color:var(--warn)">Full GC!</b>全堆扫描+压缩,STW 长停——"偶发卡顿 3 秒"的案底就在这条水位线上。';
+    for(let t=0;t<8;t++){if(!g.alive(my))return;
+      old.style.height=Math.round(oH*(1-t/8))+'px';
+      s0.style.height='10px';eden.style.height='0';
+      await sleep(170);}
+    oH=Math.round(oH*.28);sH=10;edenH=0;age=1;swap=0;draw();
+    say.innerHTML+=' ✅ 老年代压到 '+oH+' 单位,全场停了约 1.4s。';
+  };
+  $('#gn-reset').onclick=()=>{edenH=0;sH=0;oH=0;age=1;swap=0;draw();say.innerHTML='三个水槽归零。';};
+}
+reg('gen',initGen);
+
+/* ============ 图6 卡表 ============ */
+function initCt(){
+  const grid=$('#ct-grid'),say=$('#ct-say');
+  const g=runGuard();
+  let dirty=new Set();
+  function build(){grid.innerHTML='';for(let i=0;i<64;i++){grid.append(h('span',{class:'ct-cell',id:'ct-c'+i}));}}
+  build();
+  $('#ct-write').onclick=()=>{const i=rnd(0,63);dirty.add(i);$('#ct-c'+i,grid).classList.add('dirty');
+    say.innerHTML='老年对象 X 把一个年轻代 y 的地址写进字段 → <b>写屏障</b>把 X 所在的卡('+i+' 号, 512B 一格)标脏。开销≈几条机器指令。';};
+  $('#ct-minor').onclick=async()=>{const my=g.next();
+    say.innerHTML='roots + <b>'+dirty.size+' 张脏卡</b> 里的老年对象一起当根,扫年轻代——老年代本体免扫。';
+    for(const i of dirty){const c=$('#ct-c'+i,grid);c.classList.add('scanlit');}
+    await sleep(1200);if(!g.alive(my))return;
+    for(const i of dirty){$('#ct-c'+i,grid).classList.remove('scanlit');}
+    say.innerHTML+=' ✅ 干净收工:扫描节点 ' + (5 + dirty.size*2) + ' 个(而非全堆)。';};
+  $('#ct-noct').onclick=async()=>{const my=g.next();
+    say.innerHTML='对照组:没有卡表 → minor GC 也只得<b>全堆扫</b>确认谁被老年代引用…';
+    for(let i=0;i<64;i++){if(!g.alive(my))return;const c=$('#ct-c'+i,grid);c.classList.add('scanlit');
+      if(i===63)setTimeout(()=>{$$('.ct-cell',grid).forEach(x=>x.classList.remove('scanlit'));},900);
+      await sleep(18);}
+    say.innerHTML='扫完 64 卡=全堆 32KB 元数据级联遍历——<b style="color:var(--warn)">老年代多大就要陪葬多大</b>,分代立刻失去意义。';};
+  $('#ct-grid').addEventListener('dblclick',e=>{if(e.target.classList.contains('ct-cell')){const i=+e.target.id.slice(4);dirty.add(i);e.target.classList.add('dirty');}});
+}
+reg('ct',initCt);
+
+/* ============ 图7 类加载 ============ */
+function initCl(){
+  const stage=$('#d-cl');
+  stepper(stage,[
+    {n:'①',t:'加载',h:'字节码进门',d:'按全限定名读字节流→方法区建类元数据结构→堆中生成代表该类的 <b>Class 对象</b>(各种反射入口)。字节流从哪来不限:jar/class/网络/动态生成(CGLib)/加密自定义 loader 均可。',tags:['类模板']},
+    {n:'②',t:'验证',h:'四道安检',d:'文件格式(magic/version)→元数据(继承关系合法?)→字节码(控制流数据流会不会搞坏栈)→符号引用(引用的类方法真的存在?)。恶意/损坏字节码挡在这。',tags:['Security']},
+    {n:'③',t:'准备',h:'静态变量分零值',d:'为 <b>static 变量</b>分配内存并置<b>零值</b>:static int x=7 此刻 x=0;例外:static final 编译期常量直接=7。实例变量不在此列(随 new 走)。',tags:['零值陷阱']},
+    {n:'④',t:'解析',h:'符号→直接引用',d:'"java/lang/String"这种文字符号,换成指针/句柄的直接引用。可延迟到首次使用再解(lazy,动态语言性)。',tags:[]},
+    {n:'⑤',t:'初始化',h:'&lt;clinit&gt; 执行',d:'执行类构造器:静态赋值+静态块按源序;<b>父类 &lt;clinit&gt; 先跑</b>;JVM 对单把锁保证<b>一个线程初始化、其他等待</b>——静态内部类单例的线程安全根因。触发时机:new/静态字段读写/反射/主类…(读 final 静态常量不触发!)。',tags:['懒加载']},
+  ]);
+  const chainEl=$('#dl-chain'),say=$('#dl-say');
+  const LD=[{id:'app',n:'Application',s:'classpath'},{id:'plat',n:'Platform(9前Ext)',s:'jrt'},{id:'boot',n:'Bootstrap',s:'核心库'}];
+  function chainBuild(){chainEl.innerHTML='';LD.forEach((l,i)=>{chainEl.append(h('div',{class:'cl-node',id:'cln-'+l.id},l.n,h('small',null,l.s)));if(i<2)chainEl.append(h('span',{class:'cl-arr'},'⇅'));});}
+  chainBuild();
+  async function ask(t){
+    const my=g.next();chainBuild();
+    const hit=t==='java/lang/String';
+    say.innerHTML='App 收到 '+t+' → 先问爹…';
+    for(let i=0;i<3;i++){if(!g.alive(my))return;$('#cln-'+LD[i].id).classList.add('hot');await sleep(520);$('#cln-'+LD[i].id).classList.remove('hot');}
+    if(hit){$('#cln-boot').classList.add('pass');say.innerHTML='<b>Bootstrap:这个我载</b>(rt/core)——下面三层全程旁观。核心类因此无法被同名伪造。';}
+    else{for(let i=0;i<3;i++)$('#cln-'+LD[i].id).classList.add('dim');await sleep(200);$('#cln-app').classList.remove('dim');$('#cln-app').classList.add('pass');say.innerHTML='三层都摇头 → <b>App 自己载</b> com.demo.Biz。';}
+  }
+  $$('#d-cl ~ .demo [data-l], [data-l]').forEach(b=>{if(!b.dataset.l)return;b.onclick=()=>{
+    if(b.dataset.l==='SPI'){say.innerHTML='<b>SPI 反委派</b>:Bootstrap 的 DriverManager 只认接口,实现类(mysql jar)它够不着 → 借<b>线程上下文类加载器</b>(App)加载——"父接口子实现",委派方向倒过来。JDBC/JNDI/JAXB 全是这路子。';}
+    else ask(b.dataset.l);};});
+}
+reg('cl',initCl);
+
+/* ============ 图8 调优场景 ============ */
+function initTune(){
+  const grid=$('#d-tune');
+  const CS=[
+    ['老年代水位锯齿上抬 → 每次 Full GC 只能压一压','频繁 Full GC',
+     'jstat -gcutil 12345 1s:O 区单调涨、FGC 连跳<br>gc 日志 cause=Allocation Failure/GCLock contention',
+     '查泄漏:jmap -dump + MAT 看 Dominator 大对象(缓存没上限?ThreadLocal 没 remove?);查晋升:动态年龄/大对象直入老年 → 加大 Survivor/调 MaxTenuringThreshold;System.gc()(RMI 每小时默认)用 NoSystemGC 关掉。'],
+    ['接口 P99 每隔几分钟尖一下,GC 日志 Mixed GC 拖 800ms','单次 STW 过长',
+     'gc -details:Remark 阶段长=引用多;Full GC 前有 Humongous Allocation=G1 大区域',
+     'G1:加大 -XX:MaxGCPauseMillis 别硬压(会更碎);引用处理开 -XX:+ParallelRefProcThreads;大数组改分块;彻底解决→ZGC(-XX:+UseZGC,亚 ms)。'],
+    ['java.lang.OutOfMemoryError: Java heap space / Metaspace / unable to create thread','OOM 三副面孔',
+     '异常文案就是诊断书:heap=对象装不下;Metaspace=动态类生成不止(CGLib 每代理一个新类);unable create thread=线程/栈地址空间尽',
+     '配 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath 留全尸;Metaspace 泄漏查字节码生成库版本与缓存复用;线程失控→降 -Xss 或修池上限(第 3 册)。'],
+    ['top 看 java 进程 780% CPU(8 核快打满)','CPU 打满',
+     'top -Hp pid → 最热线程 TID → printf "%x" → jstack | grep nid=0x…,看栈顶帧',
+     '三种常客:死循环(自己代码)/GC 线程群(其实在疯狂回收→回到第一张卡)/JIT 编译风暴(启动期正常)。定位在栈里,不在玄学里。'],
+  ];
+  CS.forEach(([sym,title,diag,fix])=>{
+    const c=h('div',{class:'tu-card'});
+    c.innerHTML='<h5>'+title+'</h5><div style="font-size:12.5px;color:var(--ink2)">'+sym+'</div><div class="rx"><b>诊断:</b><br>'+diag+'<br><b>处方:</b><br>'+fix+'</div>';
+    c.onclick=()=>{document.querySelectorAll('.tu-card').forEach(x=>{if(x!==c)x.classList.remove('open')});c.classList.toggle('open');};
+    grid.append(c);
+  });
+}
+reg('tune',initTune);
+
+/* ============ 图9 诊断终端 ============ */
+function initTerm(){
+  const out=$('#jv-out'),input=$('#jv-input'),chips=$('#jv-chips');
+  const put=(t,cls)=>{out.append(h('div',{class:'ln '+(cls||''),style:'white-space:pre-wrap'},t));out.scrollTop=out.scrollHeight;};
+  const CMDS={
+    'jps -lv':'12345 OrderService -Xms4g -Xmx4g -XX:+UseG1GC\n23890 JobWorker -Xmx512m\n<span>用 12345 继续,它是主角。</span>',
+    'jstat -gcutil 12345 1000 5':'  S0     S1     E      O      M     YGC YGCT FGC FGCT  GCT\n 98.20   0.00  86.40  <span class="jv-w">62.11</span>  91.30  812 21.4  <span class="jv-e">14</span>  39.2  60.6\n  0.00  97.60  22.30  <span class="jv-w">63.05</span>  91.30  814 21.5  <span class="jv-e">14</span>  39.2  60.7\n<span>老年代 O 单调爬 + FGC 已 14 次、平均 2.8s/次——第 8 讲第一张卡的病人。</span>',
+    'jmap -histo:live 12345 | head':' num  #instances   #bytes  class name\n   1:      984211   <span class="jv-w">157473760</span>  [B\n   2:      721004    69216384  java.lang.String\n   3:      331872    34515688  [C\n   4:      158420    16475680  java.util.HashMap$Node\n   5:      <span class="jv-e">96004</span>     15360640  com.demo.model.OrderVO<span>(9.6 万个订单驻内存,缓存没上限?)</span>',
+    'jstack 12345 > /tmp/js.txt':'写 /tmp/js.txt 完成(684 线程)\n<span>HISTOGRAM:\n  412  RUNNABLE(Tomcat 池在忙)\n  201  WAITING(parking) — 等下游\n  <span class="jv-e">34   BLOCKED(onth monitor 0x7f…) — 34 线程抢同一把锁!</span>\ngrep -A12 nid=0x 文件即得热点栈。</span>',
+    'arthas':'  arthas> dashboard:cpu 92% | gc.g1_old_gen 63%↑ | threads 684\n  arthas> thread -n 3\n"<span class="jv-w">http-nio-8080-exec-47</span>" cpu=38.6%\n  at com.demo.pricer.Calc.<span class="jv-e">hashLoop(Calc.java:208)</span>\n<span>无侵入热诊断:trace 看方法耗时分解,watch 看入参出参,jad 反编译线上字节码。</span>',
+    'help':'可试: jps -lv · jstat -gcutil 12345 1000 5 · jmap -histo:live · jstack · arthas · clear',
+  };
+  function exec(line){
+    put('<span class="jv-p">admin@prod-01:~$ </span><span class="jv-cmd">'+line+'</span>','');
+    const key=line.replace(/^jstat -gcutil \d+ \d+ \d+$/,'jstat -gcutil 12345 1000 5').replace(/^arthas.*$/,'arthas').trim();
+    if(key==='clear'){out.innerHTML='';return;}
+    const c=CMDS[key]||CMDS[line];
+    if(c){const tmp=h('div');tmp.innerHTML='<div class="ln jv-ok">'+c+'</div>';out.append(tmp.firstChild);}
+    else put('<span class="jv-e">command not found (模拟环境有限,试试 chips 里的)</span>','');
+  }
+  input.addEventListener('keydown',e=>{if(e.key==='Enter'){const v=input.value.trim();input.value='';if(v)exec(v);}});
+  ['jps -lv','jstat -gcutil 12345 1000 5','jmap -histo:live 12345 | head','jstack 12345 > /tmp/js.txt','arthas','help'].forEach(s=>{
+    chips.append(h('button',{class:'jv-chip',onclick:()=>{exec(s);input.focus();}},s));
+  });
+  put('这是<b>模拟</b>诊断终端,场景固定:订单服务 GC 不太健康,按剧本查它。','jv-d');
+}
+reg('term',initTerm);
+
+/* ============ 图10 JIT ============ */
+function initJit(){
+  const fill=$('#jt-fill'),say=$('#jt-say'),objBox=$('#jt-obj');
+  const g=runGuard();
+  let escaped=true;
+  function objDraw(){
+    objBox.innerHTML='';
+    if(escaped){
+      objBox.append(
+        h('div',{class:'bx',style:'text-align:center'},'<b>new StringBuilder()</b>','<br><small style="color:var(--ink2)">堆:对象头+char[16] 真实存在</small>'),
+        h('div',{class:'bx',style:'text-align:center'},'<b>append×5</b>','<br><small style="color:var(--ink2)">每次碰堆缓存不友好</small>'),
+        h('div',{class:'bx',style:'text-align:center'},'<b>return toString()</b>','<br><small style="color:var(--ink2)">逃逸了!老老实实堆分配</small>'));
+    }else{
+      objBox.append(
+        h('div',{class:'bx good',style:'text-align:center'},'<b>寄存器 r1 = 长度</b>','<br><small style="color:var(--ink2)">对象"不存在"</small>'),
+        h('div',{class:'bx good',style:'text-align:center'},'<b>寄存器 r2..r5 = 字符</b>','<br><small style="color:var(--ink2)">标量替换:拆散进栈帧</small>'),
+        h('div',{class:'bx good',style:'text-align:center'},'<b>栈帧弹出=回收</b>','<br><small style="color:var(--ink2)">GC 零负担</small>'));
+    }
+  }
+  objDraw();
+  $('#jt-run').onclick=async()=>{
+    const my=g.next();fill.style.width='0';
+    const marks=['','',''];
+    for(let i=1;i<=20;i++){if(!g.alive(my))return;
+      fill.style.width=(i*5)+'%';
+      if(i===3){fill.style.background='var(--blue)';say.innerHTML='过 C1 线:简单编译,保住插桩(profiling 积累类型画像)。';}
+      if(i===13){fill.style.background='var(--pen)';say.innerHTML='<b>过 C2 线:激进优化!</b>按画像内联热方法、锁消除、循环展开——此刻才"真·满血"。';}
+      await sleep(90);}
+    if(!g.alive(my))return;
+    say.innerHTML='20000 次后稳定跑机器码。<b>基准测试必须预热</b>:前 5000 次调用测的是解释器,不是你的代码。';
+  };
+  $('#jt-escape').onclick=()=>{
+    escaped=!escaped;objDraw();
+    $('#jt-escape').classList.toggle('on',!escaped);
+    say.innerHTML=escaped?'恢复默认:SB 方法内不逃逸也照样 new(示意对照)。按左边"压测"后再点本钮看魔法。':'<b>逃逸分析判定:该对象从不逃出方法</b> → 标量替换:根本不在堆分配,字段进寄存器——"性能黑洞 new 对象"被 JIT 当场抹平。';
+  };
+}
+reg('jit',initJit);
+
+/* ============ 图11 容器 ============ */
+function initCg(){
+  const view=$('#cg-view'),ceil=$('#cg-ceiling'),say=$('#cg-say'),code=$('#cg-code');
+  const g=runGuard();
+  let heapPct=0,blind=true;
+  function draw(){
+    view.innerHTML='';
+    const bar=h('div',{style:'position:absolute;bottom:0;left:8%;width:24%;height:'+heapPct+'%;background:'+(blind?'var(--warn)':'var(--teal)')+';border-radius:6px;transition:height .6s;display:flex;align-items:flex-start;justify-content:center;color:#fff;font-size:10.5px;font-family:var(--mono);padding-top:4px'},'JVM 堆 '+Math.round(heapPct*5.12)+'M');
+    const host=h('div',{style:'position:absolute;bottom:0;right:8%;width:24%;height:100%;background:#DDE6DC;border-radius:6px;color:var(--ink2);font-size:10.5px;font-family:var(--mono);display:flex;align-items:flex-start;justify-content:center;padding-top:4px'},'宿主机 32G');
+    const eye=h('div',{style:'position:absolute;left:40%;width:20%;bottom:0;height:'+(blind?100:heapPct)+'%;border:1.5px dashed var(--pen);border-bottom:none;border-radius:6px 6px 0 0;font-size:10px;color:var(--pen);text-align:center;padding-top:3px;font-family:var(--mono)'},blind?'JVM 以为自己能用 8G':'Xmx=384M');
+    view.append(host,bar,eye);
+    ceil.style.bottom=heapPct>=101?heapPct+'%':'62%';
+  }
+  draw();
+  $('#cg-blind').onclick=()=>{blind=true;heapPct=0;code.textContent='exit —';draw();
+    say.innerHTML='无容器感知:<b>默认堆按宿主机 1/4=8G</b> 起算,limit 512M 形同虚设。点"灌内存"。';};
+  $('#cg-fix').onclick=()=>{blind=false;heapPct=0;code.textContent='exit —';draw();
+    say.innerHTML='8u191+:读 cgroup,Xmx=512×75%=384M,红线在视野内。点"灌内存"对比死法。';};
+  $('#cg-load').onclick=async()=>{
+    const my=g.next();
+    for(let t=1;t<=12;t++){if(!g.alive(my))return;
+      heapPct=Math.min(blind?130:92,t*(blind?11:8));
+      draw();
+      if(heapPct>=100){if(!blind)continue;code.textContent='exit 137 (SIGKILL)';say.innerHTML='<b style="color:var(--warn)">内核出手:容器超内存直接 kill。</b>没有 OOM 异常、没有堆转储,dmesg 里 "Memory cgroup out of memory: Kill process"——这就是"程序自己消失"之谜。';draw();return;}
+      await sleep(420);}
+    if(!g.alive(my))return;
+    code.textContent='OOM-Java heap';
+    say.innerHTML='堆到 384M 上限:<b style="color:var(--teal)">JVM 自己抛 OutOfMemoryError</b>——有栈、有日志、配了 HeapDumpOnOOM 还有尸检材料。<b>死法体面=可诊断</b>。';
+  };
+}
+reg('cg',initCg);
+
+/* ============ 附录 ============ */
+function initCards(){
+  const grid=$('#card-grid');
+  const data=[
+    ['运行时区域哪些会 OOM?','堆(heap space)、Metaspace、线程栈(StackOverflow/OOM create thread)、直接内存;程序计数器是唯一不炸的。'],
+    ['怎么判断对象可回收?','可达性分析(GC Roots 遍历);引用计数败在循环引用。Roots:栈引用/静态变量/常量/JNI/活动线程。'],
+    ['引用强度四级?','强(不回收)>软(OOM 前最后一捞)>弱(下次 GC 必走,TL 的 key)>虚(只为回收通知,清堆外)。'],
+    ['GCM 的"分代"赌什么?','弱分代假说:大多数对象朝生暮死→Eden 小步快跑,老年代很少陪跑;对象晋升=Survivor 熬龄/动态年龄/大对象直入。'],
+    ['minor GC 为何不必扫全堆?','卡表:写屏障把"老年→年轻"的引用记在脏卡上;扫描只算 roots+脏卡。G1 的 RSet 是反向账。'],
+    ['CMS 为什么被 G1 换掉?','不整理→碎片→Concurrent Mode Failure 退化 Serial Old;并发模式还怕浮动垃圾与 CPU 抢占。'],
+    ['双亲委派与它的破例?','向上问、父能则不亲自动手:防伪造核心类+复用。SPI 线程上下文反委派、Tomcat 应用优先自载、OSGi。'],
+    ['什么时候类会初始化?','new/读写静态字段/调静态方法/反射/子类初始化触发父/主类。读 static final 常量<b>不</b>触发(编译期已折叠)。'],
+    ['三种回收器怎么选?','吞吐批处理→Parallel;堆大+低延迟→G1;极致亚 ms+大堆→ZGC;单核小内存→Serial。'],
+    ['逃逸分析三件套?','标量替换(对象拆进寄存器)/栈上挂起(概念同向)/锁消除(不共享的锁白加)。'],
+    ['容器里 JVM 怎么配内存?','MaxRAMPercentage=70-80(留非堆+栈+元空间+native 头寸);老 JDK 必显式 Xmx,别信默认。'],
+    ['线上救火连招?','CPU:top -Hp→nid 转 16 进制→jstack;内存:jstat 看水位→jmap dump→MAT;万能:Arthas dashboard/thread/trace。'],
+  ];
+  data.forEach(([q,a])=>{grid.append(h('div',{class:'card'},h('b',null,q),a));});
+}
+reg('cards',initCards);
+
+/* ============ 装配 ============ */
+function initSpy(){
+  const links=$$('.toc a');
+  const secs=links.map(a=>$(a.getAttribute('href'))).filter(Boolean);
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-18% 0px -72% 0px'});
+  secs.forEach(s=>io.observe(s));
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  Object.entries(INIT).forEach(([n,f])=>safe(n,f));
+  initSpy();
+});
+</script>
+</body>
+</html>
