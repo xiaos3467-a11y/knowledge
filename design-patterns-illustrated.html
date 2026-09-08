@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>设计模式 图解讲义 · GoF 实景样板间</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F6F2; --card:#FFFFFF; --stage:#FAFBF7;
+  --ink:#1E232B; --ink2:#59616E; --line:#DDE0D8;
+  --pen:#7A5C2E; --pen-bg:#F3EDE0; --pen-line:#DDCDA9;
+  --warn:#C0392B; --warn-bg:#FAECE9; --warn-line:#EABFB4;
+  --teal:#0E7C6B; --teal-bg:#E8F4F1;
+  --blue:#2D5FA6; --blue-bg:#EBF0F8;
+  --grape:#5B4A96; --grape-bg:#EEEAF8;
+  --amber:#A9750A; --amber-bg:#FAF2DE;
+  --gray:#7A828C;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --serif:"Noto Serif SC","Source Han Serif SC","STZhongsong","SimSun",serif;
+  --sans:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+  --kai:"KaiTi","STKaiti","Kaiti SC",var(--serif);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(30,35,43,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,35,43,.04) 1px,transparent 1px);
+  background-size:28px 28px}
+::selection{background:rgba(122,92,46,.2)}
+a{color:var(--pen);text-decoration:none}
+.wrap{display:grid;grid-template-columns:224px minmax(0,832px);gap:52px;max-width:1180px;margin:0 auto;padding:0 24px}
+main{min-width:0;padding-bottom:96px}
+section.ch{margin-top:96px;scroll-margin-top:24px}
+.kicker{font-family:var(--serif);color:var(--pen);font-weight:600;font-size:14px;letter-spacing:.12em;margin-bottom:6px}
+h1,h2{font-family:var(--serif);font-weight:900;line-height:1.3}
+h2{font-size:32px;margin-bottom:18px}
+p{margin:12px 0;max-width:76ch}
+p.lead{font-size:17px;color:var(--ink2)}
+ul.tight{margin:8px 0 8px 1.4em}
+ul.tight li{margin:6px 0}
+code.k{font-family:var(--mono);font-size:.86em;background:#EBEDE6;border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+mark{background:none;color:var(--pen);font-weight:700}
+.think{font-family:var(--kai);color:var(--pen);background:var(--pen-bg);border:1px dashed var(--pen-line);border-radius:8px;padding:8px 14px;font-size:15px;margin:18px 0}
+.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pen);border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;font-size:15px}
+.note b.tag{color:var(--pen);font-weight:700;margin-right:6px}
+aside.toc{position:sticky;align-self:start;top:24px;height:calc(100vh - 48px);overflow:auto;padding:28px 0;scrollbar-width:thin}
+.toc-brand{font-family:var(--serif);font-weight:900;font-size:19px;line-height:1.4;margin-bottom:14px}
+.toc-brand small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--pen);letter-spacing:.18em;font-weight:600}
+.toc ol{list-style:none}
+.toc li a{display:flex;gap:10px;align-items:baseline;padding:5.5px 10px;border-radius:6px;font-size:13.5px;color:var(--ink2);border-left:2px solid transparent}
+.toc li a i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--gray);width:20px;flex:none}
+.toc li a:hover{background:#ECEEE6;color:var(--ink)}
+.toc li a.active{color:var(--pen);font-weight:700;border-left-color:var(--pen);background:rgba(122,92,46,.08)}
+.toc li a.active i{color:var(--pen)}
+.hero{padding-top:48px}
+.hero-title{font-size:clamp(40px,6vw,66px);line-height:1.14}
+.hero-title .stroke{position:relative;display:inline-block}
+.hero-title .stroke svg{position:absolute;left:-4px;right:-4px;bottom:-8px;width:calc(100% + 8px);height:16px;overflow:visible}
+.hero-title .stroke svg path{stroke:var(--pen);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:420;stroke-dashoffset:420;animation:wipe 1s .5s ease-out forwards}
+@keyframes wipe{to{stroke-dashoffset:0}}
+.hero-sub{margin-top:16px;font-size:15.5px;color:var(--ink2);max-width:72ch}
+.hero-kicker{font-family:var(--serif);letter-spacing:.3em;color:var(--pen);font-size:14px;font-weight:600;margin-bottom:10px}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+.caret{display:inline-block;width:9px;height:1.05em;background:var(--pen);vertical-align:-2px;animation:blink 1.1s infinite}
+.reveal{opacity:0;transform:translateY(14px);animation:rv .7s ease-out forwards}
+.reveal.d1{animation-delay:.1s}.reveal.d2{animation-delay:.25s}.reveal.d3{animation-delay:.45s}
+@keyframes rv{to{opacity:1;transform:none}}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+@keyframes slidein{from{transform:translateX(-10px);opacity:0}}
+.demo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin:26px 0;box-shadow:0 2px 0 rgba(30,35,43,.03)}
+.fig-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.fig-no{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--pen);border-radius:4px;padding:2px 8px;flex:none}
+.fig-title{font-family:var(--serif);font-size:17px;font-weight:600}
+.caption{font-family:var(--kai);color:var(--ink2);font-size:14px;line-height:1.7;margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
+.caption::before{content:"图注 · ";color:var(--pen)}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:14px}
+.dctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.dctrl .gap{flex:1}
+.btn{font-family:var(--sans);font-size:13px;color:var(--ink);background:#fff;border:1px solid #C7CCC0;border-radius:7px;padding:5px 14px;cursor:pointer;line-height:1.6;transition:border-color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--pen);color:var(--pen)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.solid:hover:not(:disabled){background:var(--pen);border-color:var(--pen);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{border-color:var(--pen);color:var(--pen);background:var(--pen-bg);font-weight:700}
+.btn.warn-o{border-color:var(--warn);color:var(--warn)}
+.btn.warn-o.on{background:var(--warn-bg)}
+.btn:focus-visible,a:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+.hint{font-size:13px;color:var(--ink2);margin-top:10px}
+.hint b{color:var(--pen)}
+.say{font-size:13.5px;min-height:2.2em;padding:6px 2px;color:var(--ink2);line-height:1.8}
+.say b{color:var(--pen)}
+.say.bad b{color:var(--warn)}
+.pill{display:inline-block;font-size:12px;font-family:var(--mono);border-radius:99px;padding:1px 10px;border:1px solid var(--line);background:#fff}
+.pill.pen{color:var(--pen);border-color:var(--pen-line);background:var(--pen-bg)}
+.pill.teal{color:var(--teal);border-color:#BFDDD5;background:var(--teal-bg)}
+.pill.warn{color:var(--warn);border-color:var(--warn-line);background:var(--warn-bg)}
+svg text{font-family:var(--sans)}
+table.tb{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;background:var(--card)}
+table.tb th,table.tb td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top}
+table.tb th{background:#ECEEE6;font-weight:700;font-size:13px}
+table.tb td.m{font-family:var(--mono);font-size:12.5px}
+/* 模式宫格 */
+.tm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.tm-col h5{font-family:var(--mono);font-size:11.5px;color:var(--gray);margin-bottom:5px}
+.tm-cards{display:flex;flex-wrap:wrap;gap:4px}
+.tm-c{border:1px solid var(--line);border-radius:6px;background:var(--card);padding:1px 9px;font-size:11.5px;font-family:var(--mono);cursor:pointer;transition:all .15s}
+.tm-c:hover{border-color:var(--pen);color:var(--pen)}
+.tm-c.on{background:var(--pen);color:#fff;border-color:var(--pen)}
+.tm-desc{border:1px dashed var(--pen-line);border-radius:9px;background:var(--card);padding:8px 12px;font-size:12.5px;min-height:120px;line-height:1.8;margin-top:10px}
+.tm-desc b{color:var(--pen)}
+/* 代码 diff 面板 */
+.df-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-family:var(--mono);font-size:11px;line-height:1.9}
+.df{border:1.5px solid var(--line);border-radius:10px;background:#22262D;color:#C9D0DA;padding:9px 12px;min-height:190px;white-space:pre;overflow:auto}
+.df h6{font-family:var(--sans);font-size:11.5px;color:var(--gray);margin-bottom:5px}
+.df .add{color:#8CC63F;display:block;background:rgba(140,198,63,.09)}
+.df .cut{color:#F08A72;display:block}
+.df .cm{color:#7A8283}
+/* 装饰器洋葱 */
+.dc-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0;font-family:var(--mono);font-size:11px}
+.dc-box{border:2px solid var(--amber);border-radius:9px;padding:5px 11px;background:var(--amber-bg);transition:all .3s}
+.dc-box.core{border-color:var(--pen);background:var(--pen-bg)}
+.dc-box.flow{box-shadow:0 0 0 5px rgba(122,92,46,.2)}
+/* 单例擂台 */
+.sg-mat{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11.5px;font-family:var(--mono);margin:8px 0}
+.sg-cell{border:1.5px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--card);text-align:center;transition:all .3s}
+.sg-cell.ok{border-color:var(--teal);background:var(--teal-bg)}
+.sg-cell.no{border-color:var(--warn);background:var(--warn-bg)}
+.sg-cell.hit{outline:3px solid var(--amber)}
+/* 责任链 */
+.ch-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0;font-family:var(--mono);font-size:11px}
+.ch-node{border:2px solid var(--line);border-radius:9px;background:var(--card);padding:6px 12px;text-align:center;transition:all .25s;min-width:96px}
+.ch-node b{display:block;font-size:11.5px}
+.ch-node small{color:var(--gray);font-size:9.5px}
+.ch-node.ok{border-color:var(--teal);background:var(--teal-bg)}
+.ch-node.stop{border-color:var(--warn);background:var(--warn-bg)}
+.ch-node.cur{box-shadow:0 0 0 4px rgba(122,92,46,.2);border-color:var(--pen)}
+/* 建造 */
+.bd-list{font-family:var(--mono);font-size:10.5px;color:var(--gray);max-height:150px;overflow:auto;line-height:1.9;margin:6px 0}
+.bd-keep{color:var(--pen);font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:13.5px;line-height:1.7}
+.card b{display:block;font-family:var(--serif);font-size:14.5px;margin-bottom:4px}
+.card b::before{content:"问 ";color:var(--pen)}
+footer{margin-top:88px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2);font-family:var(--kai);line-height:1.9}
+@media (max-width:1120px){
+  .wrap{grid-template-columns:minmax(0,860px);justify-content:center}
+  aside.toc{position:static;height:auto;order:-1;padding:12px 0 0}
+  .toc ol{display:flex;overflow-x:auto;gap:4px;padding-bottom:8px;scrollbar-width:thin}
+  .toc li a{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;border-radius:4px}
+  .toc li a.active{border-bottom-color:var(--pen);background:none}
+  .toc-brand{padding-left:10px}
+}
+@media (max-width:820px){
+  .df-wrap,.tm-grid{grid-template-columns:1fr}
+  .sg-mat{grid-template-columns:1fr 1fr}
+  h2{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+  .reveal{opacity:1;transform:none}
+  .hero-title .stroke svg path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<aside class="toc" aria-label="目录">
+  <div class="toc-brand"><small>DESIGN PATTERNS</small>设计模式 图解讲义</div>
+  <nav><ol>
+    <li><a href="#hero"><i>00</i>开篇 · 模式宫格</a></li>
+    <li><a href="#ch-strategy"><i>01</i>策略:if-else 的救赎</a></li>
+    <li><a href="#ch-decor"><i>02</i>装饰器:穿洋葱</a></li>
+    <li><a href="#ch-single"><i>03</i>单例七式攻防擂台</a></li>
+    <li><a href="#ch-obs"><i>04</i>观察者:一次广播</a></li>
+    <li><a href="#ch-chain"><i>05</i>责任链:流水线关卡</a></li>
+    <li><a href="#ch-proxy"><i>06</i>代理:替身文学</a></li>
+    <li><a href="#ch-build"><i>07</i>建造者与原型陷阱</a></li>
+    <li><a href="#ch-more"><i>08</i>模板·适配·工厂速通</a></li>
+    <li><a href="#ch-meta"><i>09</i>模式的反面:过度设计</a></li>
+    <li><a href="#ch-cards"><i>附</i>模式速查卡</a></li>
+  </ol></nav>
+</aside>
+
+<main>
+
+<section id="hero" class="hero">
+  <p class="hero-kicker reveal d1">GoF 实景样板间 · 九讲</p>
+  <h1 class="hero-title reveal d1">设计模式<br><span class="stroke">图解讲义<svg viewBox="0 0 200 12" aria-hidden="true"><path d="M3 8 C 40 2, 70 11, 105 6 S 170 3, 197 7"/></svg></span></h1>
+  <p class="hero-sub reveal d2">23 个模式不是背诵清单,是<b>23 个"被重复发现的解法"</b>。这张宫格每块都能点开:它解决什么问题、在 JDK/Spring 里以什么身份生活。先建立地图,再进样板间。</p>
+  <div class="demo reveal d2" style="margin-top:24px">
+    <div class="fig-head"><span class="fig-no">序</span><span class="fig-title">模式宫格 · 创建 5 · 结构 7 · 行为 11</span></div>
+    <div class="stage">
+      <div class="tm-grid" id="tm-grid"></div>
+      <div class="tm-desc" id="tm-desc">点任意一个模式。</div>
+    </div>
+    <p class="caption">学模式的正确姿势不是"找地方套用",而是<b>先认痛点</b>:哪段代码让你改了 A 必须动 B?哪种对象创建散落五处?痛处对上一个模式名,它带着几十年的成熟方案来找你——这册的每道"装修实景"都从痛点开门。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-strategy">
+  <p class="kicker">第 一 讲</p>
+  <h2>策略模式:把"变的部分"装进格子</h2>
+  <p class="lead">支付要支持信用卡、借记、积分……朴素写法是 if-else/switch 金字塔:<b>每加一种方式,都要回到主流程动刀</b>,回归测试从头跑。策略模式:把"算法族"各自封装成实现同一接口的类,运行时从<b>策略表</b>(Map)按 key 取——主流程从此不为新增而改动(开闭原则)。<b>但注意模式自身的演化</b>:老式"工厂+抽象策略"要你手动注册;if-else 只有三五行时它反而是坏味道——<mark>策略模式的甜点区是"分支多、会变、每支都有独立逻辑"</mark>。Spring 给了现代化写法:注入 <code class="k">Map&lt;String,PayStrategy&gt;</code>(bean 名即 key)或 <code class="k">List&lt;Strategy&gt;</code> 按 supports() 匹配——注册表由容器维护。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 1</span><span class="fig-title">"新增加密货币支付" · 两种代码各要动几行?diff 见真章</span></div>
+    <div class="stage">
+      <div class="df-wrap">
+        <div class="df" id="df-ifelse"><h6>if-else 世界</h6>public BigDecimal pay(int way, BigDecimal amt) {
+  <span class="cm">// 主流程 = 所有策略的坟场</span>
+  if (way == CREDIT) return credit(amt);
+  else if (way == DEBIT) return debit(amt);
+  else if (way == POINT) return point(amt);
+  return reject(amt);
+}</div>
+        <div class="df" id="df-strategy"><h6>策略表世界</h6>Map&lt;Integer, PayStrategy&gt; table;
+public BigDecimal pay(int way, BigDecimal amt) {
+  return table.get(way).pay(amt);  <span class="cm">// 永远这一行</span>
+}</div>
+      </div>
+      <div class="dctrl">
+        <button class="btn warn-o" id="st-add">＋ 新增"加密货币支付"并接入</button>
+        <button class="btn" id="st-reset">还原</button>
+        <span class="hint" id="st-hint"></span>
+      </div>
+    </div>
+    <p class="caption">点新增:左边主流程<b>被切开动刀</b>(新分支插入 + 回归测试范围=全部),右边<b>主流程零 diff</b>,新增=新文件+注册一行——改动半径决定爆炸半径。追问"那策略只有 3 行分支呢?"——诚实答案:别上模式,if-else 挺好。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-decor">
+  <p class="kicker">第 二 讲</p>
+  <h2>装饰器:给对象一层层穿外套</h2>
+  <p class="lead">想给输入流加上"缓冲 + 解压 + 行号"三种能力,排列组合用继承写:4 种能力 = 16 个子类——<b>继承是编译期的静态组合,爆炸不可控</b>。装饰器把"增强"变成运行期的洋葱:每层持有对同接口的<b>包装对象</b>,自己加一点料再把活转给内层。JDK 的 IO 家族就是教科书:<code class="k">new BufferedReader(new InputStreamReader(new GZIPInputStream(file)))</code>。同族思想在框架层随处可见:Spring 的 <code class="k">BeanPostProcessor</code> 链、Retryable/Hystrix 式包装、Servlet Filter——<mark>凡"能力自由组合+可插拔",想想到装饰器</mark>。代价:栈深了调试栈满屏 wrapper,对象身份靠 equals 包装链穿透。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 2</span><span class="fig-title">字节流过洋葱 · 勾选外套,放一坨数据进去</span></div>
+    <div class="stage">
+      <div class="dc-row" id="dc-onion"></div>
+      <div class="say" id="dc-say" style="font-family:var(--mono);font-size:12px"></div>
+    </div>
+    <div class="dctrl">
+      <button class="btn on" data-dc="buf">Buffered 缓冲</button>
+      <button class="btn" data-dc="gz">Gzip 解压</button>
+      <button class="btn" data-dc="ln">LineNumber 行号</button>
+      <button class="btn solid" id="dc-run">▶ 放入 "hello world" 流</button>
+      <span class="hint">顺序也有意义:解压必须在缓冲内侧还是外侧?</span>
+    </div>
+    <p class="caption">数据每过一层被加工一次——<b>继承组合数 2ⁿ,装饰器组合数 n 层自由拼</b>。"顺序题"答案:Gzip 包 File、Buffered 包 Gzip(先解压再缓冲读),包反了就是乱码事故——洋葱圈层序,是装饰器唯一的深坑。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-single">
+  <p class="kicker">第 三 讲</p>
+  <h2>单例的七种写法,和三种进攻</h2>
+  <p class="lead">看似最熟的模式,翻车最多的也是它。<b>朴素饿汉</b>在并发下"检查-加锁"之间被插队造出两个;<b>双检锁(DCL)</b>修了竞态,但 <code class="k">instance=new Singleton()</code> 是"分配内存→初始化→赋值指针"三步——无 <code class="k">volatile</code> 时后两步可重排,另一线程第一重检查拿到"非 null 但半成品"(第 3 册 volatile 与 DCL 的账,在这结账);<b>静态内部类</b>用 JVM 类初始化锁拿到懒加载+线程安全+免 volatile;<b>枚举</b>是 Effective Java 的冠军——序列化与反射攻击都免疫(反射调私有构造器会拿到"第二个枚举",但 JDK 对枚举构造器直接抛异常)。<b>更重要的是知道什么时候"别用单例"</b>:隐藏依赖让测试举步维艰,它是全局变量的化妆舞会。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 3</span><span class="fig-title">单例擂台 · 选写法,放三种攻击</span></div>
+    <div class="stage">
+      <div class="dctrl" style="margin-top:0" id="sg-forms"></div>
+      <div class="sg-mat" id="sg-mat"></div>
+      <div class="say" id="sg-say"></div>
+    </div>
+    <p class="caption">五种写法定格在擂台:并发双线程、反射私构造、序列化 clone 三把刀轮流砍。<b>全绿的只有枚举</b>;静态内部类会漏过序列化刀(不实现 Serializable 时)但倒向反射。而 Spring 的 @Bean 单例是<b>第六种容器托管式</b>——注册表单例池(singletonObjects),它的"唯一性"由容器的双检锁保证,出了容器就作废——这也是"为什么 Spring 不用 DCL 枚举"的答题点。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-obs">
+  <p class="kicker">第 四 讲</p>
+  <h2>观察者:一处变更,广播全场</h2>
+  <p class="lead">下单成功要：加积分、发短信、推数仓。直调版=<b>OrderService 认识全世界</b>,加一个下游就改一次上游;观察者版=发布一个事件,谁关心谁订阅。<mark>依赖方向从此掰正</mark>(上游不认识下游,合依赖倒置)。三个必修细节:① <b>弱引用注册表</b>(否则被观察者永生——Java 监听器内存泄漏的经典款);② 通知线程语义(Spring 默认同线程同步,RxJava 靠 scheduler 切);③ 事件风暴与顺序(@Order/分区)。它的现代放大版遍地都是:Spring Event、MQ 发布订阅、前端 Redux、Vue 响应式——全是"发布者-订阅者"这一个骨架的不同肌肉。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 4</span><span class="fig-title">强直调 vs 订阅广播 · 加第 4 个下游时看谁改上游</span></div>
+    <div class="stage">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="dc-row" id="ob-direct" style="flex-direction:column;align-items:stretch"></div>
+        <div class="dc-row" id="ob-bus" style="flex-direction:column;align-items:stretch"></div>
+      </div>
+      <div class="dctrl">
+        <button class="btn solid" id="ob-fire">▶ 订单创建成功!publish</button>
+        <button class="btn warn-o" id="ob-add">＋ 新需求:下游加"风控上报"</button>
+      </div>
+      <div class="say" id="ob-say"></div>
+    </div>
+    <p class="caption">广播版:新下游=新订阅者文件,<b>上游零改动</b>;直调版每次都是"核心类开膛日"。这也正是第 6 册 Agent 事件总线、Kafka 发布订阅的设计母型。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-chain">
+  <p class="kicker">第 五 讲</p>
+  <h2>责任链:给请求修一条关卡路</h2>
+  <p class="lead">请求过一道道关卡:鉴权→限流→参数校验→业务——每关可选<b>放行/拦截/改道</b>,下一关不知道上一关是谁。<mark>把"处理器序列"从硬编码嵌套 if 变成可插拔的链</mark>:Servlet Filter 链、SpringMVC HandlerInterceptor、Netty ChannelPipeline、Dubbo 过滤器簇、审批流引擎,全是它。链的三要素:<b>节点契约</b>(process/handle)、<b>传播方式</b>(next.handle 或 fire 语义)、<b>装配权</b>(谁决定顺序——这往往才是架构设计本身:限流放鉴权前省算力,还是鉴权前限流放前面防越权探测?)。它的兄弟是拦截器/AOP:同一条链的不同装配时机。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 5</span><span class="fig-title">四道关卡 · 换一种请求,看它死在哪一关</span></div>
+    <div class="stage">
+      <div class="ch-row" id="ch-row"></div>
+      <div class="dctrl" id="ch-btns">
+        <span style="font-size:13px">请求:</span>
+        <button class="btn solid" data-rq="ok">合法用户拉数据</button>
+        <button class="btn warn-o" data-rq="401">token 过期</button>
+        <button class="btn warn-o" data-rq="429">狂点刷新(超配额)</button>
+        <button class="btn warn-o" data-rq="400">参数缺 id</button>
+      </div>
+      <div class="say" id="ch-say"></div>
+    </div>
+    <p class="caption">每种请求沿链走到哪关停一目了然。<b>顺序哲学题</b>:把"限流"挪到"鉴权"前=省算力但匿名流量也能打到业务校验;挪后面=先验明正身再按用户配额——两种都对,取决于你防的是误伤还是恶意,这正是责任链真正的设计点。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-proxy">
+  <p class="kicker">第 六 讲</p>
+  <h2>代理:替身文学的一千种面孔</h2>
+  <p class="lead">控制对目标的访问,顺便塞横切——这就是代理。<b>静态代理</b>(手写包装类,每个接口成员手写转发,累);<b>JDK 动态代理</b>(运行时生成接口实现,InvocationHandler 统一收口——RPC 客户端存根、MyBatis Mapper 的"没有实现的接口"全靠它);<b>CGLIB</b>(生成子类覆写方法,类无接口时的方案)。按意图分:<b>远程代理</b>(Dubbo 把网络调用伪装成本地方法)、<b>虚拟代理</b>(图片懒加载、JPA 的 @OneToOne lazy)、<b>缓存代理</b>、<b>保护代理</b>(权限)、<b>智能引用</b>(计数)。第 3 册 AOP 那一章把"事务/日志是动态代理的产物"讲透了,这里换个视角:<mark>代理是"面向接口编程"吃到红利的那一半</mark>——正因为调用方只认接口,替身才有资格上岗。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 6</span><span class="fig-title">一个调用的三层替身 · 点播放看横切堆栈</span></div>
+    <div class="stage">
+      <div class="dc-row" id="px-layers"></div>
+      <div class="say" id="px-say"></div>
+    </div>
+    <div class="dctrl"><button class="btn solid" id="px-run">▶ userSvc.findById(1)</button></div>
+    <p class="caption">调用方以为在调真身,其实一路穿过 权限代理→缓存代理→(RPC 时:网络代理)→ 真身。<b>每层只认识接口不认识"下家是谁"</b>——这是代理与装饰器唯一的实质差异:装饰器重在"加能力",代理重在"控访问",结构同形、意图相反。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-build">
+  <p class="kicker">第 七 讲</p>
+  <h2>建造者与原型:造的姿势与抄的姿势</h2>
+  <p class="lead"><b>建造者</b>治"重叠构造器":15 个可选参数 = 2¹⁵ 个重载的坟;builder 链式只喊你在意的,且<b>不可变对象一次成型</b>(build 后无 setter,线程安全)。现代 Java:Lombok @Builder、record + withX。<b>原型</b>治"昂贵对象的重复装配":clone 一份再改——但 <code class="k">Object.clone</code> 是<b>浅拷贝</b>:外层字段逐个赋值,<b>数组/集合/嵌套对象的引用原样照抄</b>——两个"独立"对象共享同一个内部 List,改一个崩两个(面试陷阱+生产事故双料)。真深拷贝:序列化往返/手写 copy 构造器/Apache Commons。<b>Spring 的 scope=prototype 不用 clone,而是把 BeanDefinition 再走一遍工厂</b>——"原型"模式的工业化改名。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 7</span><span class="fig-title">重载地狱 vs 链式装配;然后现场演示浅拷贝之坑</span></div>
+    <div class="stage">
+      <div class="df-wrap">
+        <div class="df" id="bd-over"><h6>重叠构造器(节选)</h6></div>
+        <div class="df" id="bd-build"><h6>Builder</h6>new User.Builder()
+  .name("ada")
+  .port(8080)
+  .build();</div>
+      </div>
+      <div class="dctrl"><button class="btn warn-o" id="bd-show">▶ 展开 4 参数 15 组合的重载地狱</button><button class="btn solid" id="bd-copy">🧬 原型浅拷贝事故演示</button></div>
+      <div class="say" id="bd-say"></div>
+    </div>
+    <p class="caption">浅拷贝动画:原对象与"克隆体"的外壳是两份,<b>tags 数组只有一份</b>——克隆体 push("bug") 之后原对象的 tags 也长了。判断标准永远一句话:<b>clone 后两个对象改内部字段,会不会互相污染?</b></p>
+  </div>
+</section>
+
+<section class="ch" id="ch-more">
+  <p class="kicker">第 八 讲</p>
+  <h2>模板方法·适配器·工厂速通</h2>
+  <p class="lead">三件套一句话档:<b>模板方法</b>——流程钉在父类、步骤留给钩子(比策略"重":编译期骨架;JdbcTemplate.execute 把"拿连接/释异常"固定,StatementCallback 留白;Spring Bean 生命周期本身就是给业务的大模板);<b>适配器</b>——目标接口(客户端想要的)与被适配者(已有的)不兼容时的转接头:Arrays.asList、InputStreamReader、DDD 防腐层的本质就是架构级适配器;<b>工厂家族</b>——简单工厂(工具方法,违反开闭)→工厂方法(一个产品一个子类,开闭达成)→抽象工厂(产品族:换一家=UI/存储/主题成套换)。<mark>当"new 什么"成为会变的决策,就把它锁进工厂</mark>——Spring IoC 容器是工厂模式+注册表的终极工业化:全应用只留一个"决定 new 什么"的地方。</p>
+  <div class="dctrl" style="margin-top:0"><div class="tm-desc" style="margin:0;width:100%"><b>模板 vs 策略:</b>骨架继承复用(编译期、整体流程)vs 组件组合注入(运行期、单点算法)——Spring 生态整体趋势:模板方法在新框架里越来越少被直接继承,取而代之是回调与自动配置。</div></div>
+</section>
+
+<section class="ch" id="ch-meta">
+  <p class="kicker">第 九 讲(终)</p>
+  <h2>模式的反面:没有模式的场景别硬套</h2>
+  <p class="lead">GoF 原文最后一章就写着"模式如何慎用"。<mark>模式是"反复出现的痛点的解法总结",不是"炫技的题库"</mark>。三条反模式清单:① <b>预防性抽象</b>:只有一个实现就造接口+工厂+策略"以后好扩展"——扩展点要长在<b>真实变化</b>上,猜的变化九成猜错(YAGNI);② <b>模式崇拜的重型工厂链</b>:读三屏才找到真正干活的那行代码;③ <b>把语言特性当模式用</b>:Java 9+ 用 var/record/密封类可能让某些"经典模式"退化——策略≈函数对象(Comparator.comparing)、单例≈枚举、命令≈lambda、观察者≈Flow API。<b>现代框架已经把模式消化成默认结构</b>:你用 Spring 就已经在模板方法(IoC 容器)+代理(AOP)+工厂(BeanFactory)+观察者(event)的样板间里生活。<mark>认模式是为了读框架源码快,写业务代码时,先写直白的 if,直到它真的疼</mark>——这就是本册的毕业寄语。</p>
+</section>
+
+<section class="ch" id="ch-cards">
+  <p class="kicker">附 录</p>
+  <h2>模式速查卡</h2>
+  <div class="cards" id="card-grid"></div>
+</section>
+
+<footer>
+  设计模式 图解讲义 · 系列第十四册 · 手写 vanilla JS/SVG 无依赖 · GoF 23 + JDK/Spring 实景对照。
+</footer>
+</main>
+</div>
+
+<script>
+/* ============ 工具 ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function h(tag,attrs){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k==='text')e.textContent=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)));}return e;}
+function runGuard(){let id=0;return{next(){return++id},alive(my){return my===id}};}
+const safe=(name,fn)=>{try{fn();}catch(e){console.error('[demo:'+name+']',e);}};
+const INIT={};
+const reg=(n,f)=>{INIT[n]=f;};
+
+/* ============ hero 模式宫格 ============ */
+function initTmap(){
+  const grid=$('#tm-grid'),desc=$('#tm-desc');
+  const G={
+    '创建型 creational':[
+      ['单例','全场唯一实例;七写法三把刀见第 3 讲','Runtime / Spring @Bean'],
+      ['工厂方法','把"new 哪个类"延迟到子类/注册表','Calendar.getInstance / BeanFactory'],
+      ['抽象工厂','一族产品一起造,换厂全家换','WebDriver 全家桶 / DocumentBuilderFactory'],
+      ['建造者','多可选参数的对象分步装配','StringBuilder / URI.builder'],
+      ['原型','克隆代替重造(深坑:浅拷贝)','Object.clone / Spring scope=prototype'],
+    ],
+    '结构型 structural':[
+      ['适配器','接口不兼容的翻译官','Arrays.asList / InputStreamReader'],
+      ['装饰器','同接口包装增强,洋葱可叠','IO 流家族 / BeanPostProcessor 们'],
+      ['代理','控制访问+横切','JDK Proxy / AOP'],
+      ['外观','一把子系统总开关','SLF4J / FacesContext'],
+      ['享元','共享内部状态省内存','Integer.valueOf 缓存池 / String 常量'],
+      ['桥接','抽象与实现两个维度分开','JDBC:DriverManager×Driver'],
+      ['组合','树形统一单与多','File 树 / 渲染节点'],
+    ],
+    '行为型 behavioral':[
+      ['策略','算法族换着上','Comparator / 第 1 讲'],
+      ['观察者','一变百广播','EventListener / RxJava'],
+      ['模板方法','流程固定步骤留钩子','AbstractList / JdbcTemplate'],
+      ['责任链','请求过道道,各站可拦','Servlet Filter / MVC 拦截器'],
+      ['迭代器','遍历不暴露内部结构','Iterator'],
+      ['命令','请求对象化,可录可撤','Runnable / 撤销栈'],
+      ['状态','状态各自为政,表驱动转移','第 1 讲的双胞胎'],
+      ['中介','同事间网状改星型','ExecutorService 调度'],
+      ['备忘录','存快照回滚','Transaction savepoint'],
+      ['解释器','小语言求值','正则 / SpEL'],
+      ['访问者','操作与结构解耦(双分派)','编译器 AST pass'],
+    ],
+  };
+  Object.entries(G).forEach(([cat,list])=>{
+    const col=h('div',{class:'tm-col'});
+    col.append(h('h5',null,cat));
+    const cards=h('div',{class:'tm-cards'});
+    list.forEach(([n,p,real])=>{
+      const c=h('span',{class:'tm-c'},n);
+      c.onclick=()=>{$$('.tm-c').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+        desc.innerHTML='<b>'+n+'</b> —— '+p+'<br><span style="color:var(--gray)">实景:'+real+'</span>';};
+      cards.append(c);
+    });
+    col.append(cards);grid.append(col);
+  });
+}
+reg('tmap',initTmap);
+
+/* ============ 图1 策略 diff ============ */
+function initStrategy(){
+  const iF=$('#df-ifelse'),st=$('#df-strategy'),hint=$('#st-hint');
+  const IF_ORIG=iF.innerHTML,ST_ORIG=st.innerHTML;
+  $('#st-add').onclick=()=>{
+    iF.innerHTML='<h6>if-else 世界</h6>public BigDecimal pay(int way, BigDecimal amt) {<span class="add">  if (way == CRYPTO) return crypto(amt);   ← 动刀</span>  if (way == CREDIT) return credit(amt);\n  else if (way == DEBIT) return debit(amt);\n  else if (way == POINT) return point(amt);\n  return reject(amt);\n}';
+    st.innerHTML='<h6>策略表世界</h6>Map&lt;Integer, PayStrategy&gt; table;\npublic BigDecimal pay(int way, BigDecimal amt) {\n  return table.get(way).pay(amt);  <span class="cm">// 永远这一行</span>\n}\n<span class="add">+ new CryptoPayStrategy()            ← 只加文件</span>\n<span class="add">+ @Bean 注册进表                     ← 只加注册</span>';
+    hint.innerHTML='左:<b>主流程被改,全量回归</b>;右:主流程零 diff,新逻辑在<b>隔离的新文件</b>里。';
+  };
+  $('#st-reset').onclick=()=>{iF.innerHTML=IF_ORIG;st.innerHTML=ST_ORIG;hint.textContent='';};
+}
+reg('strategy',initStrategy);
+
+/* ============ 图2 装饰器洋葱 ============ */
+function initDecor(){
+  const row=$('#dc-onion'),say=$('#dc-say');
+  const g=runGuard();
+  let on={buf:true,gz:false,ln:false};
+  function render(){
+    row.innerHTML='';
+    const layers=[];
+    if(on.gz)layers.push(['Gzip 解压','gz']);
+    if(on.ln)layers.push(['LineNumber 计数','ln']);
+    if(on.buf)layers.push(['Buffered 缓冲','buf']);
+    layers.push(['FileInputStream','core']);
+    layers.forEach(([n,id])=>row.append(h('span',{class:'dc-box'+(id==='core'?' core':''),id:'dc-'+id},n)));
+    say.innerHTML='包装顺序(由外向内):'+layers.map(l=>l[0]).join(' ← ');
+  }
+  $$('[data-dc]').forEach(b=>b.onclick=()=>{const k=b.dataset.dc;on[k]=!on[k];b.classList.toggle('on',on[k]);render();});
+  $('#dc-run').onclick=async()=>{
+    const my=g.next();
+    let data='hello world';
+    const order=['gz','ln','buf'].filter(k=>on[k]).concat(['core']).reverse();
+    say.innerHTML='字节流 →';
+    for(const k of order){
+      if(!g.alive(my))return;
+      const el=$('#dc-'+k);if(!el)continue;
+      el.classList.add('flow');
+      if(k==='core')data='[gz:'+data.length+'B 压缩块]';
+      if(k==='buf')data='buf→'+data;
+      if(k==='ln')data='L1:'+data;
+      if(k==='gz')data='{'+data.replace('gz:','')+':inflated}';
+      say.innerHTML='字节流 → <b>'+data+'</b>';
+      await sleep(700);el.classList.remove('flow');
+    }
+  };
+  render();
+}
+reg('decor',initDecor);
+
+/* ============ 图3 单例擂台 ============ */
+function initSingle(){
+  const formsEl=$('#sg-forms'),matEl=$('#sg-mat'),say=$('#sg-say');
+  const FORMS=['朴素无锁','双检锁','DCL+volatile','静态内部类','枚举','Spring @Bean'];
+  const ATK=['并发抢注','反射私构造','序列化复制'];
+  const M={
+    '朴素无锁':[0,1,1],
+    '双检锁':[1,1,1],
+    'DCL+volatile':[1,1,1],
+    '静态内部类':[1,1,0],
+    '枚举':[1,1,1],
+    'Spring @Bean':[1,1,2],
+  };
+  function draw(hit){
+    matEl.innerHTML='';
+    FORMS.forEach(f=>{
+      matEl.append(h('div',{style:'grid-column:span 4;border:none;background:none;font-family:var(--mono);font-weight:700;color:var(--pen);padding:6px 0 0;font-size:11.5px'},f));
+      M[f].forEach((v,ai)=>{
+        const cell=h('div',{class:'sg-cell '+(v===1?'ok':v===2?'':'no')},ATK[ai]+(v===1?' ✓':v===2?' 容器内✓':' 破'));
+        if(hit===ai)cell.classList.add('hit');
+        matEl.append(cell);
+      });
+    });
+  }
+  draw();
+  ATK.forEach((a,ai)=>{
+    const b=h('button',{class:'btn solid'},'⚔ '+a);
+    b.onclick=()=>{draw(ai);
+
+      let txt=FORMS.map((f,i)=>f+':'+(M[f][ai]===1?'✓':M[f][ai]===2?'容器内✓':'✗')).join(' · ');
+      say.innerHTML='<b>'+a+'</b> → '+txt+(ai===1?'<br>反射攻击=私构造器 setAccessible 再 new 一个;唯一免疫是枚举(JVM 对枚举构造反射直接抛异常)。':ai===2?'<br>序列化攻击=readObject 造新实例;实现 readResolve 可防,枚举天生防。':'<br>并发攻击=检查与创建之间被插队;DCL 忘 volatile 还会读到"半初始化对象"。');};
+    formsEl.append(b);
+  });
+  say.innerHTML='三种攻击逐个放,六种写法谁裸泳一目了然。';
+}
+reg('single',initSingle);
+
+/* ============ 图4 观察者 ============ */
+function initObs(){
+  const dir=$('#ob-direct'),bus=$('#ob-bus'),say=$('#ob-say');
+  const g=runGuard();
+  let subs=['加积分','发短信','推数仓'];
+  function render(){
+    dir.innerHTML='<h6 style="color:var(--gray);font-size:10px">直调:OrderService 认识全世界</h6><div class="dc-box core">OrderService.create()</div><div style="font-family:var(--mono);font-size:10.5px;color:var(--warn);padding-left:8px">↓ 硬编码三连</div>'+['point.add()','sms.send()','dw.push()'].map(x=>'<div class="dc-box" style="border-color:var(--warn-line)">'+x+'</div>').join('');
+    bus.innerHTML='<h6 style="color:var(--gray);font-size:10px">事件:上游只广播,下游自选订阅</h6><div class="dc-box core" id="ob-pub">publish(OrderCreated)</div><div style="font-family:var(--mono);font-size:10.5px;color:var(--teal);padding-left:8px">↓ 广播给订阅列表</div><div id="ob-sublist"></div>';
+    const sl=$('#ob-sublist',bus);
+    subs.forEach(s=>sl.append(h('div',{class:'dc-box',style:'border-color:var(--teal);font-size:11px'},'@EventListener '+s)));
+    dir.querySelector('.dc-box').outerHTML=dir.querySelector('.dc-box').outerHTML; // keep
+  }
+  render();
+  $('#ob-fire').onclick=async()=>{
+    const my=g.next();
+    const els=$$('#ob-sublist .dc-box',bus);
+    const core=dir.querySelector('.dc-box');
+    core.classList.add('flow');
+    say.innerHTML='直调:三行顺序调用,任何一行抛异常全链炸;新增下游=改这里。';
+    await sleep(500);if(!g.alive(my))return;
+    core.classList.remove('flow');
+    for(const el of els){if(!g.alive(my))return;el.classList.add('flow');say.innerHTML='广播:每个订阅者独立收到,互不知晓、可独立失败(加 try/异步)。';await sleep(420);el.classList.remove('flow');}
+  };
+  $('#ob-add').onclick=()=>{
+    subs.push('风控上报');render();
+    say.innerHTML='<b>直调版:还得改 OrderService</b>(它现在认识四个下游);事件版:新增一个文件、贴上 @EventListener——<b>上游永远零改动</b>。这就是开闭原则的观察者版本。';
+  };
+  say.innerHTML='点"订单创建成功"。';
+}
+reg('obs',initObs);
+
+/* ============ 图5 责任链 ============ */
+function initChain(){
+  const row=$('#ch-row'),say=$('#ch-say');
+  const g=runGuard();
+  const NODES=[['鉴权','token 有效?'],['限流','配额够?'],['参数校验','schema 合法?'],['业务','真正干活']];
+  function build(){row.innerHTML='';NODES.forEach(([n,d],i)=>{if(i)row.append(h('span',{class:'ch-node',style:'border:none;background:none'},'→'));row.append(h('div',{class:'ch-node',id:'chn'+i},h('b',null,n),h('small',null,d)));});}
+  build();
+  const OUT={
+    ok:['全部 ✓ 200',[]],
+    '401':['⛔ 401 Unauthorized',[]],
+    '429':['⛔ 429 Too Many Requests',[]],
+    '400':['⛔ 400 Invalid Param',[]],
+  };
+  async function play(rq){
+    const my=g.next();build();
+    const stop={ '401':0,'429':1,'400':2}[rq];
+    for(let i=0;i<4;i++){
+      if(!g.alive(my))return;
+      $('#chn'+i).classList.add('cur');
+      await sleep(520);
+      if(stop===i){$('#chn'+i).classList.remove('cur');$('#chn'+i).classList.add('stop');say.innerHTML='<b style="color:var(--warn)">'+OUT[rq][0]+'</b> —— 在第 '+(i+1)+' 关「'+NODES[i][0]+'」被拦,后面的关卡与业务根本没执行(链短路)。';return;}
+      $('#chn'+i).classList.remove('cur');$('#chn'+i).classList.add('ok');
+    }
+    say.innerHTML='<b style="color:var(--teal)">全部放行 → 200</b>:每关职责单一、可独立测试、顺序可编排——这就是网关与拦截器的骨架。';
+  }
+  $$('#ch-btns [data-rq]').forEach(b=>b.onclick=()=>play(b.dataset.rq));
+  say.innerHTML='四种请求,看它们各死在哪一关。';
+}
+reg('chain',initChain);
+
+/* ============ 图6 代理 ============ */
+function initProxy(){
+  const lay=$('#px-layers'),say=$('#px-say');
+  const g=runGuard();
+  lay.innerHTML='<span style="color:var(--gray)">caller</span>';
+  [['权限代理','AuthenticationProxy'],['缓存代理','CacheProxy'],['JDK 动态代理','InvocationHandler'],['真身','UserServiceImpl']].forEach(([n,en],i)=>{
+    lay.append(h('span',{class:'dc-box'+(i===3?' core':''),id:'pxl'+i},n));
+    if(i<3)lay.append(h('span',{style:'color:var(--gray)'},'⊃'));
+  });
+  $('#px-run').onclick=async()=>{
+    const my=g.next();
+    for(let i=0;i<4;i++){if(!g.alive(my))return;$('#pxl'+i).classList.add('flow');
+      say.innerHTML=['穿过权限层:未登录?直接 401,下面根本没醒','穿过缓存层:命中?返回,<b>真身从未被惊动</b>(虚拟代理同理:懒加载)','动态代理收口:method 名+args 打包成"一次网络调用/一次织入"——RPC 存根与 AOP 的共同秘密','到达真身:查库返回。回程继续穿三层(写缓存/审计)——<b>洋葱每一层都只认识接口</b>。'];
+      await sleep(800);}
+  };
+  say.innerHTML='点播放。';
+}
+reg('proxy',initProxy);
+
+/* ============ 图7 建造者+浅拷贝 ============ */
+function initBuild(){
+  const over=$('#bd-over'),say=$('#bd-say');
+  const g=runGuard();
+  $('#bd-show').onclick=()=>{
+    let txt='';
+    const ps=['name','age','port','tags'];
+    function gen(k,acc){
+      if(k===ps.length){txt+='public User('+acc.join(', ')+') { … }\n';return;}
+      gen(k+1,acc.concat(ps[k]));if(k>0)gen(k+1,acc);
+    }
+    gen(1,[]);
+    over.innerHTML='<h6>重叠构造器(仅 4 参就有 '+txt.split('\n').filter(Boolean).length+' 个重载)</h6>'+txt;
+    say.innerHTML='<b>2ⁿ 增长的重载</b>是纸面地狱,实际更糟:参数同类型时传颠倒编译器都不管("address/phone 反了")。Builder:必填进构造器、可选链式点名、build() 校验——三行搞定。';
+  };
+  $('#bd-copy').onclick=async()=>{
+    const my=g.next();
+    say.innerHTML='原 A{tags:[x]} —clone→ B{tags:【同一个数组!】}';
+    await sleep(900);if(!g.alive(my))return;
+    say.innerHTML+=' → B.tags.push("bug") …';
+    await sleep(900);if(!g.alive(my))return;
+    say.innerHTML='<b style="color:var(--warn)">A.tags 也长出 "bug"!</b> 浅拷贝只抄字段值,引用字段抄的是地址。深拷贝三选一:序列化往返、手写 copy 构造器(最诚实)、映射工具(慢,慎用 BeanUtils)。';
+  };
+  say.innerHTML='点两个按钮。';
+}
+reg('build',initBuild);
+
+/* ============ 附录 ============ */
+function initCards(){
+  const grid=$('#card-grid');
+  const data=[
+    ['策略 vs 状态?','策略=可互换的完整算法(选);状态=行为随状态机迁移(变)。代码都是"接口+表驱动",语义不同。'],
+    ['装饰器 vs 代理?','结构同形意图相反:装饰器加功能、由客户端主动叠;代理控访问、客户端可能不知情(AOP 是后者)。'],
+    ['模板方法 vs 策略?','继承定骨架(粗、编译期)vs 组合注组件(细、运行期)。新代码倾向回调+组合,少继承。'],
+    ['适配器 vs 装饰器?','适配器改接口形状(变成别的),装饰器保持接口只增强(还是它)。'],
+    ['单例用哪种?','常规:静态内部类;要防反射/序列化:枚举;在 Spring 里:直接 @Bean(容器池)。'],
+    ['DCL 为什么要 volatile?','new 三步可重排(分配→初始化→引用),无 volatile 时第二线程第一重检查可拿到半初始化对象。'],
+    ['观察者内存泄漏?','被观察者持注册表强引用 → 忘记注销的监听器永生;弱列表/注销义务/Spring 事件自动清理。'],
+    ['责任链与拦截器/AOP?','同族的"链式横切":Filter(Servlet)→Interceptor(MVC)→AOP(方法),作用域递进。'],
+    ['工厂方法 vs 抽象工厂?','一个产品=一个工厂子类;一族产品=一个工厂对象(成套换)。'],
+    ['Builder 何时必要?','参数≥4 且多可选/需不可变对象。两个参数老老实实构造器。'],
+    ['clone 的坑?','浅拷贝共享引用字段;深拷贝:copy 构造器/序列化;性能敏感别上反射 BeanUtils。'],
+    ['何时不用模式?','只有一个实现别造接口;分支≤3 别上策略;模式名是沟通工具,不是 KPI。'],
+  ];
+  data.forEach(([q,a])=>{grid.append(h('div',{class:'card'},h('b',null,q),a));});
+}
+reg('cards',initCards);
+
+/* ============ 装配 ============ */
+function initSpy(){
+  const links=$$('.toc a');
+  const secs=links.map(a=>$(a.getAttribute('href'))).filter(Boolean);
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-18% 0px -72% 0px'});
+  secs.forEach(s=>io.observe(s));
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  Object.entries(INIT).forEach(([n,f])=>safe(n,f));
+  initSpy();
+});
+</script>
+</body>
+</html>
