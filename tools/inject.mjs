@@ -1,6 +1,7 @@
-// tools/inject.mjs · 图解讲义馆资产注入管线（整区替换 + 版本标记 + all-or-nothing）
-// 用法: node tools/inject.mjs [--check] [--force-seo]
-// 区块契约: kn:seo(head) / kn:pbar(body) / kn:quiz-data(仅缺失时初写,注入器之后只读) / kn:quiz-engine(版本替换)
+// tools/inject.mjs · 图解讲义馆资产注入管线(标记成对整区替换 + 版本化 + 两阶段落盘)
+// 用法: node tools/inject.mjs [--check] [--force-seo] [--force-data]
+// 区块契约: kn:seo/kn:pbar/kn:quiz-engine 以 tools/partials 为准自动对齐;
+//           kn:quiz-data 仅缺失或 --force-data 时写入(册内可手改),漂移会在 check/注入时提示,两边人工对齐
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -86,10 +87,13 @@ for(const slug in META){
       const wantData=dataBlock(items);
       if(!html.includes('<!--kn:quiz-data')||FORCE_DATA){
         html=applyBlock(html,{open:'<!--kn:quiz-data',close:'<!--/kn:quiz-data-->',content:wantData,anchor:'<style>.home-back'});
-      }else if(CHECK){
-        // check 模式:在册数据区与题库重算结果比对,漂移计入 changed
+      }else{
         const i0=html.indexOf('<!--kn:quiz-data'),i1=html.indexOf('<!--/kn:quiz-data-->');
-        if(html.slice(i0,i1+'<!--/kn:quiz-data-->'.length)!==wantData)html=applyBlock(html,{open:'<!--kn:quiz-data',close:'<!--/kn:quiz-data-->',content:wantData,anchor:null});
+        const inBook=i0>-1&&i1>i0?html.slice(i0,i1+'<!--/kn:quiz-data-->'.length):null;
+        if(inBook!==wantData){
+          if(CHECK)html=applyBlock(html,{open:'<!--kn:quiz-data',close:'<!--/kn:quiz-data-->',content:wantData,anchor:null});
+          else console.error(`⚠ ${slug}: 在册题目与题库不一致(手改或题库更新)。同步: --force-data 以题库覆盖,或把改动回写 tools/bank/`);
+        }
       }
       // 引擎: 版本替换
       html=applyBlock(html,{open:'<!--kn:quiz-engine',close:'<!--/kn:quiz-engine-->',content:ENGINE.replace(/\{\{SLUG\}\}/g,bookSlug),anchor:'<style>.home-back'});

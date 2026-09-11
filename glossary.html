@@ -38,7 +38,7 @@ header p{color:var(--ink2);margin-top:8px;font-size:15px;max-width:64ch}
 .grp{margin-top:40px}
 .grp h2{font-family:var(--serif);font-size:21px;font-weight:900;display:flex;gap:10px;align-items:center;border-bottom:1.5px solid var(--ink);padding-bottom:8px}
 .grp h2 i{font-style:normal;width:12px;height:12px;border-radius:3px;display:inline-block}
-.grp h2 s{text-decoration:none;font:12px var(--mono);color:var(--ink2)}
+ .grp h2 span{text-decoration:none;font:12px var(--mono);color:var(--ink2)}
 .items{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 @media (max-width:760px){.items{grid-template-columns:1fr}}
 .it{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gc);border-radius:10px;padding:10px 14px}
@@ -82,7 +82,7 @@ G.forEach(g=>{
   const h2=document.createElement('h2');
   const dot=document.createElement('i');dot.style.background=g.c;
   h2.append(dot,document.createTextNode(g.n));
-  const s=document.createElement('s');s.textContent=g.items.length+' 条';h2.append(s);
+  const s=document.createElement('span');s.textContent=g.items.length+' 条';h2.append(s);
   sec.append(h2);
   const box=document.createElement('div');box.className='items';
   g.items.forEach(it=>{

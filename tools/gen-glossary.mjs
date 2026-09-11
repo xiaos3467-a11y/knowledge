@@ -1,5 +1,8 @@
 // 生成 glossary.html 的数据与脚本区(数据在此定义并断言,JSON 序列化写入,杜绝手写括号事故)
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const ROOT=path.join(path.dirname(fileURLToPath(import.meta.url)),'..');
 const G=[
 {k:'lang',n:'语言与框架',c:'var(--c-lang)',items:[
  ['happens-before','JMM 的可见性偏序契约：两条操作若无此关系，重排与不可见都是合法行为','java-concurrency','ch-jmm','并发 · JMM'],
@@ -130,8 +133,8 @@ for(const g of G)for(const it of g.items){
 for(const g of G)for(const it of g.items){
   if(!it[2].endsWith('-illustrated'))it[2]+='-illustrated';
   const [,,file,anchor]=it;
-  if(!fs.existsSync(file+'.html'))throw new Error('出处文件不存在:'+file);
-  if(!fs.readFileSync(file+'.html','utf8').includes('id="'+anchor+'"'))throw new Error('锚点不存在:'+file+'#'+anchor);
+  if(!fs.existsSync(path.join(ROOT,file+'.html')))throw new Error('出处文件不存在:'+file);
+  if(!fs.readFileSync(path.join(ROOT,file+'.html'),'utf8').includes('id="'+anchor+'"'))throw new Error('锚点不存在:'+file+'#'+anchor);
 }
 console.log('词条数:',total);
 const DATA=JSON.stringify(G).replace(/</g,'\\u003c');
@@ -143,7 +146,7 @@ G.forEach(g=>{
   const h2=document.createElement('h2');
   const dot=document.createElement('i');dot.style.background=g.c;
   h2.append(dot,document.createTextNode(g.n));
-  const s=document.createElement('s');s.textContent=g.items.length+' 条';h2.append(s);
+  const s=document.createElement('span');s.textContent=g.items.length+' 条';h2.append(s);
   sec.append(h2);
   const box=document.createElement('div');box.className='items';
   g.items.forEach(it=>{
@@ -184,7 +187,7 @@ document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
 });
 apply();
 </`+`script>`;
-let html=fs.readFileSync('glossary.html','utf8');
-html=html.replace(/<script>[\s\S]*<\/script>/,RENDER);
-fs.writeFileSync('glossary.html',html);
+let html=fs.readFileSync(path.join(ROOT,'glossary.html'),'utf8');
+html=html.replace(/<script>[\s\S]*?<\/script>/,RENDER);
+fs.writeFileSync(path.join(ROOT,'glossary.html'),html);
 console.log('glossary.html script region replaced');
