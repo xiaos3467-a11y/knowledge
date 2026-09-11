@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spring 图解讲义 · IoC 与 AOP 十二讲</title>
+<title>Spring 图解讲义 · IoC 与 AOP 十二讲</title><!--kn:seo-->
+<meta name="description" content="Spring 十二讲：IoC、Bean 生命周期、三级缓存循环依赖、AOP 代理禁区、事务传播与失效、扩展点与 MVC 流程讲义。">
+<meta property="og:title" content="Spring 图解讲义 · IoC 与 AOP 十二讲">
+<meta property="og:description" content="Spring 十二讲：IoC、Bean 生命周期、三级缓存循环依赖、AOP 代理禁区、事务传播与失效、扩展点与 MVC 流程讲义。">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'24'%20fill%3D'%233D7A2C'%2F%3E%3Ctext%20x%3D'50'%20y%3D'73'%20font-size%3D'62'%20text-anchor%3D'middle'%20fill%3D'white'%20font-family%3D'serif'%20font-weight%3D'900'%3E%E7%BF%A0%3C%2Ftext%3E%3C%2Fsvg%3E">
+<!--/kn:seo-->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -1253,6 +1260,83 @@ document.addEventListener('DOMContentLoaded',()=>{
   initSpy();
 });
 </script>
+<!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
+<script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
+var b=document.getElementById('kn-pbar');
+addEventListener('scroll',function(){var h=document.documentElement;
+if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+<!--kn:quiz-data v1-->
+<script>window.__KN_QUIZ_DATA__=[{"q":"三级缓存中第三级（singletonFactories）存在的核心理由是？","o":["加快查找速度","把\"给裸对象还是提前代理\"的决策延迟到真有人来要早期引用时","存储销毁回调","给 prototype 用的"],"a":1,"why":"若两级缓存直存裸对象，AOP 需要代理时会出现\"裸对象与代理各一份\"的分裂；存 ObjectFactory 让代理化恰好发生一次。","ref":"#ch-cycle","rt":"第三讲 · 三级缓存"},{"q":"构造器注入的循环依赖为什么三级缓存也救不了？","o":["因为构造器太慢","A 连实例化都没完成，没有任何引用可提前曝光","Spring 故意不支持","要改用 @Resource"],"a":1,"why":"早期引用依赖\"空壳对象已存在\"；构造参数解析发生在实例化之前，工厂无从注册——只能 @Lazy 占位或拆环。","ref":"#ch-cycle","rt":"第三讲 · 构造器死锁"},{"q":"@Transactional 标在私有方法上，事务生效吗？","o":["生效，CGLIB 什么都能拦","不生效：子类无法覆写 private 方法，代理织不进去","生效但只回滚不提交","抛异常启动失败"],"a":1,"why":"CGLIB 靠继承覆写，private 跨类不可见、final/static 同理——代理根本没有插手的机会，马甲没穿上。","ref":"#ch-pit","rt":"第五讲 · 代理禁区"},{"q":"REQUIRED 传播下内层方法抛异常被外层 catch，外层最后提交会？","o":["正常提交，互不影响","抛 UnexpectedRollbackException：共享事务已被标记 rollback-only","自动回滚外层但不报错","降级为 NOT_SUPPORTED"],"a":1,"why":"一条船上的标记：inner 把共享事务标成只许回滚，outer 看不见异常却提交时被事务管理器揭穿——要隔离换 REQUIRES_NEW。","ref":"#ch-prop","rt":"第八讲 · 传播行为"},{"q":"@TransactionalEventListener(AFTER_COMMIT) 解决什么问题？","o":["让事件更快","把副作用（发短信/投递）推迟到业务事务提交成功之后，回滚则不执行","替代 MQ","解决事件乱序"],"a":1,"why":"同步监听在事务提交前执行，事务回滚了短信却已发出；AFTER_COMMIT 让\"成了才做\"由容器保证。","ref":"#ch-event","rt":"第十一讲 · 事件"}]</script>
+<!--/kn:quiz-data-->
+<!--kn:quiz-engine v2-->
+<section class="demo" id="qz-root" data-slug="spring" style="margin-top:56px">
+ <div class="fig-head"><span class="fig-no" style="background:var(--pen,#3D5A80)">自测</span><span class="fig-title">卷末自测 · 五题全对算毕业</span></div>
+ <div style="font-size:13px;color:var(--ink2,#59616E)" id="qz-top"></div>
+ <div id="qz-body"></div>
+ <div class="dctrl"><button class="btn" id="qz-retry" type="button">↻ 重做本卷</button><span class="hint" id="qz-note"></span></div>
+</section>
+<style>
+#qz-root .qz-i{border:1px solid var(--line,#DDE0D8);border-radius:10px;background:var(--card,#fff);padding:10px 14px;margin:10px 0}
+#qz-root .qz-q{font-weight:700;font-size:14.5px;margin-bottom:7px;line-height:1.7}
+#qz-root .qz-o{display:block;width:100%;text-align:left;font-size:13.5px;border:1px solid #C7CCC0;border-radius:7px;background:#fff;padding:5px 12px;margin:4px 0;cursor:pointer;font-family:var(--sans,sans-serif);line-height:1.7;transition:all .15s;color:var(--ink,#1E232B)}
+#qz-root .qz-o:hover:not(:disabled){border-color:var(--pen,#3D5A80)}
+#qz-root .qz-o.right{border-color:var(--teal,#0E7C6B);background:var(--teal-bg,#E8F4F1);font-weight:700}
+#qz-root .qz-o.wrong{border-color:var(--warn,#C0392B);background:var(--warn-bg,#FAECE9)}
+#qz-root .qz-o:disabled{cursor:default;opacity:.92}
+#qz-root .qz-why{display:none;font-size:12.5px;color:var(--ink2,#59616E);margin-top:7px;line-height:1.75;border-top:1px dashed var(--line,#DDE0D8);padding-top:6px}
+#qz-root .qz-why.show{display:block}
+#qz-root .qz-why a{color:var(--pen,#3D5A80);font-weight:700}
+#qz-score{font-family:var(--mono,monospace);font-size:14px;min-height:24px;margin-top:4px}
+#qz-score b{font-size:19px;color:var(--pen,#3D5A80)}
+</style>
+<script>
+(function(){
+if(window.__KN_QUIZ__)return;window.__KN_QUIZ__=1;
+var QB=window.__KN_QUIZ_DATA__||[],root=document.getElementById('qz-root');
+var SLUG=root&&root.getAttribute('data-slug')||location.pathname.replace(/^.*\//,'').replace(/\.html$/,'').replace(/-illustrated$/,'');
+try{if(QB.length&&root)localStorage.setItem('kn.visit.'+SLUG,String(Date.now()));}catch(e){}
+if(!QB.length||!root){if(root)root.style.display='none';return;}
+var body=document.getElementById('qz-body'),note=document.getElementById('qz-note'),topEl=document.getElementById('qz-top'),retry=document.getElementById('qz-retry');
+function h(t){return document.createElement(t)}
+function loadPrev(){try{var r=JSON.parse(localStorage.getItem('kn.quiz.'+SLUG)||'null');return r&&r.best!=null?'历史最好 '+r.best+'/'+(r.total||QB.length)+' · 已答 '+r.tries+' 次':'';}catch(e){return ''}}
+function finish(right,wrongIdx){
+  var el=document.getElementById('qz-score');
+  el.innerHTML='<b>'+right+'/'+QB.length+'</b> '+(right===QB.length?'满分——这张卷的每个知识点你都摸过了':'——答错的题把解析读完，点「回看」把那一讲的相关段落再过一遍。');
+  try{var k='kn.quiz.'+SLUG,prev=JSON.parse(localStorage.getItem(k)||'null');
+    var rec={right:right,total:QB.length,best:Math.max(right,prev&&prev.best||0),tries:(prev&&prev.tries||0)+1,wrong:wrongIdx,ts:Date.now()};
+    localStorage.setItem(k,JSON.stringify(rec));topEl.textContent=loadPrev();}catch(e){}
+}
+function render(){
+  body.innerHTML='';note.textContent='';topEl.textContent=loadPrev();
+  var right=0,answered=0,wrongIdx=[];
+  var sc=h('div');sc.id='qz-score';body.append(sc);
+  QB.forEach(function(item,qi){
+    var box=h('div');box.className='qz-i';
+    var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
+    var why=h('div');why.className='qz-why';
+    why.textContent='解析：'+item.why+' ';
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var btns=[];
+    item.o.forEach(function(op,oi){
+      var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;
+      b.onclick=function(){
+        if(box.dataset.done)return;box.dataset.done='1';answered++;
+        var ok=oi===item.a;if(ok)right++;else wrongIdx.push(qi+1);
+        b.classList.add(ok?'right':'wrong');
+        btns[item.a].classList.add('right');
+        btns.forEach(function(x){x.disabled=true});
+        why.classList.add('show');
+        if(answered===QB.length)finish(right,wrongIdx);
+      };
+      btns.push(b);box.append(b);
+    });
+    box.append(why);body.append(box);
+  });
+}
+retry.onclick=function(){render()};
+render();
+})();
+</script><!--/kn:quiz-engine-->
 <style>.home-back{position:fixed;top:14px;right:14px;z-index:99;background:rgba(255,255,255,.94);border:1px solid var(--pen-line,#bbb);color:var(--pen,#333);padding:5px 16px;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700;font-family:var(--sans,system-ui);box-shadow:0 3px 12px rgba(30,35,43,.10);backdrop-filter:blur(6px);transition:all .18s}.home-back:hover{border-color:var(--pen,#333);transform:translateY(-2px);box-shadow:0 6px 18px rgba(30,35,43,.16)}</style>
 <a class="home-back" href="index.html">← 图解讲义馆</a>
 </body>

@@ -1,0 +1,5 @@
+<!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
+<script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
+var b=document.getElementById('kn-pbar');
+addEventListener('scroll',function(){var h=document.documentElement;
+if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->

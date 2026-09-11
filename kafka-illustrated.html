@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kafka 图解讲义 · 日志即一切</title>
+<title>Kafka 图解讲义 · 日志即一切</title><!--kn:seo-->
+<meta name="description" content="Kafka 九讲：分区路由、ISR/HW 水位、消费组重平衡、幂等级联、参数生死矩阵、Lag 诊室与事务 LSO 的图解讲义。">
+<meta property="og:title" content="Kafka 图解讲义 · 日志即一切">
+<meta property="og:description" content="Kafka 九讲：分区路由、ISR/HW 水位、消费组重平衡、幂等级联、参数生死矩阵、Lag 诊室与事务 LSO 的图解讲义。">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'24'%20fill%3D'%237C2F52'%2F%3E%3Ctext%20x%3D'50'%20y%3D'73'%20font-size%3D'62'%20text-anchor%3D'middle'%20fill%3D'white'%20font-family%3D'serif'%20font-weight%3D'900'%3E%E7%BB%9B%3C%2Ftext%3E%3C%2Fsvg%3E">
+<!--/kn:seo-->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -688,6 +695,83 @@ document.addEventListener('DOMContentLoaded',()=>{
   initSpy();
 });
 </script>
+<!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
+<script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
+var b=document.getElementById('kn-pbar');
+addEventListener('scroll',function(){var h=document.documentElement;
+if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+<!--kn:quiz-data v1-->
+<script>window.__KN_QUIZ_DATA__=[{"q":"HW（高水位）的定义是？","o":["Leader 的 LEO","ISR 全体副本 LEO 的最小值——消费者只能读到这条线以下","最大分区号","生产者的 ack 数"],"a":1,"why":"\"至少被 ISR 每个副本持有\"才算已提交;Leader 独跑再快,消费者也不能提前看到没复制完的数据。","ref":"#ch-replica","rt":"第二讲 · LEO/HW"},{"q":"acks=all + min.insync.replicas=2 的运行时含义是？","o":["永远不丢也不拒写","ISR≥2 才接受写；缩到 1 时直接拒绝写入——用可用性换持久性","全部副本落盘才 ack","每两秒同步一次"],"a":1,"why":"三件套(rep≥3+acks=all+min.insync=2)才是\"确认过的写不丢\"的完整契约;NotEnoughReplicasException 是它的痛觉。","ref":"#ch-replica","rt":"第二讲 · ISR"},{"q":"Kafka 的\"顺序保证\"边界是？","o":["全局有序","单分区内有序;同 key 靠 hash 进同一分区才谈得上该 key 有序","同 group 有序","跨集群有序"],"a":1,"why":"分区是唯一有序单元;扩分区会重排 hash 抽屉顺序,历史 key 的新消息可能换区——顺序承诺要按业务键设计。","ref":"#ch-order","rt":"第五讲 · 有序"},{"q":"消费端\"自动提交 offset\"最典型的事故是？","o":["重复消费","处理未完成 offset 已提交,崩溃即永久跳过这批消息","性能慢","触发 rebalance"],"a":1,"why":"提交时机与处理完成的错位:先提后做=丢,先做后提=重;要 exactly-once 语义靠幂等或事务,不靠提交时机玄学。","ref":"#ch-consume","rt":"第三讲 · 位移"},{"q":"Lag 监控里\"一个分区独高、其余贴地\"说明？","o":["网络分区","热点 key 全挤同一分区;加分区救不了 hash,要先治 key 分布","消费者太多","磁盘满"],"a":1,"why":"齐涨才是吞吐缺口;\"独高\"是数据分布问题——加盐二次分发或消费端按 key 并行,别急着扩容。","ref":"#ch-lag","rt":"第七讲 · 积压"}]</script>
+<!--/kn:quiz-data-->
+<!--kn:quiz-engine v2-->
+<section class="demo" id="qz-root" data-slug="kafka" style="margin-top:56px">
+ <div class="fig-head"><span class="fig-no" style="background:var(--pen,#3D5A80)">自测</span><span class="fig-title">卷末自测 · 五题全对算毕业</span></div>
+ <div style="font-size:13px;color:var(--ink2,#59616E)" id="qz-top"></div>
+ <div id="qz-body"></div>
+ <div class="dctrl"><button class="btn" id="qz-retry" type="button">↻ 重做本卷</button><span class="hint" id="qz-note"></span></div>
+</section>
+<style>
+#qz-root .qz-i{border:1px solid var(--line,#DDE0D8);border-radius:10px;background:var(--card,#fff);padding:10px 14px;margin:10px 0}
+#qz-root .qz-q{font-weight:700;font-size:14.5px;margin-bottom:7px;line-height:1.7}
+#qz-root .qz-o{display:block;width:100%;text-align:left;font-size:13.5px;border:1px solid #C7CCC0;border-radius:7px;background:#fff;padding:5px 12px;margin:4px 0;cursor:pointer;font-family:var(--sans,sans-serif);line-height:1.7;transition:all .15s;color:var(--ink,#1E232B)}
+#qz-root .qz-o:hover:not(:disabled){border-color:var(--pen,#3D5A80)}
+#qz-root .qz-o.right{border-color:var(--teal,#0E7C6B);background:var(--teal-bg,#E8F4F1);font-weight:700}
+#qz-root .qz-o.wrong{border-color:var(--warn,#C0392B);background:var(--warn-bg,#FAECE9)}
+#qz-root .qz-o:disabled{cursor:default;opacity:.92}
+#qz-root .qz-why{display:none;font-size:12.5px;color:var(--ink2,#59616E);margin-top:7px;line-height:1.75;border-top:1px dashed var(--line,#DDE0D8);padding-top:6px}
+#qz-root .qz-why.show{display:block}
+#qz-root .qz-why a{color:var(--pen,#3D5A80);font-weight:700}
+#qz-score{font-family:var(--mono,monospace);font-size:14px;min-height:24px;margin-top:4px}
+#qz-score b{font-size:19px;color:var(--pen,#3D5A80)}
+</style>
+<script>
+(function(){
+if(window.__KN_QUIZ__)return;window.__KN_QUIZ__=1;
+var QB=window.__KN_QUIZ_DATA__||[],root=document.getElementById('qz-root');
+var SLUG=root&&root.getAttribute('data-slug')||location.pathname.replace(/^.*\//,'').replace(/\.html$/,'').replace(/-illustrated$/,'');
+try{if(QB.length&&root)localStorage.setItem('kn.visit.'+SLUG,String(Date.now()));}catch(e){}
+if(!QB.length||!root){if(root)root.style.display='none';return;}
+var body=document.getElementById('qz-body'),note=document.getElementById('qz-note'),topEl=document.getElementById('qz-top'),retry=document.getElementById('qz-retry');
+function h(t){return document.createElement(t)}
+function loadPrev(){try{var r=JSON.parse(localStorage.getItem('kn.quiz.'+SLUG)||'null');return r&&r.best!=null?'历史最好 '+r.best+'/'+(r.total||QB.length)+' · 已答 '+r.tries+' 次':'';}catch(e){return ''}}
+function finish(right,wrongIdx){
+  var el=document.getElementById('qz-score');
+  el.innerHTML='<b>'+right+'/'+QB.length+'</b> '+(right===QB.length?'满分——这张卷的每个知识点你都摸过了':'——答错的题把解析读完，点「回看」把那一讲的相关段落再过一遍。');
+  try{var k='kn.quiz.'+SLUG,prev=JSON.parse(localStorage.getItem(k)||'null');
+    var rec={right:right,total:QB.length,best:Math.max(right,prev&&prev.best||0),tries:(prev&&prev.tries||0)+1,wrong:wrongIdx,ts:Date.now()};
+    localStorage.setItem(k,JSON.stringify(rec));topEl.textContent=loadPrev();}catch(e){}
+}
+function render(){
+  body.innerHTML='';note.textContent='';topEl.textContent=loadPrev();
+  var right=0,answered=0,wrongIdx=[];
+  var sc=h('div');sc.id='qz-score';body.append(sc);
+  QB.forEach(function(item,qi){
+    var box=h('div');box.className='qz-i';
+    var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
+    var why=h('div');why.className='qz-why';
+    why.textContent='解析：'+item.why+' ';
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var btns=[];
+    item.o.forEach(function(op,oi){
+      var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;
+      b.onclick=function(){
+        if(box.dataset.done)return;box.dataset.done='1';answered++;
+        var ok=oi===item.a;if(ok)right++;else wrongIdx.push(qi+1);
+        b.classList.add(ok?'right':'wrong');
+        btns[item.a].classList.add('right');
+        btns.forEach(function(x){x.disabled=true});
+        why.classList.add('show');
+        if(answered===QB.length)finish(right,wrongIdx);
+      };
+      btns.push(b);box.append(b);
+    });
+    box.append(why);body.append(box);
+  });
+}
+retry.onclick=function(){render()};
+render();
+})();
+</script><!--/kn:quiz-engine-->
 <style>.home-back{position:fixed;top:14px;right:14px;z-index:99;background:rgba(255,255,255,.94);border:1px solid var(--pen-line,#bbb);color:var(--pen,#333);padding:5px 16px;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700;font-family:var(--sans,system-ui);box-shadow:0 3px 12px rgba(30,35,43,.10);backdrop-filter:blur(6px);transition:all .18s}.home-back:hover{border-color:var(--pen,#333);transform:translateY(-2px);box-shadow:0 6px 18px rgba(30,35,43,.16)}</style>
 <a class="home-back" href="index.html">← 图解讲义馆</a>
 </body>

@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Agent 图解讲义 · 从一次调用到一台智能体</title>
+<title>AI Agent 图解讲义 · 从一次调用到一台智能体</title><!--kn:seo-->
+<meta name="description" content="AI Agent 十二讲：会跑的迷你 Agent 循环、温度采样、工具调用、记忆策略、RAG、评测、提示注入攻防与成本工程讲义。">
+<meta property="og:title" content="AI Agent 图解讲义 · 从一次调用到一台智能体">
+<meta property="og:description" content="AI Agent 十二讲：会跑的迷你 Agent 循环、温度采样、工具调用、记忆策略、RAG、评测、提示注入攻防与成本工程讲义。">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'24'%20fill%3D'%230F6E73'%2F%3E%3Ctext%20x%3D'50'%20y%3D'73'%20font-size%3D'62'%20text-anchor%3D'middle'%20fill%3D'white'%20font-family%3D'serif'%20font-weight%3D'900'%3E%E9%9D%92%3C%2Ftext%3E%3C%2Fsvg%3E">
+<!--/kn:seo-->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -1049,6 +1056,83 @@ document.addEventListener('DOMContentLoaded',()=>{
   initSpy();
 });
 </script>
+<!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
+<script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
+var b=document.getElementById('kn-pbar');
+addEventListener('scroll',function(){var h=document.documentElement;
+if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+<!--kn:quiz-data v1-->
+<script>window.__KN_QUIZ_DATA__=[{"q":"Agent 的本质定义最贴近哪句？","o":["一个大模型","LLM 在循环里被反复调用,中间给它工具,直到不再请求工具","一套提示词","一个向量库"],"a":1,"why":"开场那台迷你 agent 演完了:messages 生长→tool_use→执行→回填→再发——\"自主规划\"=目标+循环把上一步喂回去。","ref":"#ch-loop","rt":"第一讲 · 循环"},{"q":"temperature 调高的实际效果是？","o":["输出更长","softmax 前的 logits 除 T,分布被抬平:低概率词上位,多样性与胡说同涨","确定性强","token 更省"],"a":1,"why":"抽 30 次的直方图说明一切:T=0.1 一个词垄断、T=2 四家平分——创意升温,抽取/代码降温。","ref":"#ch-temp","rt":"第二讲 · 温度"},{"q":"\"模型调用了天气 API\"这句话错在哪？","o":["API 不存在","模型只输出 tool_use JSON;执行、鉴权、计费全在你的运行时","不能并行调用","需要联网"],"a":1,"why":"模型连网都没碰;stop_reason=tool_use 是循环发令枪,tool_result 由你贴回——职责分界看清,事故责任才追得对。","ref":"#ch-tool","rt":"第四讲 · 工具"},{"q":"滑动窗口截断记忆最隐蔽的失败模式是？","o":["太贵","早期事实(猫的名字)被静默倒掉,模型答不上来还不报错——你只看到\"忘了\"","变慢","重复消费"],"a":1,"why":"四种策略=四种失忆方式;摘要/向量能救,但摘要器漏写、检索漏召同样是新失忆。没有免费记忆,只有选择的遗忘。","ref":"#ch-mem","rt":"第五讲 · 记忆"},{"q":"间接提示注入最典型的载体是？","o":["系统提示","被 Agent 读取的网页/邮件/工具返回值里埋\"忽略以上指令\"","日志级别","模型温度"],"a":1,"why":"模型眼里指令与数据同介质;防御靠纵深:内容标不可信+权限最小+危险动作人工确认——提示词层只是纱窗。","ref":"#ch-inject","rt":"第十一讲 · 注入"}]</script>
+<!--/kn:quiz-data-->
+<!--kn:quiz-engine v2-->
+<section class="demo" id="qz-root" data-slug="ai-agent" style="margin-top:56px">
+ <div class="fig-head"><span class="fig-no" style="background:var(--pen,#3D5A80)">自测</span><span class="fig-title">卷末自测 · 五题全对算毕业</span></div>
+ <div style="font-size:13px;color:var(--ink2,#59616E)" id="qz-top"></div>
+ <div id="qz-body"></div>
+ <div class="dctrl"><button class="btn" id="qz-retry" type="button">↻ 重做本卷</button><span class="hint" id="qz-note"></span></div>
+</section>
+<style>
+#qz-root .qz-i{border:1px solid var(--line,#DDE0D8);border-radius:10px;background:var(--card,#fff);padding:10px 14px;margin:10px 0}
+#qz-root .qz-q{font-weight:700;font-size:14.5px;margin-bottom:7px;line-height:1.7}
+#qz-root .qz-o{display:block;width:100%;text-align:left;font-size:13.5px;border:1px solid #C7CCC0;border-radius:7px;background:#fff;padding:5px 12px;margin:4px 0;cursor:pointer;font-family:var(--sans,sans-serif);line-height:1.7;transition:all .15s;color:var(--ink,#1E232B)}
+#qz-root .qz-o:hover:not(:disabled){border-color:var(--pen,#3D5A80)}
+#qz-root .qz-o.right{border-color:var(--teal,#0E7C6B);background:var(--teal-bg,#E8F4F1);font-weight:700}
+#qz-root .qz-o.wrong{border-color:var(--warn,#C0392B);background:var(--warn-bg,#FAECE9)}
+#qz-root .qz-o:disabled{cursor:default;opacity:.92}
+#qz-root .qz-why{display:none;font-size:12.5px;color:var(--ink2,#59616E);margin-top:7px;line-height:1.75;border-top:1px dashed var(--line,#DDE0D8);padding-top:6px}
+#qz-root .qz-why.show{display:block}
+#qz-root .qz-why a{color:var(--pen,#3D5A80);font-weight:700}
+#qz-score{font-family:var(--mono,monospace);font-size:14px;min-height:24px;margin-top:4px}
+#qz-score b{font-size:19px;color:var(--pen,#3D5A80)}
+</style>
+<script>
+(function(){
+if(window.__KN_QUIZ__)return;window.__KN_QUIZ__=1;
+var QB=window.__KN_QUIZ_DATA__||[],root=document.getElementById('qz-root');
+var SLUG=root&&root.getAttribute('data-slug')||location.pathname.replace(/^.*\//,'').replace(/\.html$/,'').replace(/-illustrated$/,'');
+try{if(QB.length&&root)localStorage.setItem('kn.visit.'+SLUG,String(Date.now()));}catch(e){}
+if(!QB.length||!root){if(root)root.style.display='none';return;}
+var body=document.getElementById('qz-body'),note=document.getElementById('qz-note'),topEl=document.getElementById('qz-top'),retry=document.getElementById('qz-retry');
+function h(t){return document.createElement(t)}
+function loadPrev(){try{var r=JSON.parse(localStorage.getItem('kn.quiz.'+SLUG)||'null');return r&&r.best!=null?'历史最好 '+r.best+'/'+(r.total||QB.length)+' · 已答 '+r.tries+' 次':'';}catch(e){return ''}}
+function finish(right,wrongIdx){
+  var el=document.getElementById('qz-score');
+  el.innerHTML='<b>'+right+'/'+QB.length+'</b> '+(right===QB.length?'满分——这张卷的每个知识点你都摸过了':'——答错的题把解析读完，点「回看」把那一讲的相关段落再过一遍。');
+  try{var k='kn.quiz.'+SLUG,prev=JSON.parse(localStorage.getItem(k)||'null');
+    var rec={right:right,total:QB.length,best:Math.max(right,prev&&prev.best||0),tries:(prev&&prev.tries||0)+1,wrong:wrongIdx,ts:Date.now()};
+    localStorage.setItem(k,JSON.stringify(rec));topEl.textContent=loadPrev();}catch(e){}
+}
+function render(){
+  body.innerHTML='';note.textContent='';topEl.textContent=loadPrev();
+  var right=0,answered=0,wrongIdx=[];
+  var sc=h('div');sc.id='qz-score';body.append(sc);
+  QB.forEach(function(item,qi){
+    var box=h('div');box.className='qz-i';
+    var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
+    var why=h('div');why.className='qz-why';
+    why.textContent='解析：'+item.why+' ';
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var btns=[];
+    item.o.forEach(function(op,oi){
+      var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;
+      b.onclick=function(){
+        if(box.dataset.done)return;box.dataset.done='1';answered++;
+        var ok=oi===item.a;if(ok)right++;else wrongIdx.push(qi+1);
+        b.classList.add(ok?'right':'wrong');
+        btns[item.a].classList.add('right');
+        btns.forEach(function(x){x.disabled=true});
+        why.classList.add('show');
+        if(answered===QB.length)finish(right,wrongIdx);
+      };
+      btns.push(b);box.append(b);
+    });
+    box.append(why);body.append(box);
+  });
+}
+retry.onclick=function(){render()};
+render();
+})();
+</script><!--/kn:quiz-engine-->
 <style>.home-back{position:fixed;top:14px;right:14px;z-index:99;background:rgba(255,255,255,.94);border:1px solid var(--pen-line,#bbb);color:var(--pen,#333);padding:5px 16px;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700;font-family:var(--sans,system-ui);box-shadow:0 3px 12px rgba(30,35,43,.10);backdrop-filter:blur(6px);transition:all .18s}.home-back:hover{border-color:var(--pen,#333);transform:translateY(-2px);box-shadow:0 6px 18px rgba(30,35,43,.16)}</style>
 <a class="home-back" href="index.html">← 图解讲义馆</a>
 </body>

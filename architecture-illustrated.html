@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>后端架构师 图解讲义 · 决策地图十二讲</title>
+<title>后端架构师 图解讲义 · 决策地图十二讲</title><!--kn:seo-->
+<meta name="description" content="后端架构师十三讲：CAP、一致性哈希、限流熔断、雪花 ID、MQ 可靠性、分布式事务、单元化与容量估算的决策地图讲义。">
+<meta property="og:title" content="后端架构师 图解讲义 · 决策地图十二讲">
+<meta property="og:description" content="后端架构师十三讲：CAP、一致性哈希、限流熔断、雪花 ID、MQ 可靠性、分布式事务、单元化与容量估算的决策地图讲义。">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'24'%20fill%3D'%236B3FA0'%2F%3E%3Ctext%20x%3D'50'%20y%3D'73'%20font-size%3D'62'%20text-anchor%3D'middle'%20fill%3D'white'%20font-family%3D'serif'%20font-weight%3D'900'%3E%E7%B4%AB%3C%2Ftext%3E%3C%2Fsvg%3E">
+<!--/kn:seo-->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -1184,6 +1191,83 @@ document.addEventListener('DOMContentLoaded',()=>{
   initSpy();
 });
 </script>
+<!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
+<script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
+var b=document.getElementById('kn-pbar');
+addEventListener('scroll',function(){var h=document.documentElement;
+if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+<!--kn:quiz-data v1-->
+<script>window.__KN_QUIZ_DATA__=[{"q":"CAP 里 P 的含义是？","o":["性能","分区容错不是选项而是现实:网络必坏,你只能在 C 与 A 之间选","私有化","负载均衡"],"a":1,"why":"P 被误当成\"三选二里的选项\";真相是分区发生时 CP 拒答保一致、AP 各写各的留可用——且粒度可按节点/业务拆。","ref":"#ch-cap","rt":"第一讲 · CAP"},{"q":"一致性哈希加虚拟节点的收益是？","o":["查询更快","落点均匀(负载齐)+迁移被切碎(扰动更近 1/N 且摊到所有人)","省内存","免心跳"],"a":1,"why":"三个物理点在环上会把世界切成三大块弧;每点撒 24 个分身,新节点接管的是碎片而不是整块江山。","ref":"#ch-lb","rt":"第二讲 · 哈希环"},{"q":"令牌桶与漏桶的语义分工是？","o":["前者更快","令牌桶容忍合理突发(攒令牌),漏桶强制恒速(护下游)","等价","都只能匀速"],"a":1,"why":"同一段双尖峰流量,四种算法放行进/拒两分——没有最好的算法,只有你要的语义:护下游选漏桶。","ref":"#ch-rl","rt":"第三讲 · 限流"},{"q":"MQ 三本账里\"消费端不丢消息\"的铁律是？","o":["先 ack 后处理","先处理完业务、后提交 ack;顺序反了=拿丢消息换重复","自动重试即可","开了幂等就安全"],"a":1,"why":"处理前 ack:崩在处理中途消息已销账=永久丢;处理后 ack 至多少量重复——配合幂等去重才两全,生产默认 at-least-once。","ref":"#ch-mq","rt":"第六讲 · MQ 账本"},{"q":"三地五单元架构的核心价值是？","o":["省机器","爆炸半径收敛到 1/N:单元自闭环,炸一个只切该单元流量","延迟更低","免备份"],"a":1,"why":"异地双写被 RTT 否决,单元化让绝大多数请求在本地闭环;机房起火从\"全站事故\"降级为\"1/5 用户抖动\"。","ref":"#ch-idc","rt":"第十讲 · 单元化"}]</script>
+<!--/kn:quiz-data-->
+<!--kn:quiz-engine v2-->
+<section class="demo" id="qz-root" data-slug="architecture" style="margin-top:56px">
+ <div class="fig-head"><span class="fig-no" style="background:var(--pen,#3D5A80)">自测</span><span class="fig-title">卷末自测 · 五题全对算毕业</span></div>
+ <div style="font-size:13px;color:var(--ink2,#59616E)" id="qz-top"></div>
+ <div id="qz-body"></div>
+ <div class="dctrl"><button class="btn" id="qz-retry" type="button">↻ 重做本卷</button><span class="hint" id="qz-note"></span></div>
+</section>
+<style>
+#qz-root .qz-i{border:1px solid var(--line,#DDE0D8);border-radius:10px;background:var(--card,#fff);padding:10px 14px;margin:10px 0}
+#qz-root .qz-q{font-weight:700;font-size:14.5px;margin-bottom:7px;line-height:1.7}
+#qz-root .qz-o{display:block;width:100%;text-align:left;font-size:13.5px;border:1px solid #C7CCC0;border-radius:7px;background:#fff;padding:5px 12px;margin:4px 0;cursor:pointer;font-family:var(--sans,sans-serif);line-height:1.7;transition:all .15s;color:var(--ink,#1E232B)}
+#qz-root .qz-o:hover:not(:disabled){border-color:var(--pen,#3D5A80)}
+#qz-root .qz-o.right{border-color:var(--teal,#0E7C6B);background:var(--teal-bg,#E8F4F1);font-weight:700}
+#qz-root .qz-o.wrong{border-color:var(--warn,#C0392B);background:var(--warn-bg,#FAECE9)}
+#qz-root .qz-o:disabled{cursor:default;opacity:.92}
+#qz-root .qz-why{display:none;font-size:12.5px;color:var(--ink2,#59616E);margin-top:7px;line-height:1.75;border-top:1px dashed var(--line,#DDE0D8);padding-top:6px}
+#qz-root .qz-why.show{display:block}
+#qz-root .qz-why a{color:var(--pen,#3D5A80);font-weight:700}
+#qz-score{font-family:var(--mono,monospace);font-size:14px;min-height:24px;margin-top:4px}
+#qz-score b{font-size:19px;color:var(--pen,#3D5A80)}
+</style>
+<script>
+(function(){
+if(window.__KN_QUIZ__)return;window.__KN_QUIZ__=1;
+var QB=window.__KN_QUIZ_DATA__||[],root=document.getElementById('qz-root');
+var SLUG=root&&root.getAttribute('data-slug')||location.pathname.replace(/^.*\//,'').replace(/\.html$/,'').replace(/-illustrated$/,'');
+try{if(QB.length&&root)localStorage.setItem('kn.visit.'+SLUG,String(Date.now()));}catch(e){}
+if(!QB.length||!root){if(root)root.style.display='none';return;}
+var body=document.getElementById('qz-body'),note=document.getElementById('qz-note'),topEl=document.getElementById('qz-top'),retry=document.getElementById('qz-retry');
+function h(t){return document.createElement(t)}
+function loadPrev(){try{var r=JSON.parse(localStorage.getItem('kn.quiz.'+SLUG)||'null');return r&&r.best!=null?'历史最好 '+r.best+'/'+(r.total||QB.length)+' · 已答 '+r.tries+' 次':'';}catch(e){return ''}}
+function finish(right,wrongIdx){
+  var el=document.getElementById('qz-score');
+  el.innerHTML='<b>'+right+'/'+QB.length+'</b> '+(right===QB.length?'满分——这张卷的每个知识点你都摸过了':'——答错的题把解析读完，点「回看」把那一讲的相关段落再过一遍。');
+  try{var k='kn.quiz.'+SLUG,prev=JSON.parse(localStorage.getItem(k)||'null');
+    var rec={right:right,total:QB.length,best:Math.max(right,prev&&prev.best||0),tries:(prev&&prev.tries||0)+1,wrong:wrongIdx,ts:Date.now()};
+    localStorage.setItem(k,JSON.stringify(rec));topEl.textContent=loadPrev();}catch(e){}
+}
+function render(){
+  body.innerHTML='';note.textContent='';topEl.textContent=loadPrev();
+  var right=0,answered=0,wrongIdx=[];
+  var sc=h('div');sc.id='qz-score';body.append(sc);
+  QB.forEach(function(item,qi){
+    var box=h('div');box.className='qz-i';
+    var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
+    var why=h('div');why.className='qz-why';
+    why.textContent='解析：'+item.why+' ';
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var btns=[];
+    item.o.forEach(function(op,oi){
+      var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;
+      b.onclick=function(){
+        if(box.dataset.done)return;box.dataset.done='1';answered++;
+        var ok=oi===item.a;if(ok)right++;else wrongIdx.push(qi+1);
+        b.classList.add(ok?'right':'wrong');
+        btns[item.a].classList.add('right');
+        btns.forEach(function(x){x.disabled=true});
+        why.classList.add('show');
+        if(answered===QB.length)finish(right,wrongIdx);
+      };
+      btns.push(b);box.append(b);
+    });
+    box.append(why);body.append(box);
+  });
+}
+retry.onclick=function(){render()};
+render();
+})();
+</script><!--/kn:quiz-engine-->
 <style>.home-back{position:fixed;top:14px;right:14px;z-index:99;background:rgba(255,255,255,.94);border:1px solid var(--pen-line,#bbb);color:var(--pen,#333);padding:5px 16px;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700;font-family:var(--sans,system-ui);box-shadow:0 3px 12px rgba(30,35,43,.10);backdrop-filter:blur(6px);transition:all .18s}.home-back:hover{border-color:var(--pen,#333);transform:translateY(-2px);box-shadow:0 6px 18px rgba(30,35,43,.16)}</style>
 <a class="home-back" href="index.html">← 图解讲义馆</a>
 </body>

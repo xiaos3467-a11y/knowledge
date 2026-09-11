@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SRE 与稳定性工程 图解讲义 · 消防队十讲</title>
+<title>SRE 与稳定性工程 图解讲义 · 消防队十讲</title><!--kn:seo-->
+<meta name="description" content="SRE 与稳定性工程十讲：错误预算、多窗口燃烧率告警、事故指挥、变更治理、容量拐点与混沌演练的消防队讲义。">
+<meta property="og:title" content="SRE 与稳定性工程 图解讲义 · 消防队十讲">
+<meta property="og:description" content="SRE 与稳定性工程十讲：错误预算、多窗口燃烧率告警、事故指挥、变更治理、容量拐点与混沌演练的消防队讲义。">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'24'%20fill%3D'%23B03A2E'%2F%3E%3Ctext%20x%3D'50'%20y%3D'73'%20font-size%3D'62'%20text-anchor%3D'middle'%20fill%3D'white'%20font-family%3D'serif'%20font-weight%3D'900'%3E%E7%82%8E%3C%2Ftext%3E%3C%2Fsvg%3E">
+<!--/kn:seo-->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -585,5 +592,82 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 <a class="home-back" href="index.html">← 图解讲义馆</a>
+<!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
+<script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
+var b=document.getElementById('kn-pbar');
+addEventListener('scroll',function(){var h=document.documentElement;
+if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+<!--kn:quiz-data v1-->
+<script>window.__KN_QUIZ_DATA__=[{"q":"99.9% 的 SLO 折算成月度错误预算是？","o":["4 分钟","约 43 分钟;99.99% 只剩 4.3 分钟——\"稳\"必须换算成可燃烧的分钟数","3 小时","432 秒"],"a":1,"why":"把形容词变货币:预算台滑块上四档目标四种寿命;烧完必须有后果(发布冻结/签字豁免),否则 SLO 只是墙上的标语。","ref":"#ch-slo","rt":"开篇 · 预算台"},{"q":"多窗口燃烧率告警里\"慢窗口\"的职责是？","o":["防睡过头","等雨停:30s 重启风暴不该叫醒人,持续烧预算才 page——快窗说\"出事了\",慢窗说\"还在出事吗\"","加速报警","记录日志"],"a":1,"why":"spike 剧本演示了固定阈值的深夜误报;2×/6×/14.4× 分档把\"响多大声\"接到利率上,值班信任才能重建。","ref":"#ch-burn","rt":"第二讲 · 燃烧率"},{"q":"事故响应的第一原则是？","o":["找根因","先止血:回滚>降级>扩容>重启;破案排到恢复之后,MTTR 才是 KPI","升级领导","改监控"],"a":1,"why":"双时间线对照:先破案的队伍 47 分钟仍在翻日志,止血队 4 分钟回滚恢复——而且破案能力一点没少,只是排到了后面。","ref":"#ch-incident","rt":"第三讲 · 双线"},{"q":"约七成线上事故的共同来源是？","o":["硬件老化","变更(代码/配置/基础设施/数据回刷);所以防线=可灰度+可观测+一键回滚+窗口冻结","流量突增","黑客"],"a":1,"why":"配置变更也算;评审只需要一个问题:\"这次坏了,怎么 5 分钟内回来\"——答不上来就是下次事故的预定时间。","ref":"#ch-change","rt":"第五讲 · 变更"},{"q":"利用率-P99 曲线为什么把容量红线画在 70-80%？","o":["省电","拐点之后陡升:M/M/1 排队时间随 ρ→1 爆炸,80% 再抖一下就雪崩","习惯","内核限制"],"a":1,"why":"拖过拐点是最好的体感教育——日常 60% 的规划余量不是为了\"用不完\",是为了峰值抖动留在悬崖之前。","ref":"#ch-cap","rt":"第六讲 · 拐点"}]</script>
+<!--/kn:quiz-data-->
+<!--kn:quiz-engine v2-->
+<section class="demo" id="qz-root" data-slug="sre" style="margin-top:56px">
+ <div class="fig-head"><span class="fig-no" style="background:var(--pen,#3D5A80)">自测</span><span class="fig-title">卷末自测 · 五题全对算毕业</span></div>
+ <div style="font-size:13px;color:var(--ink2,#59616E)" id="qz-top"></div>
+ <div id="qz-body"></div>
+ <div class="dctrl"><button class="btn" id="qz-retry" type="button">↻ 重做本卷</button><span class="hint" id="qz-note"></span></div>
+</section>
+<style>
+#qz-root .qz-i{border:1px solid var(--line,#DDE0D8);border-radius:10px;background:var(--card,#fff);padding:10px 14px;margin:10px 0}
+#qz-root .qz-q{font-weight:700;font-size:14.5px;margin-bottom:7px;line-height:1.7}
+#qz-root .qz-o{display:block;width:100%;text-align:left;font-size:13.5px;border:1px solid #C7CCC0;border-radius:7px;background:#fff;padding:5px 12px;margin:4px 0;cursor:pointer;font-family:var(--sans,sans-serif);line-height:1.7;transition:all .15s;color:var(--ink,#1E232B)}
+#qz-root .qz-o:hover:not(:disabled){border-color:var(--pen,#3D5A80)}
+#qz-root .qz-o.right{border-color:var(--teal,#0E7C6B);background:var(--teal-bg,#E8F4F1);font-weight:700}
+#qz-root .qz-o.wrong{border-color:var(--warn,#C0392B);background:var(--warn-bg,#FAECE9)}
+#qz-root .qz-o:disabled{cursor:default;opacity:.92}
+#qz-root .qz-why{display:none;font-size:12.5px;color:var(--ink2,#59616E);margin-top:7px;line-height:1.75;border-top:1px dashed var(--line,#DDE0D8);padding-top:6px}
+#qz-root .qz-why.show{display:block}
+#qz-root .qz-why a{color:var(--pen,#3D5A80);font-weight:700}
+#qz-score{font-family:var(--mono,monospace);font-size:14px;min-height:24px;margin-top:4px}
+#qz-score b{font-size:19px;color:var(--pen,#3D5A80)}
+</style>
+<script>
+(function(){
+if(window.__KN_QUIZ__)return;window.__KN_QUIZ__=1;
+var QB=window.__KN_QUIZ_DATA__||[],root=document.getElementById('qz-root');
+var SLUG=root&&root.getAttribute('data-slug')||location.pathname.replace(/^.*\//,'').replace(/\.html$/,'').replace(/-illustrated$/,'');
+try{if(QB.length&&root)localStorage.setItem('kn.visit.'+SLUG,String(Date.now()));}catch(e){}
+if(!QB.length||!root){if(root)root.style.display='none';return;}
+var body=document.getElementById('qz-body'),note=document.getElementById('qz-note'),topEl=document.getElementById('qz-top'),retry=document.getElementById('qz-retry');
+function h(t){return document.createElement(t)}
+function loadPrev(){try{var r=JSON.parse(localStorage.getItem('kn.quiz.'+SLUG)||'null');return r&&r.best!=null?'历史最好 '+r.best+'/'+(r.total||QB.length)+' · 已答 '+r.tries+' 次':'';}catch(e){return ''}}
+function finish(right,wrongIdx){
+  var el=document.getElementById('qz-score');
+  el.innerHTML='<b>'+right+'/'+QB.length+'</b> '+(right===QB.length?'满分——这张卷的每个知识点你都摸过了':'——答错的题把解析读完，点「回看」把那一讲的相关段落再过一遍。');
+  try{var k='kn.quiz.'+SLUG,prev=JSON.parse(localStorage.getItem(k)||'null');
+    var rec={right:right,total:QB.length,best:Math.max(right,prev&&prev.best||0),tries:(prev&&prev.tries||0)+1,wrong:wrongIdx,ts:Date.now()};
+    localStorage.setItem(k,JSON.stringify(rec));topEl.textContent=loadPrev();}catch(e){}
+}
+function render(){
+  body.innerHTML='';note.textContent='';topEl.textContent=loadPrev();
+  var right=0,answered=0,wrongIdx=[];
+  var sc=h('div');sc.id='qz-score';body.append(sc);
+  QB.forEach(function(item,qi){
+    var box=h('div');box.className='qz-i';
+    var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
+    var why=h('div');why.className='qz-why';
+    why.textContent='解析：'+item.why+' ';
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var btns=[];
+    item.o.forEach(function(op,oi){
+      var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;
+      b.onclick=function(){
+        if(box.dataset.done)return;box.dataset.done='1';answered++;
+        var ok=oi===item.a;if(ok)right++;else wrongIdx.push(qi+1);
+        b.classList.add(ok?'right':'wrong');
+        btns[item.a].classList.add('right');
+        btns.forEach(function(x){x.disabled=true});
+        why.classList.add('show');
+        if(answered===QB.length)finish(right,wrongIdx);
+      };
+      btns.push(b);box.append(b);
+    });
+    box.append(why);body.append(box);
+  });
+}
+retry.onclick=function(){render()};
+render();
+})();
+</script><!--/kn:quiz-engine-->
 </body>
 </html>
