@@ -19,6 +19,7 @@
     { "source": "/arch", "destination": "/architecture-illustrated.html" },
     { "source": "/llmops", "destination": "/llm-platform-illustrated.html" },
     { "source": "/llm", "destination": "/llm-illustrated.html" },
+    { "source": "/glossary", "destination": "/glossary.html" },
     { "source": "/agent", "destination": "/ai-agent-illustrated.html" }
   ]
 }

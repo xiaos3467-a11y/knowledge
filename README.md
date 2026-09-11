@@ -22,6 +22,7 @@
 | 计算机网络 图解讲义 | `network-illustrated.html` | 金 |
 | 后端架构师 图解讲义 | `architecture-illustrated.html` | 紫 |
 | AI Agent 图解讲义 | `ai-agent-illustrated.html` | 青 |
+| 术语词典(106 条跨册索引) | `glossary.html` | 典 |
 | 门厅(入口) | `index.html` | — |
 
 ## 本地打开

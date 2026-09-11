@@ -1,3 +1,6 @@
 # vercel CLI 直传时排除的文件
 .claude
 .git
+
+# 构建工具与源码 partial(注入产物已在 HTML 内,无需上线)
+tools/
