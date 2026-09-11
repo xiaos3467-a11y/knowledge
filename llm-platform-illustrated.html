@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 平台工程 图解讲义 · LLMOps 十讲</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F6F2; --card:#FFFFFF; --stage:#FAFBF7;
+  --ink:#1E232B; --ink2:#59616E; --line:#DDE0D8;
+  --pen:#33566B; --pen-bg:#E5EEF2; --pen-line:#BCD5DE;
+  --warn:#C0392B; --warn-bg:#FAECE9; --warn-line:#EABFB4;
+  --teal:#0E7C6B; --teal-bg:#E8F4F1;
+  --grape:#5B4A96; --grape-bg:#EEEAF8;
+  --amber:#A9750A; --amber-bg:#FAF2DE;
+  --gray:#7A828C;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --serif:"Noto Serif SC","Source Han Serif SC","STZhongsong","SimSun",serif;
+  --sans:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+  --kai:"KaiTi","STKaiti","Kaiti SC",var(--serif);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(30,35,43,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,35,43,.04) 1px,transparent 1px);
+  background-size:28px 28px}
+::selection{background:rgba(51,86,107,.18)}
+a{color:var(--pen);text-decoration:none}
+.wrap{display:grid;grid-template-columns:224px minmax(0,832px);gap:52px;max-width:1180px;margin:0 auto;padding:0 24px}
+main{min-width:0;padding-bottom:96px}
+section.ch{margin-top:96px;scroll-margin-top:24px}
+.kicker{font-family:var(--serif);color:var(--pen);font-weight:600;font-size:14px;letter-spacing:.12em;margin-bottom:6px}
+h1,h2{font-family:var(--serif);font-weight:900;line-height:1.3}
+h2{font-size:32px;margin-bottom:18px}
+p{margin:12px 0;max-width:76ch}
+p.lead{font-size:17px;color:var(--ink2)}
+ul.tight{margin:8px 0 8px 1.4em}
+ul.tight li{margin:6px 0}
+code.k{font-family:var(--mono);font-size:.86em;background:#EBEDE6;border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+mark{background:none;color:var(--pen);font-weight:700}
+.think{font-family:var(--kai);color:var(--pen);background:var(--pen-bg);border:1px dashed var(--pen-line);border-radius:8px;padding:8px 14px;font-size:15px;margin:18px 0}
+.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pen);border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;font-size:15px}
+.note b.tag{color:var(--pen);font-weight:700;margin-right:6px}
+aside.toc{position:sticky;align-self:start;top:24px;height:calc(100vh - 48px);overflow:auto;padding:28px 0;scrollbar-width:thin}
+.toc-brand{font-family:var(--serif);font-weight:900;font-size:19px;line-height:1.4;margin-bottom:14px}
+.toc-brand small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--pen);letter-spacing:.18em;font-weight:600}
+.toc ol{list-style:none}
+.toc li a{display:flex;gap:10px;align-items:baseline;padding:5.5px 10px;border-radius:6px;font-size:13.5px;color:var(--ink2);border-left:2px solid transparent}
+.toc li a i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--gray);width:20px;flex:none}
+.toc li a:hover{background:#ECEEE6;color:var(--ink)}
+.toc li a.active{color:var(--pen);font-weight:700;border-left-color:var(--pen);background:rgba(51,86,107,.08)}
+.toc li a.active i{color:var(--pen)}
+.hero{padding-top:48px}
+.hero-title{font-size:clamp(38px,5.6vw,60px);line-height:1.14}
+.hero-title .stroke{position:relative;display:inline-block}
+.hero-title .stroke svg{position:absolute;left:-4px;right:-4px;bottom:-8px;width:calc(100% + 8px);height:16px;overflow:visible}
+.hero-title .stroke svg path{stroke:var(--pen);stroke-width:5;fill:none;stroke-linecap:round;stroke-dasharray:420;stroke-dashoffset:420;animation:wipe 1s .5s ease-out forwards}
+@keyframes wipe{to{stroke-dashoffset:0}}
+.hero-sub{margin-top:16px;font-size:15.5px;color:var(--ink2);max-width:72ch}
+.hero-kicker{font-family:var(--serif);letter-spacing:.3em;color:var(--pen);font-size:14px;font-weight:600;margin-bottom:10px}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+.caret{display:inline-block;width:9px;height:1.05em;background:var(--pen);vertical-align:-2px;animation:blink 1.1s infinite}
+.reveal{opacity:0;transform:translateY(14px);animation:rv .7s ease-out forwards}
+.reveal.d1{animation-delay:.1s}.reveal.d2{animation-delay:.25s}.reveal.d3{animation-delay:.45s}
+@keyframes rv{to{opacity:1;transform:none}}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+@keyframes slidein{from{transform:translateX(-10px);opacity:0}}
+.demo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin:26px 0;box-shadow:0 2px 0 rgba(30,35,43,.03)}
+.fig-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.fig-no{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--pen);border-radius:4px;padding:2px 8px;flex:none}
+.fig-title{font-family:var(--serif);font-size:17px;font-weight:600}
+.caption{font-family:var(--kai);color:var(--ink2);font-size:14px;line-height:1.7;margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
+.caption::before{content:"图注 · ";color:var(--pen)}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:14px}
+.dctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.dctrl .gap{flex:1}
+.btn{font-family:var(--sans);font-size:13px;color:var(--ink);background:#fff;border:1px solid #C7CCC0;border-radius:7px;padding:5px 14px;cursor:pointer;line-height:1.6;transition:border-color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--pen);color:var(--pen)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.solid:hover:not(:disabled){background:var(--pen);border-color:var(--pen);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{border-color:var(--pen);color:var(--pen);background:var(--pen-bg);font-weight:700}
+.btn.warn-o{border-color:var(--warn);color:var(--warn)}
+.btn.warn-o.on{background:var(--warn-bg)}
+.btn:focus-visible,a:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+.hint{font-size:13px;color:var(--ink2);margin-top:10px}
+.hint b{color:var(--pen)}
+.say{font-size:13.5px;min-height:2.2em;padding:6px 2px;color:var(--ink2);line-height:1.8}
+.say b{color:var(--pen)}
+.say.bad b{color:var(--warn)}
+.pill{display:inline-block;font-size:12px;font-family:var(--mono);border-radius:99px;padding:1px 10px;border:1px solid var(--line);background:#fff}
+.pill.pen{color:var(--pen);border-color:var(--pen-line);background:var(--pen-bg)}
+.pill.teal{color:var(--teal);border-color:#BFDDD5;background:var(--teal-bg)}
+.pill.warn{color:var(--warn);border-color:var(--warn-line);background:var(--warn-bg)}
+.pill.amber{color:var(--amber);border-color:#E5D3A8;background:var(--amber-bg)}
+svg text{font-family:var(--sans)}
+table.tb{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;background:var(--card)}
+table.tb th,table.tb td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top}
+table.tb th{background:#ECEEE6;font-weight:700;font-size:13px}
+table.tb td.m{font-family:var(--mono);font-size:12.5px}
+/* 网关控制台 */
+.gw-flow{display:grid;grid-template-columns:130px 120px 1fr;gap:12px;align-items:center;font-size:11.5px;font-family:var(--mono)}
+.gw-col{display:grid;gap:8px;align-content:center}
+.gw-pool{border:2px solid var(--line);border-radius:10px;background:var(--card);padding:6px 10px;text-align:center;transition:all .25s}
+.gw-pool b{display:block;font-size:12px}
+.gw-pool small{color:var(--gray);font-size:9.5px}
+.gw-pool.hit{border-color:var(--pen);box-shadow:0 0 0 4px rgba(51,86,107,.15)}
+.gw-pool.cache{border-color:var(--teal);background:var(--teal-bg)}
+.gw-tk{border:1.5px solid var(--pen);border-radius:7px;background:var(--pen-bg);padding:4px 8px;text-align:center;animation:pop .25s}
+.gw-meter{display:grid;grid-template-columns:96px 1fr 60px;gap:8px;align-items:center;font-size:11px;font-family:var(--mono);margin:4px 0}
+.gw-track{height:14px;background:#EDEFEA;border-radius:7px;overflow:hidden}
+.gw-bar{height:100%;width:0;background:var(--pen);border-radius:7px;transition:width .8s}
+/* CI 流水线 */
+.ci-steps{display:flex;gap:6px;align-items:center;font-size:11px;font-family:var(--mono);flex-wrap:wrap;margin:8px 0}
+.ci-s{border:1.5px solid var(--line);border-radius:8px;background:var(--card);padding:6px 12px;text-align:center;min-width:98px;transition:all .3s}
+.ci-s b{display:block;font-size:11.5px}
+.ci-s.run{border-color:var(--amber);background:var(--amber-bg)}
+.ci-s.pass{border-color:var(--teal);background:var(--teal-bg)}
+.ci-s.fail{border-color:var(--warn);background:var(--warn-bg)}
+/* trace */
+.tf-row{display:grid;grid-template-columns:190px 1fr 118px;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;margin:3px 0}
+.tf-t{position:relative;height:16px;background:#F0F1EC;border-radius:5px}
+.tf-b{position:absolute;top:1px;height:14px;border-radius:4px;width:0;transition:width .6s;color:#fff;font-size:8.5px;display:flex;align-items:center;padding-left:5px;white-space:nowrap;overflow:hidden}
+.tf-cost{color:var(--warn)}
+/* prompt 版本 */
+.pr-p{font-family:var(--mono);font-size:11px;background:#22262D;color:#C9D0DA;border-radius:9px;padding:9px 12px;white-space:pre-wrap;line-height:1.8;min-height:100px}
+.pr-p .v{color:#8CC63F}.pr-p .o{color:#F08A72}
+/* 预算板 */
+.bg-rows{display:grid;gap:7px;font-family:var(--mono);font-size:11.5px}
+.bg-row{display:grid;grid-template-columns:110px 1fr 74px;gap:8px;align-items:center}
+/* 模型生命周期 */
+.ml-states{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px;font-family:var(--mono)}
+.ml-st{border:2px solid var(--line);border-radius:99px;background:var(--card);padding:5px 14px;transition:all .3s}
+.ml-st.cur{border-color:var(--pen);background:var(--pen-bg);font-weight:700}
+.ml-st.bad{border-color:var(--warn);background:var(--warn-bg)}
+.ml-st.good{border-color:var(--teal);background:var(--teal-bg)}
+/* serve 盈亏 */
+.sv-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px}
+.sv-card{border:2px solid var(--line);border-radius:12px;background:var(--card);padding:9px 13px;transition:all .3s;text-align:center}
+.sv-card.win{border-color:var(--teal);background:var(--teal-bg)}
+.sv-num{font-family:var(--mono);font-size:17px;font-weight:900;color:var(--pen)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:13.5px;line-height:1.7}
+.card b{display:block;font-family:var(--serif);font-size:14.5px;margin-bottom:4px}
+.card b::before{content:"问 ";color:var(--pen)}
+footer{margin-top:88px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2);font-family:var(--kai);line-height:1.9}
+@media (max-width:1120px){
+  .wrap{grid-template-columns:minmax(0,860px);justify-content:center}
+  aside.toc{position:static;height:auto;order:-1;padding:12px 0 0}
+  .toc ol{display:flex;overflow-x:auto;gap:4px;padding-bottom:8px;scrollbar-width:thin}
+  .toc li a{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;border-radius:4px}
+  .toc li a.active{border-bottom-color:var(--pen);background:none}
+  .toc-brand{padding-left:10px}
+}
+@media (max-width:820px){
+  .gw-flow,.sv-grid{grid-template-columns:1fr}
+  h2{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+  .reveal{opacity:1;transform:none}
+  .hero-title .stroke svg path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<aside class="toc" aria-label="目录">
+  <div class="toc-brand"><small>LLM PLATFORM / LLMOps</small>AI 平台工程 图解讲义</div>
+  <nav><ol>
+    <li><a href="#hero"><i>00</i>开篇 · AI 网关台</a></li>
+    <li><a href="#ch-why"><i>01</i>从直连到平台:收敛治理</a></li>
+    <li><a href="#ch-cascade"><i>02</i>级联路由:先小后大</a></li>
+    <li><a href="#ch-prompt"><i>03</i>Prompt 注册表与 A/B</a></li>
+    <li><a href="#ch-evalci"><i>04</i>评测进 CI:质量闸门</a></li>
+    <li><a href="#ch-trace"><i>05</i>LLM 可观测与计量</a></li>
+    <li><a href="#ch-serve"><i>06</i>租 API 还是自建推理</a></li>
+    <li><a href="#ch-budget"><i>07</i>多租户与 FinOps</a></li>
+    <li><a href="#ch-mlife"><i>08</i>模型生命周期管理</a></li>
+    <li><a href="#ch-data"><i>09</i>数据飞轮与合规红线</a></li>
+    <li><a href="#ch-org"><i>10</i>平台团队的产品思维</a></li>
+    <li><a href="#ch-cards"><i>附</i>速查卡</a></li>
+  </ol></nav>
+</aside>
+
+<main>
+
+<section id="hero" class="hero">
+  <p class="hero-kicker reveal d1">LLMOps · 十讲</p>
+  <h1 class="hero-title reveal d1">AI 平台工程<br><span class="stroke">图解讲义<svg viewBox="0 0 200 12" aria-hidden="true"><path d="M3 8 C 40 2, 70 11, 105 6 S 170 3, 197 7"/></svg></span></h1>
+  <p class="hero-sub reveal d2">会写 agent loop 只是入场券;<b>把"调模型"运营成平台</b>——路由、预算、评测、观测、版本、合规——才是 AI 架构师的正席。控制台开起来:四个业务方,三类模型池,一个网关。</p>
+  <div class="demo reveal d2" style="margin-top:24px">
+    <div class="fig-head"><span class="fig-no">序</span><span class="fig-title">AI 网关控制台 · 选任务发起,看它去哪、花多少</span></div>
+    <div class="stage">
+      <div class="gw-flow">
+        <div class="gw-col" id="gw-req"><div class="gw-tk">任务:<br><select id="gw-task" style="font-family:var(--mono);font-size:11px;padding:2px;border-radius:5px">
+          <option>翻译一句产品文案</option><option>补全一个函数</option><option>总结 40 页合同</option><option>客服 FAQ 问答</option>
+        </select></div><button class="btn solid" id="gw-send" style="width:100%">▶ 发起</button></div>
+        <div class="gw-col">
+          <div class="gw-pool" id="gw-gate"><b>AI 网关</b><small>鉴权·配额·路由·审计</small></div>
+          <div class="gw-pool cache" id="gw-cache" style="display:none"><b>语义缓存命中</b><small>0 token</small></div>
+        </div>
+        <div class="gw-col">
+          <div class="gw-pool" id="gw-small"><b>小模型 / 自托管 7B</b><small>质量 78 · 成本 ¥0.2/M · 40ms</small></div>
+          <div class="gw-pool" id="gw-mid"><b>中档通用</b><small>质量 88 · ¥3/M · 200ms</small></div>
+          <div class="gw-pool" id="gw-big"><b>旗舰大模型</b><small>质量 96 · ¥15/M · 800ms</small></div>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="gw-meter"><span>今日预算(月 ¥3,000)</span><div class="gw-track"><div class="gw-bar" id="gw-budget"></div></div><span id="gw-budtxt">0%</span></div>
+        <div class="gw-meter"><span>本请求成本</span><div style="font-family:var(--mono);font-size:11px;color:var(--gray)">按 token 计价累计 →</div><span id="gw-fee">¥0.0000</span></div>
+      </div>
+      <div class="dctrl"><button class="btn" id="gw-semantic">💾 语义缓存:关</button><span class="hint" id="gw-hint"></span></div>
+      <div class="say" id="gw-say">路由不是玄学:<b>按任务复杂度分级 + 按租户配额限流 + 按历史效果调价</b>。发起四个任务各看一次落点。</div>
+    </div>
+    <p class="caption">客服 FAQ 走小模型或缓存、合同总结必须旗舰——同一家公司里,<mark>60%+ 的 LLM 调用不需要最贵的模型</mark>;而网关就是让这件事"自动发生"的那个组件。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-why">
+  <p class="kicker">第 一 讲</p>
+  <h2>从各自直连,到一扇城门</h2>
+  <p class="lead">AI 应用的野蛮生长史都是同一幕:各团队各申请 key(密钥散落代码库)、各自定价(月底财务对不上谁花的)、各自挑模型(升级要改 30 个仓库)、出事没有审计现场。<mark>AI 网关=把这些"平台级关切"从应用里抽走</mark>:统一认证与配额、按团队计量、模型路由与热切换、语义缓存、内容安全前置、全量留痕。形态两类:云厂商 AI Gateway(Helicone/LiteLLM 网关形态)或自建 Envoy/AISIX 插件——本质同普通 API 网关,<b>只是多懂"token、流式、会话亲和、prompt 版本"这几个 LLM 特有趣味</b>。第 0 册的"穿透击穿"在这里换了主语,但网关的军规一条没变:自己必须集群化、旁路能力不阻塞主路径、配置热更。</p>
+</section>
+
+<section class="ch" id="ch-cascade">
+  <p class="kicker">第 二 讲</p>
+  <h2>级联路由:让 80% 的题死在便宜模型手里</h2>
+  <p class="lead">路由的三层进阶:<b>规则路由</b>(按应用/任务类型硬编码档位,起步够用)→ <b>语义路由</b>(给请求分类:简单问答/复杂推理,小分类器甚至 embedding 相似度即可判)→ <b>级联(cascade)</b>:先小模型作答+自报置信度(或一个裁判校验),<mark>不合格才升级大模型——质量贴近全大模型,成本接近全小模型</mark>。代价:两次延迟、置信度判定本身要评测(校准不好=白付两级)。第 3 册线程池、第 12 册投机解码是同一个哲学:<b>用便宜手段吸收大头,贵手段处理长尾</b>。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 1</span><span class="fig-title">100 个混合请求 · 「全旗舰」vs「级联」的三本账</span></div>
+    <div class="stage" id="d-cascade">
+      <div class="sv-grid" id="cs-cards" style="grid-template-columns:repeat(3,1fr)"></div>
+      <div class="dctrl"><button class="btn solid" id="cs-run">▶ 同一流量,两种路由各放一遍</button></div>
+      <div class="say" id="cs-say"></div>
+    </div>
+    <p class="caption">任务构成:65 简单/25 中等/10 难。级联版:小模型接 63 个(2 个误判升级),旗舰只接 37 个——<b>成本 −58%、均分只差 0.8</b>。这 0.8 值不值 ¥,就是你给 CFO 的那道选择题。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-prompt">
+  <p class="kicker">第 三 讲</p>
+  <h2>Prompt 是代码,得进注册表</h2>
+  <p class="lead">散落在业务字符串里的 prompt,是 AI 系统最脆的资产:改了一个字没人知道影响哪些流量、线上效果回退了找不到那一次改动。平台化的解法把它当<b>代码+配置</b>管:中央 <b>prompt registry</b>(模板+变量+版本+归属应用)、网关按 <code class="k">app_id+version</code> 拉取渲染、发布走评测闸门(下一讲)、流量可 <b>A/B</b>(同用户哈希锁桶,指标对比胜出全量)、出问题<b>秒级回滚版本</b>。配套纪律:模板里"指令段/数据段/少样本"结构化分层(与注入防御直接相关——用户数据永远落在不可信区);变量渲染做长度与字符卫生;每个版本挂效果与成本曲线,让"更好的 prompt"是统计结论不是玄学。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 2</span><span class="fig-title">v3→v4 发布现场 · 拖 A/B 权重,看两版指标赛跑</span></div>
+    <div class="stage">
+      <div class="pr-p" id="pm-code"></div>
+      <div class="dctrl" style="align-items:center">
+        <span style="font-size:13px">v4 流量:</span>
+        <input type="range" min="0" max="100" value="0" id="pm-ab" style="width:180px">
+        <b class="mono" id="pm-abv" style="color:var(--pen)">0%</b>
+        <button class="btn" id="pm-publish">🚀 发布 v4(过了评测闸门)</button>
+      </div>
+      <div style="margin-top:6px">
+        <div class="gw-meter"><span>v3 均分/成本</span><div class="gw-track"><div class="gw-bar" id="pm-v3"></div></div><span id="pm-v3t">—</span></div>
+        <div class="gw-meter"><span>v4 均分/成本</span><div class="gw-track"><div class="gw-bar" id="pm-v4" style="background:var(--teal)"></div></div><span id="pm-v4t">—</span></div>
+      </div>
+      <div class="say" id="pm-say"></div>
+    </div>
+    <p class="caption">v4 把"请尽量简洁"改成硬约束"回答 ≤80 字,先结论后理由"——均分 +1.4、token 成本 −31%。<b>没有注册表与 A/B,这些差异只存在于"体感"里</b>;有了,它才叫迭代。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-evalci">
+  <p class="kicker">第 四 讲</p>
+  <h2>评测进 CI:把"感觉变好了"开除出工程</h2>
+  <p class="lead">改 prompt/换模型/升级依赖,没有评测集就是开盲盒。平台化的做法把 <b>eval 做成流水线的一等公民</b>:PR 改动命中 prompt/模型/检索配置 → 触发评测集(任务用例+判分器:规则、LLM-as-judge、人标对照三混)→ <mark>通过率低于阈值或关键回归 → CI 红灯,禁止合并/发布</mark>;全量评测太贵就走"冒烟集 20 题必跑、完整集夜间跑"两级;评测产物(分维度得分、成本、延迟对比)回贴 PR 评审页。三个务实细节:<b>评测集要版本化并与生产事故联动</b>(每个线上翻车 case 沉淀成评测题——评测集的含金量=事故复盘的沉淀量);裁判模型与被测模型<b>避嫌</b>(同家族偏差);通过率阈值别拍脑袋,用历史波动带定。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 3</span><span class="fig-title">一次真实的 PR:改了检索 top-k,评测闸门亮灯</span></div>
+    <div class="stage">
+      <div class="ci-steps" id="ci-steps"></div>
+      <div class="dctrl"><button class="btn solid" id="ci-run">▶ 提交 PR #231「knn k=3→8」</button><button class="btn warn-o" id="ci-bad">▶ 改坏版:删掉拒答指令再提一次</button></div>
+      <div class="say" id="ci-say"></div>
+    </div>
+    <p class="caption">正常 PR:构建→冒烟评测 20 题通过→完整集 91.2%≥基线−0.5σ→绿;坏 PR:幻觉率 +11%、拒答场景通过率跳水——<b>红灯拦下的不是运气差,是把「体感」关进了可重复的笼子</b>。这一条,就是 AI 团队和"prompt 游击队"的分水岭。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-trace">
+  <p class="kicker">第 五 讲</p>
+  <h2>LLM 可观测:trace 里长出来的成本账</h2>
+  <p class="lead">一次"AI 功能"的调用链=网关→路由决策→(检索→重排→)模型调用(可能多次工具往返)→护栏检查→后处理。<b>普通 APM 看不见中间这些"非 RPC 环节"</b>——LLM 观测要在 span 上挂语义属性(gen_ai.* 的 OTel 约定):模型名、输入输出 token 数、温度、prompt 版本、工具调用参数、护栏判定。四件套看板:① <b>质量代理指标</b>(拒答率/负反馈率/裁判抽样分);② <b>成本</b>(按 app×用户×模型的 token 账单实时透视);③ <b>延迟分解</b>(TTFT 与生成段分开看,否则"慢"查不到是排队还是解码);④ <b>行为回放</b>(采样留全量 prompt/completion,事故能原样复现——<mark>隐私合规红线:留痕要脱敏分级,不是全都存原文</mark>)。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 4</span><span class="fig-title">一次客服 agent 调用的 trace 瀑布 · 每根条都带着钱</span></div>
+    <div class="stage" id="d-trace"></div>
+    <div class="dctrl"><button class="btn solid" id="tf-run">▶ 回放这次请求</button></div>
+    <p class="caption">最贵的不是大模型那 6K token,是<b>工具循环里那次"检索+重排+两级模型"的全家桶</b>。没有这张图,你只能对老板说"AI 变贵了";有了,你能说"3 号会话平均 4.2 次工具往返,建议加语义缓存+砍掉重排"。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-serve">
+  <p class="kicker">第 六 讲</p>
+  <h2>租 API 还是自建推理:算盈亏线</h2>
+  <p class="lead">第 16 册说过:decode 是访存生意,自建推理(vLLM/SGLang+GPU 池)的吞吐优化能到 API 单价的 <mark>1/5~1/10</mark>,但固定成本(GPU 卡+运维+碎片化利用率)在那里蹲着。决策三问:<b>量到盈亏线了吗</b>(日 token 账单连续数月 &gt; 自建 TCO 1.5 倍才值得);<b>数据与合规逼不逼你自建</b>(私有化交付/数据出境/行业监管,有时不是经济题是准入题);<b>需求形状配不配</b>(稳定吞吐好摊成本,波峰波谷 10 倍的场景云 API 弹性更省)。折中谱系:主力走 API+敏感链路自托管、或买"专属实例"(dedicated deployment)——<b>混合路由是平台期常态,网关的存在让它可执行</b>。别用"技术自主性"说服财务,把盈亏线算给他看。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 5</span><span class="fig-title">盈亏线计算器 · 拖日 token 量,看钱往哪边倒</span></div>
+    <div class="stage">
+      <div style="font-size:13px">日处理 token(百万):<input type="range" min="50" max="3000" step="50" value="300" id="sv-t" style="width:220px"> <b class="mono" id="sv-tv" style="color:var(--pen)">300M</b></div>
+      <div class="sv-grid" style="margin-top:10px">
+        <div class="sv-card" id="sv-api"><h5 style="font-family:var(--mono);color:var(--pen)">租 API</h5><div class="sv-num" id="sv-apin">—</div><div style="font-size:11px;color:var(--gray)">混合均价 ¥6/M token·无固定成本·按量弹性</div></div>
+        <div class="sv-card" id="sv-self"><h5 style="font-family:var(--mono);color:var(--pen)">自建 8×A100</h5><div class="sv-num" id="sv-seln">—</div><div style="font-size:11px;color:var(--gray)">月摊 ¥35 万(卡租+电+人力)·有效单价 ¥1.2/M·利用率 60% 计</div></div>
+      </div>
+      <div class="say" id="sv-say"></div>
+    </div>
+    <p class="caption">滑到盈亏交叉点:月 token 账单覆盖自建 TCO 后自建开始省钱——但记住三个隐藏项:<b>利用率不达标(曲线立刻恶化)、容量峰值要留 30% 冗余、还有那个没人愿意承认的"运维人力+GPU 故障率"</b>。八成公司其实没到线,只是觉得"自建听起来更牛"。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-budget">
+  <p class="kicker">第 七 讲</p>
+  <h2>多租户与 FinOps:把 AI 花销管成水电</h2>
+  <p class="lead">AI 预算的崩盘姿势通常不是模型贵,是<b>失控</b>:一个批处理任务跑飞、一个 agent 循环空转、某团队拿旗舰模型做翻译。FinOps 三循环:<b>可见</b>(trace 级计量→按团队/应用/用户维度账单,周清);<b>优化</b>(闲置配额回收、缓存命中率、级联比例、模型替换的月度复盘);<b>治理</b>(预算三级防线:租户配额→软阈值告警+自动降级→硬停,策略提前定好,"停"不是惩罚是保险丝)。配套机制:<b>内部计价</b>(让业务方为 token 付费预算,免费的东西一定被滥用)、<b>预算标签随请求头全链传播</b>(归因到需求方而不是"平台背锅")。FinOps 做得好的信号:业务方主动来问"怎么把我的推理成本降一半"——成本变成了他们的 KPI 而不是你的。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 6</span><span class="fig-title">预算仪表盘 · 触发一次"某任务跑飞"</span></div>
+    <div class="stage">
+      <div class="bg-rows" id="bg-rows"></div>
+      <div class="dctrl"><button class="btn warn-o" id="bg-runaway">⚡ 模拟:推荐批任务跑飞</button><button class="btn" id="bg-reset">重置</button></div>
+      <div class="say" id="bg-say"></div>
+    </div>
+    <p class="caption">三级防线剧本:80% 告警 → 90% <b>自动降级(旗舰→中档,批任务直接排队)</b> → 100% 硬停并挂值班工单。关键设计:<b>降级策略由预算所有者预先声明</b>(写进配额单),网关只执行,不临场决策——事故时刻没有冷静讨论,只有预案。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch-mlife">
+  <p class="kicker">第 八 讲</p>
+  <h2>模型生命周期:把换模型管成发布</h2>
+  <p class="lead">"底层模型升级"在没人管时是灾难(效果悄悄漂移、老 prompt 失配、价格悄悄变),平台化后是流水线:<b>注册表登记每个模型版本</b>(能力卡:上下文长度/价格/延迟/评测集分数/已知风险)→ 候选升级先过<b>离线评测矩阵</b>(全任务线跑分对比)→ <b>5% 灰度</b>(按租户/应用维度的分流,指标双跑对比)→ 达标推进、不达标一键回滚(prompt 与流量都跟着版本走,回滚无状态)→ 退役旧版本给迁移期限并强制下线。供应商 API 也有生命周期:<b>"latest" 别名是定时炸弹</b>,生产永远钉版本号日期;供应商弃用公告要有自动盯梢。把这套流程叫一个朴素的名字:<b>模型变更管理</b>——审计与合规部门最爱听的那一种。</p>
+  <div class="demo">
+    <div class="fig-head"><span class="fig-no">图 7</span><span class="fig-title">一次模型升级的状态机 · 走到底,再演一次回滚</span></div>
+    <div class="stage">
+      <div class="ml-states" id="ml-flow"></div>
+      <div class="dctrl"><button class="btn solid" id="ml-run">▶ 推进 candidate→prod</button><button class="btn warn-o" id="ml-rollback">⬅ 灰度期指标恶化,回滚</button></div>
+      <div class="say" id="ml-say"></div>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="ch-data">
+  <p class="kicker">第 九 讲</p>
+  <h2>数据飞轮,以及它的红线</h2>
+  <p class="lead">平台独有的复利:<b>反馈闭环</b>——显式(用户点赞点踩/改稿对照)、隐式(采纳/放弃/重生成)、裁判抽样(生产样本离线打分)三路汇入;脱敏后进偏好数据集,喂对齐与路由策略("哪类任务哪个模型赢"的先验表也是它产的)。飞轮的燃料管理比转动更重要,三条红线:<b>① 用途授权</b>(用户数据进训练池要有明示选择权,企业客户的协议里这是硬条款);<b>② 留存分级</b>(trace 全量≠全量存原文,PII 进掩码管线、按敏感度设 TTL);<b>③ 数据集血缘</b>(哪版模型用了哪批数据、批次里有没有被污染的爬取样本——出事要能追溯回滚)。飞轮不加速不转,但<b>转错方向的飞轮比不转更糟</b>:脏数据微调出来的模型,退化的方式是"自信地错"。</p>
+</section>
+
+<section class="ch" id="ch-org">
+  <p class="kicker">第 十 讲(终)</p>
+  <h2>平台是产品:业务方是用户</h2>
+  <p class="lead">AI 平台团队的交付物不是"接口",是<b>产品的默认路径</b>:接入 SDK 十分钟跑通、golden path 一路绿灯(标准路由+评测+观测自带)、偏离默认自己担责——治理靠"顺路"而非审批墙。度量自己的三北极星:<b>业务方接入时长</b>、<b>平台承载调用的质量指标</b>(不是"网关可用性 99.9%"的自嗨,是全链评测通过率)、<b>单位价值成本下降曲线</b>(FinOps 成果的月度呈现)。组织协作三件套写进平台章程:模型选型评审(平台+算法+业务三方)、事故复盘数据共享(每 case 进评测集)、成本透明(账单周报)。最后收拢这个系列的终局视角:<mark>Agent 应用层(第 6 册)决定业务上限,平台工程层(本册)决定这个上限能不能可持续地、可审计地、不破产地跑下去</mark>——架构师的座位,永远在"能跑"之后那一格。</p>
+  <div class="note"><b class="tag">要点</b>面试/述职的终章答题框架:讲一次"效果回退事故"——如何 15 分钟内定位到 prompt 版本+模型别名漂移,靠 trace 回放钉死现场,靠 A/B 基线证明影响,靠注册表权限收紧防复发。<b>把"平台能力"讲成"事故免疫能力",架构师的分就到手了。</b></div>
+</section>
+
+<section class="ch" id="ch-cards">
+  <p class="kicker">附 录</p>
+  <h2>速查卡</h2>
+  <div class="cards" id="card-grid"></div>
+</section>
+
+<footer>
+  AI 平台工程 图解讲义 · 系列第十七册 · 手写 vanilla JS/SVG 无依赖 · 口径与模型供应商无关,平台模式通用。
+</footer>
+</main>
+</div>
+
+<script>
+/* ============ 工具 ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+function h(tag,attrs){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k==='text')e.textContent=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(let i=2;i<arguments.length;i++){const c=arguments[i];if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)));}return e;}
+function runGuard(){let id=0;return{next(){return++id},alive(my){return my===id}};}
+const safe=(name,fn)=>{try{fn();}catch(e){console.error('[demo:'+name+']',e);}};
+const INIT={};
+const reg=(n,f)=>{INIT[n]=f;};
+
+/* ============ hero 网关 ============ */
+function initGw(){
+  const say=$('#gw-say'),hint=$('#gw-hint');
+  const g=runGuard();
+  let budget=0,fee=0,semantic=false;
+  const TASKS=[
+    {name:'翻译一句产品文案',pool:'small',cost:0.0004,tok:'0.3K in / 0.2K out',why:'分类器判「简单-生成」→ 小模型质量足够'},
+    {name:'补全一个函数',pool:'small',cost:0.0002,tok:'0.5K in / 0.3K out',why:'低延迟敏感+代码补全是小模型主场'},
+    {name:'总结 40 页合同',pool:'big',cost:0.0980,tok:'58K in / 2K out',why:'长文档+高准确性 → 旗舰;命中缓存则 0 费'},
+    {name:'客服 FAQ 问答',pool:'mid',cost:0.0011,tok:'1.2K in / 0.4K out',why:'FAQ 有模板性 → 优先语义缓存,未命中走中档'},
+  ];
+  function meter(){
+    $('#gw-budget').style.width=Math.min(100,budget/3000*100)+'%';
+    $('#gw-budtxt').textContent='¥'+budget.toFixed(2)+' / 3000';
+    $('#gw-fee').textContent='¥'+fee.toFixed(4);
+    $('#gw-budget').style.background=budget>2400?'var(--warn)':'var(--pen)';
+  }
+  async function send(){
+    const my=g.next();
+    const t=TASKS.find(x=>x.name===$('#gw-task').value);
+    ['gw-small','gw-mid','gw-big','gw-cache'].forEach(id=>$('#'+id).classList.remove('hit'));
+    if(semantic&&Math.random()<0.45){
+      $('#gw-gate').classList.add('hit');await sleep(350);
+      $('#gw-cache').style.display='block';$('#gw-cache').classList.add('hit');
+      say.innerHTML='<b>'+t.name+'</b> → 语义缓存命中(embedding 相似度 >0.94),<b style="color:var(--teal)">0 token、5ms 返回</b>——FAQ/文案类场景命中率能到三成。';
+      hint.textContent='再发几次同一个任务,或关缓存对比。';return;
+    }
+    $('#gw-cache').style.display='none';
+    $('#gw-gate').classList.add('hit');await sleep(320);if(!g.alive(my))return;
+    $('#gw-gate').classList.remove('hit');
+    $('#gw-'+t.pool).classList.add('hit');
+    budget+=t.cost;fee=t.cost;meter();
+    say.innerHTML='<b>'+t.name+'</b> → '+t.why+' → <b>'+(t.pool==='small'?'小模型':t.pool==='mid'?'中档':'旗舰')+'</b> · '+t.tok+' · 计费 ¥'+t.cost.toFixed(4);
+    hint.textContent=budget>2400?'⚠ 预算告警:已过 80%,网关按租户策略开始降级(大→中)或排队。':'四个任务都试一遍;再开语义缓存重发「客服 FAQ」。';
+    if(budget>2400){/* 模拟降级 */}
+  }
+  $('#gw-send').onclick=send;
+  $('#gw-semantic').onclick=function(){semantic=!semantic;this.classList.toggle('on',semantic);this.textContent='💾 语义缓存:'+(semantic?'开':'关');};
+  meter();
+}
+reg('gw',initGw);
+
+/* ============ 图1 级联 ============ */
+function initCascade(){
+  const cardsEl=$('#cs-cards'),say=$('#cs-say');
+  const g=runGuard();
+  function card(name,q,c,lat){const el=h('div',{class:'sv-card'},h('div',{class:'sv-num'},name),h('div',null,'质量 '+q+' · 成本 '+c),h('div',{style:'color:var(--gray);font-size:11px'},'均延迟 '+lat));cardsEl.append(el);return el;}
+  $('#cs-run').onclick=async()=>{
+    const my=g.next();cardsEl.innerHTML='';say.innerHTML='放 100 个混合请求(65 简单 / 25 中等 / 10 难)…';
+    await sleep(500);if(!g.alive(my))return;
+    const a=card('全旗舰','96.0','¥100','620ms');
+    say.innerHTML='方案 A:全走旗舰——质量天花板,但 65 个"翻译一句文案"级别的请求也在付旗舰价。';
+    await sleep(1300);if(!g.alive(my))return;
+    const b=card('级联路由','95.2','¥42','310ms');b.classList.add('win');
+    say.innerHTML='方案 B:小模型先接 90 个,自报置信不足/裁判不合格再升旗舰(10 个走两级)——<b>质量 −0.8,成本 −58%,长尾任务延迟反而降</b>(简单任务不再排队等大模型)。';
+    await sleep(1300);if(!g.alive(my))return;
+    const c=card('全小模型','82.0','¥12','90ms');
+    say.innerHTML='方案 C 对照组:便宜,但 35 个需要推理的请求崩给你看——<b>级联的本质:用 15% 的预算买回旗舰 99% 的质量</b>。置信度校准(自报 vs 真实对错的相关性)是这套方案的技术命门。';
+  };
+  say.innerHTML='点播放,三张账单对比。';
+}
+reg('cascade',initCascade);
+
+/* ============ 图2 prompt A/B ============ */
+function initPrompt(){
+  const codeEl=$('#pm-code'),ab=$('#pm-ab'),say=$('#pm-say');
+  const V3='系统:你是一名客服助手。\n用户问题:{{question}}\n要求:请尽量简洁地回答,语气友好。\n<span class="v">← v3 · 线上运行 21 天</span>';
+  const V4='系统:你是客服助手。规则:\n1. 先结论后原因,总字数 ≤80;\n2. 无依据时回复「需人工确认」,禁止编造;\n3. 输出格式:ANSWER|置信度\n用户问题:{{question}}\n<span class="v">← v4 · 新增硬约束与拒答协议</span><span class="o"> · diff: +3 指令段</span>';
+  codeEl.innerHTML=V3;
+  let pub=false;
+  $('#pm-publish').onclick=()=>{pub=true;codeEl.innerHTML=V4;say.innerHTML='v4 已通过离线评测(50 用例 +2.1σ)进注册表;现在拖权重开 A/B。';};
+  function tick(){
+    const w=+ab.value;
+    $('#pm-abv').textContent=w+'%';
+    const v3score=w===100?'91.2 / ¥0.0031':w===0?'— 无流量':'91.2(前 '+Math.max(1,Math.round(w/6))+'% 样本)';
+    $('#pm-v3').style.width=(100-w)+'%';$('#pm-v3t').textContent=v3score;
+    $('#pm-v4').style.width=w+'%';
+    $('#pm-v4t').textContent=w===0?(pub?'— 待分桶':'发布后可分桶'):w>=100?'92.6 / ¥0.0021 · 胜出':'92.4 / ¥0.0021(+样本累积中)';
+    say.innerHTML=w>=100?'全量+留存基线——但<b>桶分配按用户哈希,同一用户体验一致</b>;胜出后 v3 退役留档。':w>0?'同用户锁桶防体验分裂;两版指标实时对比,显著性够再全量。':'点发布 → 拖权重观察两版赛跑。';
+  }
+  ab.oninput=tick;tick();
+}
+reg('prompt',initPrompt);
+
+/* ============ 图3 CI 闸门 ============ */
+function initCi(){
+  const stepsEl=$('#ci-steps'),say=$('#ci-say');
+  const g=runGuard();
+  const S=[['构建','docker build'],['冒烟评测','20 题'],['全量评测','500 题 ×judge'],['人工抽检','20 条'],['合并发布','deploy']];
+  async function run(fail){
+    const my=g.next();stepsEl.innerHTML='';say.innerHTML='PR #231 触发流水线…';
+    for(let i=0;i<S.length;i++){
+      if(!g.alive(my))return;
+      const el=h('div',{class:'ci-s'},h('b',null,S[i][0]),h('small',{style:'color:var(--gray)'},S[i][1]));
+      stepsEl.append(el);el.classList.add('run');
+      await sleep(i===2?1400:700);if(!g.alive(my))return;
+      el.classList.remove('run');
+      const bad=fail&&i===2;
+      el.classList.add(bad?'fail':'pass');
+      if(i===2)say.innerHTML=bad?'<b style="color:var(--warn)">全量评测:通过率 71.4% &lt; 基线 84.0%(拒答场景幻觉 +11%)→ 闸门红灯</b>——"我本地试了两条感觉挺好"在这台机器上不算证据。':'500 题:通过率 91.2% ≥ 基线 −0.5σ,分维度无回退 ✓';
+      if(bad){say.innerHTML+='<br>PR 页面自动附上:回归用例清单+裁判打分分布,作者改完再触发。';return;}
+      await sleep(450);
+    }
+    if(!g.alive(my))return;
+    say.innerHTML='全绿 → 合并。<b>评测不改变模型的能力,它改变团队的自信。</b>';
+  }
+  $('#ci-run').onclick=()=>run(false);
+  $('#ci-bad').onclick=()=>run(true);
+  say.innerHTML='点两个 PR:一个正常,一个把拒答指令删了。';
+}
+reg('ci',initCi);
+
+/* ============ 图4 LLM trace ============ */
+function initTrace(){
+  const stage=$('#d-trace');
+  const SP=[
+    ['gateway · 鉴权+配额',0,4,'var(--pen)',''],
+    ['router · 语义分类→档位',4,11,'var(--grape)',''],
+    ['retrieval · 向量+BM25',15,38,'var(--teal)','8K in'],
+    ['rerank · cross-encoder',53,22,'var(--teal)',''],
+    ['llm · 旗舰(答案草稿)',75,160,'var(--amber)','6K in/0.9K out · ¥0.041'],
+    ['guardrail · 幻觉/格式检查',235,18,'var(--grape)',''],
+    ['llm · 小模型(修订)',253,42,'var(--gray)','1.2K in · ¥0.0004'],
+  ];
+  function build(){
+    stage.innerHTML='';
+    SP.forEach(([n,x,w,c,cost],i)=>{
+      const row=h('div',{class:'tf-row'});
+      const t=h('div',{class:'tf-t'},h('div',{class:'tf-b',id:'tfb'+i,style:'left:'+(x/3*0.9)+'%;background:'+c},w>60?n.split(' · ')[1]:''));
+      row.append(h('span',{style:'color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis'},n),t,h('span',{class:'tf-cost'},cost||''));
+      stage.append(row);
+    });
+    const foot=h('div',{style:'font-size:11px;color:var(--gray);font-family:var(--mono);margin-top:6px'});
+    stage.append(foot);
+    return foot;
+  }
+  let foot;
+  $('#tf-run').onclick=async()=>{
+    const my=g.next();foot=build();
+    for(let i=0;i<SP.length;i++){
+      if(!g.alive(my))return;
+      $('#tfb'+i).style.width=(SP[i][2]/3*0.9*2.4)+'%';
+      foot.textContent='trace=8f3a… 总 295ms · 总成本 ¥0.041 · prompt=v12 · 模型=旗舰@2025-06 · 工具循环×1';
+      await sleep(500);
+    }
+  };
+  build();
+}
+reg('trace',initTrace);
+
+/* ============ 图5 盈亏线 ============ */
+function initServe(){
+  const t=$('#sv-t'),say=$('#sv-say');
+  function draw(){
+    const M=+t.value;$('#sv-tv').textContent=M+'M';
+    const api=M*6*30/10000, self=35;
+    $('#sv-apin').textContent='¥'+api.toFixed(1)+' 万/月';
+    $('#sv-seln').textContent='¥'+self.toFixed(1)+' 万/月(摊)';
+    $('#sv-api').classList.toggle('win',api<self);
+    $('#sv-self').classList.toggle('win',self<=api);
+    const cross=self/(6*30/10000);
+    say.innerHTML=M<cross?'API 便宜 <b>'+Math.round(cross/M)+' 倍量还养不活卡</b>(还没算运维与故障率)。'
+      :'自建账面省 ¥'+(api-self).toFixed(1)+' 万/月——扣掉 30% 冗余与人力,真实余量 <b>¥'+((api-self)*0.55).toFixed(1)+' 万</b>。日 token ≈ <b>'+Math.round(cross)+'M</b> 是盈亏线。';
+  }
+  t.oninput=draw;draw();
+}
+reg('serve',initServe);
+
+/* ============ 图6 预算板 ============ */
+function initBudget(){
+  const rowsEl=$('#bg-rows'),say=$('#bg-say');
+  const g=runGuard();
+  const TEAMS=[['客服 bot',42,1500],['推荐批处理',8,300],['营销文案',61,800],['内部 copilot',23,600]];
+  function draw(alarm){
+    rowsEl.innerHTML='';
+    TEAMS.forEach(([n,used,cap],i)=>{
+      let u=used;
+      if(alarm&&i===1)u=140;
+      if(alarm&&i===0)u=Math.min(100,used+(used>85?0:4));
+      const row=h('div',{class:'bg-row'});
+      const hot=u>=90,war=u>=80;
+      row.append(h('span',null,n+' /¥'+cap));
+      row.append(h('div',{class:'gw-track'},h('div',{class:'gw-bar',style:'width:'+Math.min(100,u)+'%;background:'+(hot?'var(--warn)':war?'var(--amber)':'var(--pen)')})));
+      row.append(h('span',null,u+'%'+(hot?' ⛔降级':war?' ⚠':'')));
+      rowsEl.append(row);
+    });
+  }
+  draw(false);
+  $('#bg-runaway').onclick=async()=>{
+    const my=g.next();
+    draw(false);
+    await sleep(300);
+    say.innerHTML='⚡ 批任务开闸:配额 ¥300 的租户今天要吃 ¥1,900——';
+    await sleep(900);if(!g.alive(my))return;
+    draw(true);
+    say.innerHTML+='80%:告警到租户 owner;90%:<b>网关按预案自动降级</b>(批任务排队到凌晨+旗舰→中档),100%:硬停。<b>全程没人临场拍板——降级策略是配额单里提前声明的。</b>第二天账单周会,这就是治理的全部素材。';
+  };
+  $('#bg-reset').onclick=()=>{draw(false);say.innerHTML='四个租户,两条水位线。';};
+  say.innerHTML='四个租户,两条水位线(80% 告警 / 90% 降级 / 100% 停)。';
+}
+reg('budget',initBudget);
+
+/* ============ 图7 模型生命周期 ============ */
+function initMlife(){
+  const flowEl=$('#ml-flow'),say=$('#ml-say');
+  const g=runGuard();
+  const ST=['候选 candidate','离线评测','灰度 5%','全量 prod','退役 archived'];
+  let idx=0;
+  function draw(bad){
+    flowEl.innerHTML='';
+    ST.forEach((s,i)=>{
+      if(i)flowEl.append(h('span',{style:'color:var(--gray)'},'→'));
+      const el=h('span',{class:'ml-st'+(i===idx?' cur':'')+(bad&&i<=1?' good':'')+(bad&&i===2?' bad':'')},s);
+      flowEl.append(el);
+    });
+  }
+  async function run(){
+    const my=g.next();idx=0;draw();
+    const msgs=['登记模型卡:上下文/价格/评测分/已知差异(拒答风格变了)','500 题矩阵:客服线 +1.2 分,文案线 −0.4——达标线内,可灰度','按租户哈希放 5%:负反馈率、拒答率、成本双跑 48h','指标持平 → 逐步 25→100%;注册表里旧版本变 fallback','90 天观察期后强制下线——"latest 别名"从此禁用,全量钉版本'];
+    for(let i=0;i<ST.length;i++){if(!g.alive(my))return;idx=i;draw();say.innerHTML='<b>'+ST[i]+'</b> —— '+msgs[i];await sleep(1500);}
+  }
+  function rollback(){
+    const my=g.next();idx=2;draw(true);
+    say.innerHTML='<b style="color:var(--warn)">灰度期裁判分 −3.1σ、拒答率 ×2 → 一键回滚</b>:路由权重切回旧版本(秒级),prompt 跟着版本标签走不用改代码;事故样本自动进评测集——下次这个差异在离线阶段就会被拦。';
+    setTimeout(()=>{say.innerHTML+=('<br>这就是"模型也是依赖"的工程学:版本锁定、灰度、回滚、盯梢弃用公告。');},1500);
+  }
+  $('#ml-run').onclick=run;$('#ml-rollback').onclick=rollback;
+  draw();say.innerHTML='点推进走完一生,再点回滚看应急。';
+}
+reg('mlife',initMlife);
+
+/* ============ 附录 ============ */
+function initCards(){
+  const grid=$('#card-grid');
+  const data=[
+    ['AI 网关管什么?','key 集中、租户配额、模型路由、语义缓存、内容安全、全量审计——平台治理的收口点。'],
+    ['级联路由收益?','小模型先答+置信不足升级:成本 −50%+,质量 −1 内;命门是置信度校准。'],
+    ['Prompt 怎么管?','registry 版本化+diff+A/B(用户锁桶)+评测闸门+秒级回滚;prompt 是代码不是文案。'],
+    ['eval 进 CI 怎么做?','冒烟集必跑+全量夜间;阈值用历史波动带;线上事故 case 沉淀成评测题。'],
+    ['LLM trace 看什么?','质量代理指标/成本归因/TTFT 与生成延迟分解/prompt·模型版本回放;属性用 OTel gen_ai 约定。'],
+    ['自建还是租 API?','月账单 &gt; 自建TCO×1.5 且吞吐稳定才自建;合规私有化是准入题不是经济题;混合是常态。'],
+    ['预算失控怎么办?','三级防线:配额→软阈值自动降级→硬停;降级策略由预算方预先声明,网关只执行。'],
+    ['模型升级流程?','模型卡登记→离线矩阵→5% 灰度双跑→逐步全量→90 天退役;生产禁 latest,钉版本号。'],
+    ['数据飞轮的红线?','用途授权(训练进池要可退订)、留存分级(脱敏+TTL)、数据集血缘(可追溯回滚)。'],
+    ['平台团队度量?','接入时长/承载调用质量/单位成本下降曲线——业务方主动来砍成本,才算转飞轮成功。'],
+    ['评测集含金量?','等于事故复盘的沉淀量:每个翻车 case 转成评测题,系统才会"记住教训"。'],
+    ['和 Agent 层的分工?','应用层决定能力上限,平台层决定上限能否可持续、可审计、不破产地跑起来。'],
+  ];
+  data.forEach(([q,a])=>{grid.append(h('div',{class:'card'},h('b',null,q),a));});
+}
+reg('cards',initCards);
+
+/* ============ 装配 ============ */
+function initSpy(){
+  const links=$$('.toc a');
+  const secs=links.map(a=>$(a.getAttribute('href'))).filter(Boolean);
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-18% 0px -72% 0px'});
+  secs.forEach(s=>io.observe(s));
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  Object.entries(INIT).forEach(([n,f])=>safe(n,f));
+  initSpy();
+});
+</script>
+<style>.home-back{position:fixed;top:14px;right:14px;z-index:99;background:rgba(255,255,255,.94);border:1px solid var(--pen-line,#bbb);color:var(--pen,#333);padding:5px 16px;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700;font-family:var(--sans,system-ui);box-shadow:0 3px 12px rgba(30,35,43,.10);backdrop-filter:blur(6px);transition:all .18s}.home-back:hover{border-color:var(--pen,#333);transform:translateY(-2px);box-shadow:0 6px 18px rgba(30,35,43,.16)}</style>
+<a class="home-back" href="index.html">← 图解讲义馆</a>
+</body>
+</html>

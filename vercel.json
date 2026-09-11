@@ -16,6 +16,7 @@
     { "source": "/patterns", "destination": "/design-patterns-illustrated.html" },
     { "source": "/cloud", "destination": "/spring-cloud-illustrated.html" },
     { "source": "/arch", "destination": "/architecture-illustrated.html" },
+    { "source": "/llmops", "destination": "/llm-platform-illustrated.html" },
     { "source": "/llm", "destination": "/llm-illustrated.html" },
     { "source": "/agent", "destination": "/ai-agent-illustrated.html" }
   ]
