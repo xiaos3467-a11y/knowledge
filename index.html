@@ -3,159 +3,219 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>图解讲义馆 · 十六册</title>
+<title>图解讲义馆 · 十八册 · 后端架构 × AI 工程</title>
+<meta name="description" content="手写单文件交互动画讲义:Java 底座、数据中间件、网络、分布式与云原生、SRE、AI 与 Agent。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#F2F3EF; --ink:#1E232B; --ink2:#5B636F; --line:#D9DCD3;
-  --red:#CE3B24; --blue:#15607E; --green:#3D7A2C; --orange:#B4530A; --purple:#6B3FA0; --teal:#0F6E73; --navy:#3D5A80; --ochre:#8B5E3C; --gold:#7D6B1E; --jade:#41605C; --rouge:#7C2F52; --pine:#2E6B4F; --azure:#326CE5; --bronze:#7A5C2E; --haze:#4763A0; --obsid:#1F3A63;
+  --paper:#F4F5F0; --ink:#20242C; --ink2:#5B636F; --line:#D9DCD3; --card:#FFFFFF;
   --serif:"Noto Serif SC","STZhongsong","SimSun",serif;
-  --sans:"Noto Sans SC","Microsoft YaHei",sans-serif;
+  --sans:"Noto Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+  --mono:"JetBrains Mono",Consolas,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
 body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:16px;line-height:1.8;-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background-image:linear-gradient(rgba(30,35,43,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(30,35,43,.045) 1px,transparent 1px);
-  background-size:28px 28px}
-.wrap{max-width:980px;margin:0 auto;padding:64px 24px 80px}
-header h1{font-family:var(--serif);font-weight:900;font-size:clamp(36px,6vw,56px);line-height:1.2}
-header p{color:var(--ink2);margin-top:10px;max-width:62ch}
-.shelf{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:44px}
-@media (max-width:720px){.shelf{grid-template-columns:1fr}}
-a.book{display:block;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px 18px;text-decoration:none;color:inherit;position:relative;transition:transform .18s,box-shadow .18s;overflow:hidden}
-a.book:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(30,35,43,.10)}
-a.book::before{content:"";position:absolute;left:0;top:0;bottom:0;width:10px;background:var(--c)}
-.pen{position:absolute;right:16px;top:12px;font-family:var(--serif);font-weight:900;font-size:64px;line-height:1;color:var(--c);opacity:.14}
-a.book h2{font-family:var(--serif);font-size:24px;font-weight:900}
-.meta{font-size:12.5px;color:var(--c);font-weight:700;letter-spacing:.06em;margin:2px 0 8px}
-a.book p{font-size:13.5px;color:var(--ink2);line-height:1.75}
-.go{display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:var(--c)}
-footer{margin-top:56px;padding-top:16px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--ink2)}
-a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:14px}
+  background-image:linear-gradient(rgba(30,35,43,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(30,35,43,.05) 1px,transparent 1px);
+  background-size:26px 26px}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1080px;margin:0 auto;padding:0 26px 90px}
+/* ── masthead ── */
+.mast{padding:72px 0 30px;border-bottom:3px solid var(--ink);position:relative}
+.mast .kicker{font-family:var(--mono);font-size:11.5px;letter-spacing:.32em;color:#B0492F;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.mast h1{font-family:var(--serif);font-weight:900;font-size:clamp(44px,8.4vw,84px);line-height:1.06;margin-top:18px;letter-spacing:.015em}
+.mast h1 em{font-style:normal;color:#B0492F}
+.mast .tagline{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-top:22px}
+.mast .tagline p{color:var(--ink2);max-width:60ch;font-size:16.5px}
+.mast .stat{text-align:right;font-family:var(--mono);font-size:12px;color:var(--ink2);white-space:nowrap}
+.mast .stat b{font-family:var(--serif);font-size:40px;font-weight:900;color:var(--ink);display:block;line-height:1.1}
+/* ── 知识图谱 ── */
+.graph{margin:44px 0 8px}
+.graph h2,.shelf h2,.rout h2{font-family:var(--serif);font-weight:900;font-size:26px;margin-bottom:4px}
+.graph .sub,.shelf .sub,.rout .sub{color:var(--ink2);font-size:13.5px;margin-bottom:14px}
+#g-svg{width:100%;height:auto;display:block}
+.gnode{cursor:pointer}
+.gnode circle{transition:all .2s}
+.gnode text{font-family:var(--serif);font-weight:900;fill:var(--ink);text-anchor:middle;pointer-events:none}
+.gnode:hover circle,.gnode.on circle{stroke-width:3}
+.gbook{cursor:pointer;transition:opacity .2s}
+.gbook:hover circle{stroke:#20242C;stroke-width:2}
+.gbook text{font-family:var(--serif);font-weight:900;fill:#fff;text-anchor:middle;pointer-events:none;font-size:13px}
+.glink{stroke:#A9AEB3;stroke-width:1.3;fill:none;opacity:.75}
+.glink.hl{stroke:#B0492F;stroke-width:2.2;opacity:1}
+.grole{font-family:var(--mono);font-size:12px;fill:#F4F5F0;text-anchor:middle}
+/* ── 路线图 ── */
+.rout{margin-top:52px}
+.paths{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.path{border:1.5px solid var(--line);border-radius:14px;background:var(--card);padding:16px 18px;transition:transform .18s,box-shadow .18s}
+.path:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(32,36,44,.09)}
+.path h3{font-family:var(--serif);font-size:17px;font-weight:900;margin-bottom:2px}
+.path .goal{font-size:12px;color:#B0492F;font-family:var(--mono);margin-bottom:10px}
+.steps{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:12.5px}
+.steps a{border:1px solid var(--line);border-radius:99px;padding:2px 10px;background:var(--paper);transition:all .15s;white-space:nowrap}
+.steps a:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.steps i{font-style:normal;color:var(--ink2);font-size:10px}
+.path p{font-size:12.5px;color:var(--ink2);margin-top:10px;line-height:1.7}
+/* ── 书架 ── */
+.shelf{margin-top:56px}
+.grp{margin-top:34px}
+.grp h3{font-family:var(--serif);font-size:19px;font-weight:900;display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1.5px solid var(--ink)}
+.grp h3 span{font-family:var(--mono);font-size:11px;color:var(--ink2);font-weight:400}
+.grp.flash h3{color:#B0492F}
+.books{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px}
+.bk{flex:1 1 300px;min-width:280px;max-width:420px}
+@media (max-width:680px){.bk{flex:1 1 100%;max-width:none}}
+@media (max-width:600px){.books,.paths{grid-template-columns:1fr}.mast .tagline{grid-template-columns:1fr}.mast .stat{text-align:left}}
+.bk{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 20px 18px;overflow:hidden;transition:transform .16s,box-shadow .16s;display:block}
+.bk:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(32,36,44,.10)}
+.bk::before{content:"";position:absolute;left:0;top:0;bottom:0;width:9px;background:var(--c)}
+.bk .han{position:absolute;right:10px;top:6px;font-family:var(--serif);font-weight:900;font-size:56px;line-height:1;color:var(--c);opacity:.13}
+.bk h4{font-family:var(--serif);font-size:17.5px;font-weight:900}
+.bk .meta{font-family:var(--mono);font-size:11px;color:var(--c);font-weight:600;margin:3px 0 8px;letter-spacing:.02em}
+.bk p{font-size:12.8px;color:var(--ink2);line-height:1.75}
+.bk .foot{margin-top:10px;display:flex;justify-content:space-between;align-items:center;font-size:11.5px}
+.bk .lv{font-family:var(--mono);border:1px solid var(--line);border-radius:99px;padding:1px 9px;color:var(--ink2)}
+.bk .go{color:var(--c);font-weight:700}
+.bk.dim{opacity:.35}
+/* footer */
+.foot{margin-top:70px;padding-top:16px;border-top:3px solid var(--ink);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:12.5px;color:var(--ink2)}
+.foot .mono{font-family:var(--mono);font-size:11.5px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1>图解讲义馆</h1>
-    <p>十六册手写单文件讲义:每讲一张<b>按得下去</b>的动画。无框架、无构建、无外链依赖,离线可开——也是 Vercel 上最省心的一种项目。</p>
-  </header>
-  <div class="shelf">
-    <a class="book" style="--c:var(--red)" href="redis-illustrated.html">
-      <span class="pen">朱</span>
-      <h2>Redis 图解讲义</h2>
-      <div class="meta">内存缓存 · 十二讲 · 14 图 + mini redis-cli</div>
-      <p>事件循环阻塞实验、穿透击穿雪崩彩排台、三级过期淘汰、RDB 写时复制、跳表查找、Cluster 真算 CRC16… 开篇自带一个能敲命令的迷你 redis。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--blue)" href="mysql-illustrated.html">
-      <span class="pen">靛</span>
-      <h2>MySQL 图解讲义</h2>
-      <div class="meta">存储引擎 · 十二讲 · 12 图 + mini mysql</div>
-      <p>B+ 树插入分裂实验室、两棵树看回表、WAL 两阶段断电剧本、MVCC 版本链对照、隔离级别调度台、自增 vs UUID 页分裂实演(1.4 倍膨胀亲眼看)。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--green)" href="spring-illustrated.html">
-      <span class="pen">翠</span>
-      <h2>Spring 图解讲义</h2>
-      <div class="meta">IoC · AOP · 事务 · 十二讲 · 12 图 + mini beanFactory</div>
-      <p>三级缓存棋盘三种注入命运、AOP 栈帧压出、自调用绕过代理的红线、注解翻牌墙、传播行为双车道血案、事务失效六开关台、MVC 九步流水线。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--orange)" href="spring-boot-illustrated.html">
-      <span class="pen">缃</span>
-      <h2>Spring Boot 图解讲义</h2>
-      <div class="meta">自动装配 · 十一讲 · 10 图 + starter 顾问</div>
-      <p>自动配置漏斗重跑 ConditionEvaluation、BOM 仲裁前后、配置优先级水塔、fat jar 爆炸视图、Actuator 裸奔/收口对比、自研 Starter 五步工坊、启动排障室。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--navy)" href="java-concurrency-illustrated.html">
-      <span class="pen">玄</span>
-      <h2>Java 并发 图解讲义</h2>
-      <div class="meta">JUC · 十一讲 · 11 图 + 线程池沙盘</div>
-      <p>开篇线程池沙盘狂点提交看"核心→队列→临时→拒绝"全路径;两线程 i++ 竞态实演、Dekker 重排剧场、volatile 缓存失效、锁升级阶梯、CAS 三啄木鸟与 ABA、AQS 锁交接接力棒、拒绝策略调音台、ThreadLocal 僵尸抽屉、CHM 一桶一锁、三剑客门、CompletableFuture DAG 令牌流。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--ochre)" href="jvm-illustrated.html">
-      <span class="pen">赭</span>
-      <h2>JVM 图解讲义</h2>
-      <div class="meta">虚拟机 · 十一讲 · 10 图 + 诊断命令终端</div>
-      <p>开篇 -Xmx 内存标尺手感;数据区巡览、对象字节解剖(压缩指针开关)、a↔b 循环引用冤案、四种收集器搬球赛(成绩单对比)、分代三水槽、卡表记账、双亲委派实测、调优四门诊卡、jps/jstat/jmap/jstack/Arthas 模拟终端、JIT 热度爬梯与逃逸分析、容器 137 死法对照。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--gold)" href="network-illustrated.html">
-      <span class="pen">金</span>
-      <h2>计算机网络 图解讲义</h2>
-      <div class="meta">从一次请求到一条连接 · 十讲 · 10 图 + 全链路动画</div>
-      <p>开篇一次 HTTPS 请求走十站的旅程动画;封装解封装(MAC 换 IP 不换)、三次握手四次挥手+TIME_WAIT 倒计时+SYN Flood、丢包四种抢救、Reno/CUBIC/BBR 拥塞曲线同台、TCP vs QUIC 队头连坐、HTTP 四代排班表、TLS 证书链与自签事故、DNS 问路接力、JWT 现场篡改、curl 时间轴排障。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--jade)" href="netty-illustrated.html">
-      <span class="pen">黛</span>
-      <h2>Netty 与 IO 模型 图解讲义</h2>
-      <div class="meta">高性能网络框架 · 十讲 · 8 图 + select/epoll 对照舞台</div>
-      <p>开篇 8 个 fd 三种就绪,select 全量扫 vs epoll 摘名单;Buffer 三步舞、EventLoop 三环(附赠 handler 阻塞全组陪葬)、Pipeline 双河与断链事故、refCnt 僵尸内存、零拷贝四式同台、粘包两种喝法、拔线心跳时间轴、私有协议解码台。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--rouge)" href="kafka-illustrated.html">
-      <span class="pen">绛</span>
-      <h2>Kafka 图解讲义</h2>
-      <div class="meta">日志即一切 · 九讲 · 8 图 + 分区账本沙盘</div>
-      <p>开篇 hash(key) 分区账本(含扩分区乱序事故);三副本 LEO/HW 水位与 unclean 选举丢数现场、消费组四人抢三坑与提交时机双事故、随机写/顺序写/攒批三车道、幂等 seq 记账与 in.flight 反噬、参数生死矩阵、Lag 四形态诊室、Log Compaction 清扫、read_committed 的 LSO 灰区。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--pine)" href="elasticsearch-illustrated.html">
-      <span class="pen">翠</span>
-      <h2>Elasticsearch 图解讲义</h2>
-      <div class="meta">倒排索引 · 七讲 · 7 图 + 倒排实验室</div>
-      <p>开篇倒排台:posting list 跳跃求交 vs LIKE 全表扫两种世界观;写入四仓库(refresh/translog/崩溃丢不丢)、BM25 三旋钮打分对决、四台分词机器、聚合桶桶套桶、from+size 爆仓 vs search_after 书签、集群 routing 点名与 node-0 宕机自愈。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--azure)" href="kubernetes-illustrated.html">
-      <span class="pen">蔚</span>
-      <h2>Kubernetes 图解讲义</h2>
-      <div class="meta">调度即声明 · 七讲 · 7 图 + 调度台</div>
-      <p>开篇调度台:装箱与反亲和、Pending 的诞生;Pod 解剖(sidecar/netns/init)、调和环撕 Pod 自愈、Service 路由与烧 Pod 换 IP、PV/PVC/SC 绑定与 StatefulSet 转世认盘、探针与优雅下线时间轴、requests/limits 与 HPA 扩容推演、kubectl apply 全链路接力。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--bronze)" href="design-patterns-illustrated.html">
-      <span class="pen">斑</span>
-      <h2>设计模式 图解讲义</h2>
-      <div class="meta">GoF 实景样板间 · 九讲 · 7 图 + 23 格模式宫格</div>
-      <p>开篇模式宫格(23 块全可点开,附 JDK/Spring 实景);策略新增加密货币 diff 见刀、装饰器洋葱穿层、单例六写法×三攻击擂台、观察者加下游零改动、责任链四关卡短路、代理洋葱调用栈、建造者重载地狱与浅拷贝事故。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--haze)" href="spring-cloud-illustrated.html">
-      <span class="pen">阵</span>
-      <h2>微服务与 Spring Cloud 图解讲义</h2>
-      <div class="meta">阵型九讲 · 5 图 + 可点击阵型图</div>
-      <p>八块阵型图逐一点开;注册心跳的"死缓期"、least-active 绕开慢实例的实算、灰度阀门配错误率爬升、配置热更长轮询与网络分区、重试风暴 27 倍乘法现场——以及拆分方法论与韧性五问。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--obsid)" href="llm-illustrated.html">
-      <span class="pen">曜</span>
-      <h2>大模型原理 图解讲义</h2>
-      <div class="meta">注意力九讲 · 6 图 + 可点注意力之网</div>
-      <p>开场点词看它的视线落在谁身上;BPE 分词与向量条纹;4 词×2 维 QKV 全手算(softmax 放大器现形);Block 装配线;同一个问题在预训练/SFT/对齐后的三个分布;带 KV Cache vs 平方重算的解码对比;LoRA rank 滑块看参数塌缩到 0.39%。与第六册 Agent 上下衔接。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--purple)" href="architecture-illustrated.html">
-      <span class="pen">紫</span>
-      <h2>后端架构师 图解讲义</h2>
-      <div class="meta">决策地图 · 十三讲 · 13 图 + 参考架构地图</div>
-      <p>CAP 分区闸刀、一致性哈希环迁移实演、四种限流算法同场竞技、熔断保险丝一生、雪花位段挪挪看、MQ 生死簿、三级缓存脏写、分库基因解码、分布式事务四方案、机房起火演习、Trace 瀑布、交互式容量估算器。</p>
-      <span class="go">开卷 →</span>
-    </a>
-    <a class="book" style="--c:var(--teal)" href="ai-agent-illustrated.html">
-      <span class="pen">青</span>
-      <h2>AI Agent 图解讲义</h2>
-      <div class="meta">从一次调用到一台智能体 · 十二讲 · 11 图 + 会跑的迷你 Agent</div>
-      <p>开场就是真会循环的 Agent(tool_use→执行→回填);温度采样抽签、token 窗口预算、工具报文解剖、四种记忆策略失忆对照、RAG 向量空间、schema 修复循环、多智能体编排、MCP 星型接线、pass@k 评测矩阵、提示注入攻防、成本三策略。</p>
-      <span class="go">开卷 →</span>
-    </a>
+
+<header class="mast">
+  <div class="kicker"><em>ILLUSTRATED LECTURES</em><span id="today"></span></div>
+  <h1>图解讲义馆<br><em>后端架构 × AI 工程</em></h1>
+  <div class="tagline">
+    <p>十八册手写讲义、一百四十余张<b>可以按下去</b>的动画、六个内置模拟器。每一册从一句「它到底为什么快 / 为什么挂 / 为什么会答错」讲起——拆开了看,都是工程。</p>
+    <div class="stat"><b>18</b>册 · 讲次 190+ · 动画 140+<br>零依赖 · 离线可开</div>
   </div>
-  <footer>手写 vanilla JS/SVG · 字体走 Google Fonts(带系统兜底) · 部署方式见 README —— 拖进 vercel.com/new/drop 即可。</footer>
+</header>
+
+<section class="graph">
+  <h2>知识图谱</h2>
+  <div class="sub">六个知识域撑起两种身份。点节点跳到书架分组,点圆点上的字直飞该册。</div>
+  <svg id="g-svg" viewBox="0 0 980 520"></svg>
+</section>
+
+<section class="rout">
+  <h2>三条修炼路线</h2>
+  <div class="sub">按顺序吃透一条线,比每本翻十页有用。</div>
+  <div class="paths">
+    <div class="path">
+      <h3>后端筑基</h3><div class="goal">→ 把"会用 Java"读成"懂 Java"</div>
+      <div class="steps"><a href="#b-juc">并发</a><i>→</i><a href="#b-jvm">JVM</a><i>→</i><a href="#b-spring">Spring</a><i>→</i><a href="#b-boot">Boot</a><i>→</i><a href="#b-pat">设计模式</a></div>
+      <p>从线程池沙盘到 beanFactory 命令行:先懂运行时与框架骨架,再谈上层建筑。</p>
+    </div>
+    <div class="path">
+      <h3>架构主线</h3><div class="goal">→ 撑得起"高可用"三个字的答辩</div>
+      <div class="steps"><a href="#b-mysql">MySQL</a><i>→</i><a href="#b-redis">Redis</a><i>→</i><a href="#b-kafka">Kafka</a><i>→</i><a href="#b-arch">架构师</a><i>→</i><a href="#b-cloud">微服务</a><i>→</i><a href="#b-k8s">K8s</a><i>→</i><a href="#b-sre">SRE</a></div>
+      <p>数据三件套打底,分布式阵型摆开,交付与可靠性收尾——一条事故链能从存储追到人。</p>
+    </div>
+    <div class="path">
+      <h3>AI 主线</h3><div class="goal">→ 从会调 API 到会运营 AI 平台</div>
+      <div class="steps"><a href="#b-llm">大模型原理</a><i>→</i><a href="#b-agent">AI Agent</a><i>→</i><a href="#b-net">网络</a><i>→</i><a href="#b-llmops">AI 平台工程</a></div>
+      <p>先懂注意力与 KV Cache 的账,再搭 agent loop,最后把一切收敛成网关与 eval 闸门。</p>
+    </div>
+  </div>
+</section>
+
+<section class="shelf">
+  <h2>全馆书目</h2>
+  <div class="sub">深色书脊是各册批注色;悬停卡片可在图谱上找到它的位置。</div>
+  <div id="groups"></div>
+</section>
+
+<footer class="foot">
+  <span>手写 vanilla JS/SVG · 无框架无构建 · 口径 JDK21 / Spring 6 / K8s 1.28 / Kafka 3.x</span>
+  <span class="mono">图解讲义馆 · MMXXVI</span>
+</footer>
 </div>
+
+<script>
+const $=s=>document.querySelector(s);
+const G=[
+  {id:'g-lang',n:'语言与框架',x:130,y:230,c:'#3D5A80'},
+  {id:'g-data',n:'数据与中间件',x:355,y:210,c:'#CE3B24'},
+  {id:'g-net',n:'网络与通信',x:565,y:235,c:'#7D6B1E'},
+  {id:'g-arch',n:'分布式与云原生',x:780,y:205,c:'#6B3FA0'},
+  {id:'g-sre',n:'可靠性工程',x:200,y:395,c:'#B03A2E'},
+  {id:'g-ai',n:'AI 与 Agent',x:610,y:395,c:'#0F6E73'},
+];
+const B=[
+  {g:'g-lang',f:'java-concurrency-illustrated.html',n:'Java 并发',han:'玄',c:'#3D5A80',lv:'进阶',meta:'十一讲 · 11 图 + 线程池沙盘',d:'JMM、锁升级、AQS、线程池、CHM 一桶一锁;池沙盘狂点即懂"核心→队列→临时→拒绝"。'},
+  {g:'g-lang',f:'jvm-illustrated.html',n:'JVM',han:'赭',c:'#8B5E3C',lv:'进阶',meta:'十一讲 · 10 图 + 诊断终端',d:'运行时区、四收集器搬球、卡表、双亲委派、逃逸分析、容器 137;jps 到 Arthas 一个模拟终端。'},
+  {g:'g-lang',f:'spring-illustrated.html',n:'Spring',han:'翠',c:'#3D7A2C',lv:'入门',meta:'十二讲 · 12 图 + beanFactory',d:'三级缓存棋盘、AOP 栈帧、自调用红线、注解翻牌墙、事务失效开关台、MVC 九步。'},
+  {g:'g-lang',f:'spring-boot-illustrated.html',n:'Spring Boot',han:'缃',c:'#B4530A',lv:'入门',meta:'十一讲 · 10 图 + starter 顾问',d:'自动装配漏斗、BOM 仲裁、配置水塔、jar 爆炸、Actuator 收口、自研 starter 五步工坊。'},
+  {g:'g-lang',f:'design-patterns-illustrated.html',n:'设计模式',han:'斑',c:'#7A5C2E',lv:'入门',meta:'九讲 · 7 图 + 23 格宫格',d:'策略 diff 见刀、单例六写法×三攻击、装饰器洋葱、责任链短路;GoF 实景样板间。'},
+  {g:'g-data',f:'mysql-illustrated.html',n:'MySQL',han:'靛',c:'#15607E',lv:'入门',meta:'十二讲 · 12 图 + mini mysql',d:'B+ 树分裂实验室、回表双树、WAL 断电剧本、MVCC 版本链、隔离调度台、UUID 页分裂实演。'},
+  {g:'g-data',f:'redis-illustrated.html',n:'Redis',han:'朱',c:'#CE3B24',lv:'入门',meta:'十二讲 · 14 图 + mini redis-cli',d:'事件循环阻塞、三大缓存问题彩排台、三级过期淘汰、哨兵/Cluster 真算 CRC16。'},
+  {g:'g-data',f:'kafka-illustrated.html',n:'Kafka',han:'绛',c:'#7C2F52',lv:'进阶',meta:'九讲 · 8 图 + 分区账本',d:'ISR/HW 水位、消费组抢坑、幂等 seq、参数生死矩阵、Lag 四形态诊室、事务 LSO。'},
+  {g:'g-data',f:'elasticsearch-illustrated.html',n:'Elasticsearch',han:'松',c:'#2E6B4F',lv:'进阶',meta:'七讲 · 7 图 + 倒排实验室',d:'posting list 跳跃求交 vs LIKE 全表;refresh/translog、BM25、深分页、集群路由自愈。'},
+  {g:'g-net',f:'network-illustrated.html',n:'计算机网络',han:'金',c:'#7D6B1E',lv:'入门',meta:'十讲 · 10 图 + 全链路动画',d:'三握四挥 TIME_WAIT、拥塞三曲线、QUIC 队头连坐、TLS 证书链、DNS 问路、JWT 篡改。'},
+  {g:'g-net',f:'netty-illustrated.html',n:'Netty 与 IO 模型',han:'黛',c:'#41605C',lv:'进阶',meta:'十讲 · 8 图 + 调度舞台',d:'select vs epoll 双舞台、EventLoop 三环、Pipeline 断链、refCnt 僵尸、零拷贝四式、私有协议解码。'},
+  {g:'g-arch',f:'architecture-illustrated.html',n:'后端架构师',han:'紫',c:'#6B3FA0',lv:'进阶',meta:'十三讲 · 13 图 + 架构地图',d:'CAP 闸刀、哈希环迁移、限流四算法、雪花位段、事务四方案、机房起火、容量估算器。'},
+  {g:'g-arch',f:'spring-cloud-illustrated.html',n:'微服务 Spring Cloud',han:'阵',c:'#4763A0',lv:'进阶',meta:'九讲 · 5 图 + 阵型图',d:'心跳死缓、least-active 绕慢、灰度阀门、配置分区、重试风暴 27 倍、韧性五问。'},
+  {g:'g-arch',f:'kubernetes-illustrated.html',n:'Kubernetes',han:'蔚',c:'#326CE5',lv:'进阶',meta:'七讲 · 6 图 + 调度台',d:'装箱与反亲和 Pending、调和环自愈、Service 烧 Pod、PV/SC、探针下线、apply 全链路接力。'},
+  {g:'g-sre',f:'sre-illustrated.html',n:'SRE 稳定性工程',han:'炎',c:'#B03A2E',lv:'进阶',meta:'十讲 · 5 图 + 预算台',d:'错误预算四档、双窗燃烧率、止血 vs 破案双线、发布四卡、M/M/1 拐点、混沌游戏日证伪。'},
+  {g:'g-ai',f:'llm-illustrated.html',n:'大模型原理',han:'曜',c:'#1F3A63',lv:'进阶',meta:'九讲 · 6 图 + 注意力之网',d:'点词看视线、QKV 全手算、Block 装配线、三阶段分布变形、KV Cache 平方 vs 线性、LoRA 塌缩。'},
+  {g:'g-ai',f:'ai-agent-illustrated.html',n:'AI Agent',han:'青',c:'#0F6E73',lv:'入门',meta:'十二讲 · 11 图 + 会跑的 Agent',d:'浏览器里真循环的迷你 agent;记忆四策略失忆对照、RAG 空间、schema 修复、注入攻防、pass@k。'},
+  {g:'g-ai',f:'llm-platform-illustrated.html',n:'AI 平台工程',han:'航',c:'#33566B',lv:'进阶',meta:'十讲 · 7 图 + 网关台',d:'LLMOps:级联账单、Prompt 注册表 A/B、评测进 CI、trace 成本、自建盈亏线、FinOps 三级、模型生命周期。'},
+];
+B.forEach(b=>{b.gid='gb-'+b.n.replace(/[^a-zA-Z0-9一-龥]/g,'');});
+/* ---- 图谱绘制 ---- */
+const svg=document.getElementById('g-svg');
+const NS='http://www.w3.org/2000/svg';
+function el(t,a,kids){const e=document.createElementNS(NS,t);for(const x in a){x==='text'?e.textContent=a[x]:e.setAttribute(x,a[x]);}(kids||[]).forEach(c=>e.append(c));return e;}
+const ROLES=[{x:300,y:60,t:'后端架构师',links:['g-lang','g-data','g-net','g-arch','g-sre']},{x:680,y:60,t:'AI Agent 架构师',links:['g-ai','g-data','g-net','g-sre']}];
+ROLES.forEach(r=>{
+  svg.append(el('rect',{x:r.x-72,y:r.y-22,width:144,height:38,rx:19,fill:'#20242C'}));
+  svg.append(el('text',{x:r.x,y:r.y+4,'class':'grole',fill:'#F4F5F0',text:r.t}));
+  r.links.forEach(gid=>{
+    const g=G.find(x=>x.id===gid);
+    svg.append(el('path',{d:`M ${r.x} ${r.y+18} Q ${(r.x+g.x)/2} ${r.y+70}, ${g.x} ${g.y-34}`,'class':'glink','data-role':r.t,'data-g':gid}));
+  });
+});
+G.forEach(g=>{
+  const books=B.filter(b=>b.g===g.id);
+  const node=el('g',{id:'gn-'+g.id,'class':'gnode'});
+  node.append(el('circle',{cx:g.x,cy:g.y,r:34,fill:'#fff',stroke:g.c,'stroke-width':2}));
+  node.append(el('text',{x:g.x,y:g.y+3,'font-size':13,text:g.n.slice(0,2)}));
+  node.append(el('text',{x:g.x,y:g.y+56,'font-size':14,'font-weight':900,'text-anchor':'middle',fill:'#20242C',text:g.n,'font-family':'Noto Serif SC,serif'}));
+  node.append(el('text',{x:g.x,y:g.y+72,'font-size':10,fill:'#5B636F','text-anchor':'middle',text:books.length+' 册'}));
+  node.addEventListener('click',()=>{const t=document.getElementById('grp-'+g.id);t.scrollIntoView({block:'start'});t.classList.add('flash');setTimeout(()=>t.classList.remove('flash'),1200);});
+  svg.append(node);
+  books.forEach((b,i)=>{
+    const bx=g.x-((books.length-1)*34)/2+i*34, by=g.y+34;
+    const bk=el('g',{'class':'gbook',id:b.gid});
+    bk.append(el('circle',{cx:bx,cy:by,r:13,fill:b.c}));
+    bk.append(el('text',{x:bx,y:by+4.5,'font-size':12,text:b.han}));
+    const ttl=document.createElementNS(NS,'title');ttl.textContent=b.n;bk.append(ttl);
+    bk.addEventListener('click',()=>location.href=b.f);
+    svg.append(bk);
+  });
+});
+/* ---- 书架 ---- */
+const gr=document.getElementById('groups');
+G.forEach(g=>{
+  const sec=document.createElement('section');sec.className='grp';sec.id='grp-'+g.id;
+  sec.innerHTML=`<h3 style="border-color:${g.c}">${g.n}<span>${B.filter(b=>b.g===g.id).length} 册</span></h3>`;
+  B.filter(b=>b.g===g.id).forEach(b=>{b.gid='gb-'+b.n.replace(/[^a-zA-Z0-9一-龥]/g,'');});
+  const grid=document.createElement('div');grid.className='books';
+  B.filter(b=>b.g===g.id).forEach(b=>{
+    const a=document.createElement('a');a.className='bk';a.href=b.f;a.style.setProperty('--c',b.c);a.id='b-'+b.f.replace('-illustrated.html','');
+    a.innerHTML=`<span class="han">${b.han}</span><h4>${b.n}</h4><div class="meta">${b.meta}</div><p>${b.d}</p><div class="foot"><span class="lv">${b.lv}</span><span class="go">开卷 →</span></div>`;
+    a.onmouseenter=()=>{const c=document.getElementById(b.gid);if(c)c.firstChild.setAttribute('r',17);};
+    a.onmouseleave=()=>{const c=document.getElementById(b.gid);if(c)c.firstChild.setAttribute('r',13);};
+    grid.append(a);
+  });
+  sec.append(grid);gr.append(sec);
+});
+document.getElementById('today').textContent=new Date().toLocaleDateString('zh-CN');
+</script>
 </body>
 </html>
