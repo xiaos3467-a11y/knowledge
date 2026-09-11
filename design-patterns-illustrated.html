@@ -668,8 +668,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"策略模式主流程\"新增零改动\"的收益前提是？","o":["写满接口注释","分支多、每支有独立逻辑且会真实变化;三个 if 硬套策略反而是过度设计","全部用枚举","禁止 if"],"a":1,"why":"模式甜点区在\"真变化\";预防性抽象是反模式清单第一条——先让 if 疼过再请策略。","ref":"#ch-strategy","rt":"第一讲 · 策略"},{"q":"装饰器相对继承组合能力的本质优势是？","o":["更快","运行期自由叠层(洋葱),组合数 n 层;继承是编译期静态组合,4 能力=16 子类","更省内存","类型安全"],"a":1,"why":"Buffered(GZIP(File)) 随手换序;代价是洋葱圈层顺序本身成了语义——解错一层就乱码。","ref":"#ch-decor","rt":"第二讲 · 装饰器"},{"q":"单例七式里能同时免疫反射与序列化攻击的是？","o":["双重检查锁","枚举(JVM 对枚举构造反射直接抛异常,序列化按 name 解析)","静态内部类","饿汉"],"a":1,"why":"私构造挡不住 setAccessible+newInstance=\"第二个实例\";readResolve 是可忘的补丁,枚举是语言级免疫。","ref":"#ch-single","rt":"第三讲 · 擂台"},{"q":"观察者模式对\"加下游\"的改进体现在？","o":["广播更快","新下游=新订阅者文件,上游发布器零改动;代价是要自己管注销与顺序","省内存","强类型"],"a":1,"why":"依赖方向被掰正(上游不认识下游)——Spring 事件、MQ、前端响应式全是这个骨架的不同肌肉。","ref":"#ch-obs","rt":"第四讲 · 观察者"},{"q":"责任链\"顺序设计\"的考点是？","o":["节点越多越好","同一请求可被前段短路;先验明正身还是先省算力,两种顺序对应两种威胁模型","必须注册中心","禁止改序"],"a":1,"why":"限流放鉴权前后各有对错:防越权探测先鉴权,防无脑打满先限流——链的装配顺序本身是架构决策。","ref":"#ch-chain","rt":"第五讲 · 责任链"}]</script>
 <!--/kn:quiz-data-->
@@ -720,7 +720,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

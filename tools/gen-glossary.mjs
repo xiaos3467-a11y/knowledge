@@ -1,0 +1,190 @@
+// 生成 glossary.html 的数据与脚本区(数据在此定义并断言,JSON 序列化写入,杜绝手写括号事故)
+import fs from 'node:fs';
+const G=[
+{k:'lang',n:'语言与框架',c:'var(--c-lang)',items:[
+ ['happens-before','JMM 的可见性偏序契约：两条操作若无此关系，重排与不可见都是合法行为','java-concurrency','ch-jmm','并发 · JMM'],
+ ['volatile','担可见性与有序性两担子，唯独不给原子性；DCL 防半初始化对象的钥匙','java-concurrency','ch-vol','并发 · volatile'],
+ ['锁升级','无锁→偏向→轻量级(CAS 自旋)→重量级(Monitor 挂起)，只升不降','java-concurrency','ch-lock','并发 · 锁升级'],
+ ['CAS 与 ABA','比较并交换一条原子指令；值转一圈回来骗过校验，版本号戳破','java-concurrency','ch-cas','并发 · CAS'],
+ ['AQS','一个 volatile state + CLH 队列 + park 交接，JUC 锁与同步器的母版','java-concurrency','ch-aqs','并发 · AQS'],
+ ['线程池执行序','核心→队列→临时→拒绝；无界队列让 maximumPoolSize 形同虚设','java-concurrency','ch-pool','并发 · 线程池'],
+ ['ThreadLocal','每线程一张隐式 Map；弱 key 强 value，池化线程不 remove 即僵尸抽屉','java-concurrency','ch-tl','并发 · ThreadLocal'],
+ ['三级缓存','成品/早期引用/工厂三层：把"裸对象还是代理"的决策延迟到真有人要时','spring-illustrated','ch-cycle','Spring · 循环依赖'],
+ ['BeanPostProcessor','每个 Bean 出厂前后的两道安检柜台：注入、代理、Aware 都在这插队','spring-illustrated','ch-life','Spring · 生命周期'],
+ ['JDK 与 CGLIB 代理','有接口走 Proxy(强转本尊炸)，无接口生成子类覆写(final 拦不住)','spring-illustrated','ch-aop','Spring · AOP'],
+ ['事务传播七式','REQUIRED 同船、REQUIRES_NEW 换船、NESTED savepoint 分段沉船','spring-illustrated','ch-prop','Spring · 传播'],
+ ['自动装配漏斗','imports 清单 + @Conditional 逐项评估：按 classpath 决定装不装','spring-boot-illustrated','ch-auto','Boot · 漏斗'],
+ ['GC Roots','栈引用/静态变量/JNI/活线程出发，走不到的即可回收','jvm-illustrated','ch-alive','JVM · 死活判定'],
+ ['卡表与写屏障','老年→年轻的引用写一笔标脏卡；minor GC 从此不陪全堆跑','jvm-illustrated','ch-ct','JVM · 卡表'],
+ ['双亲委派','加载请求向上问，父能则子不动手；SPI 反委派是它的著名破例','jvm-illustrated','ch-cl','JVM · 类加载'],
+ ['逃逸分析','对象不出方法就"不必存在"：拆成寄存器标量，连 GC 都省了','jvm-illustrated','ch-jit','JVM · JIT'],
+]},
+{k:'data',n:'数据与中间件',c:'var(--c-data)',items:[
+ ['IO 多路复用','一个 epoll 照看万条连接：就绪回调摘名单，而非逐个问"好了吗"','redis-illustrated','ch-loop','Redis · 事件循环'],
+ ['惰删与勤删','访问时查过期是懒汉；后台每 100ms 抽样 20、过期超 25% 续轮是勤快','redis-illustrated','ch-expire','Redis · 过期淘汰'],
+ ['穿透击穿雪崩','查不存在(空值/布隆)、大热 key 过期(互斥/逻辑过期)、同时过期(抖动/高可用)','redis-illustrated','ch-cache','Redis · 三大问题'],
+ ['SDS','长度记在头上、预分配懒释放、二进制安全——Redis 字符串的底盘','redis-illustrated','ch-types','Redis · 类型台'],
+ ['跳表','有序链表盖高速路：比较 O(logN)，范围查询顺叶子链表一路走完','redis-illustrated','ch-skip','Redis · 跳表'],
+ ['RDB 与 AOF','全景照片 vs 流水账；fork+COW 拍照，fsync 三档定丢多少','redis-illustrated','ch-persist','Redis · 持久化'],
+ ['Quorum','W+R>N 多数派才算数：读写窗口必须交叠才保证读到最新确认','redis-illustrated','ch-sentinel','Redis · 哨兵仲裁'],
+ ['全量与部分复制','replid+offset+环形 backlog：缺口还在窗口里就只补差值','redis-illustrated','ch-repl','Redis · 主从'],
+ ['MVCC 与 ReadView','undo 版本链+可见性判断；RC 每次读造视图，RR 第一次就锁死','mysql-illustrated','ch-mvcc','MySQL · 版本链'],
+ ['回表与覆盖','二级树只给主键，回聚簇树再走一遍；要查的列齐了就免回表','mysql-illustrated','ch-two','MySQL · 两棵树'],
+ ['最左前缀','联合索引按 a 主 b 次 c 末排序；跳过 a 直接用 b 等于全树无序','mysql-illustrated','ch-composite','MySQL · 前缀'],
+ ['WAL 两阶段提交','日志先行：redo prepare→binlog→redo commit；崩溃恢复以 binlog 为裁判','mysql-illustrated','ch-wal','MySQL · WAL'],
+ ['间隙锁与 Next-Key','锁记录也锁空隙，防 INSERT 制造写幻读；RR 的看家武器','mysql-illustrated','ch-lock','MySQL · 锁'],
+ ['隐式转换杀索引','varchar 列比数字转的是列：等价给列套函数，索引当场作废','mysql-illustrated','ch-explain','MySQL · EXPLAIN'],
+ ['ISR 与 HW','跟得上队伍的副本集合；HW=ISR 最小 LEO，消费者只读到这条线','kafka-illustrated','ch-replica','Kafka · 水位线'],
+ ['Rebalance','组内进人出人全员暂停重分坑；慢消费触发超时=风暴','kafka-illustrated','ch-consume','Kafka · 消费组'],
+ ['幂等生产者','pid+seq 记账，重复批次静默丢弃；in.flight≤5 才不破序','kafka-illustrated','ch-order','Kafka · 幂等'],
+ ['Log Compaction','同 key 只留最新值：状态型 topic 的"全量快照+增量"一栈式','kafka-illustrated','ch-compact','Kafka · 压实'],
+ ['倒排索引','词→posting list：查询=查词表+有序链跳跃求交，O(命中数)','elasticsearch-illustrated','ch-why','ES · 倒排'],
+ ['近实时 NRT','refresh 默认 1s 才建可搜 segment——刚写的搜不到是设计不是 bug','elasticsearch-illustrated','ch-write','ES · 写入路径'],
+ ['BM25','词频饱和+逆文档频率+长度归一：堆关键词在数学上破产','elasticsearch-illustrated','ch-bm25','ES · 打分'],
+ ['doc_values','写时生成的列式正排：聚合排序走列不碰原文，text 没有它就不能聚合','elasticsearch-illustrated','ch-agg','ES · 聚合'],
+]},
+{k:'net',n:'网络与通信',c:'var(--c-net)',items:[
+ ['三次握手','每段确认一条方向；两次永远缺"服务端确认客户端收得到"','network-illustrated','ch-tcp','网络 · 握手'],
+ ['TIME_WAIT','等 2MSL：最后 ACK 丢了能重答，旧包死透再复用四元组','network-illustrated','ch-tcp','网络 · 挥手'],
+ ['rwnd 与 cwnd','流量控制说"我吃得下"，拥塞控制说"网络堵不堵"——取小开窗','network-illustrated','ch-loss','网络 · 窗口'],
+ ['慢启动','名字是误导：每个 RTT 翻倍指数探路才是它的真身','network-illustrated','ch-cong','网络 · 拥塞'],
+ ['快重传与 SACK','3 个重复 ACK 不等超时直接补；SACK 纸条写明洞在哪精确重传','network-illustrated','ch-loss','网络 · 重传'],
+ ['QUIC','传输层多流：一条流丢包不连坐其他流；CID 认人切网不断线','network-illustrated','ch-hol','网络 · 队头阻塞'],
+ ['TLS 混合加密','非对称只在握手送钥匙，数据全程对称；ECDHE 给前向安全','network-illustrated','ch-tls','网络 · TLS'],
+ ['证书链','根公钥逐级验签；自签不是"不安全"，是"无法确认他是谁"','network-illustrated','ch-tls','网络 · 证书链'],
+ ['递归与迭代','你只问本地解析器(替你办到底)；它问根/域/权威是跑腿式迭代','network-illustrated','ch-dns','网络 · DNS'],
+ ['JWT','签名防改不防看；可验签即无状态，代价是吊销难','network-illustrated','ch-auth','网络 · 身份'],
+ ['502 与 504','网关连不上后端 vs 连上了等超时——报错的主语不同','network-illustrated','ch-debug','网络 · 排障'],
+ ['epoll','注册一次免每轮拷贝；就绪链表回调，代价只跟就绪数有关','netty-illustrated','ch-io','Netty · epoll'],
+ ['EventLoop','一个线程一个 selector 一条队列；Channel 终生绑定=无锁串行化','netty-illustrated','ch-loop','Netty · 事件环'],
+ ['Pipeline 双河','入站 head→tail、出站反向，各自只走半边；忘 fire 就断链','netty-illustrated','ch-pipe','Netty · 管道'],
+ ['零拷贝四式','sendfile 不出内核、Composite 拼视图、slice 切片、池化堆外','netty-illustrated','ch-zero','Netty · 零拷贝'],
+ ['LengthField 拆包','TCP 没有消息边界：读 header 取长度，凑齐整条才往下 fire','netty-illustrated','ch-frame','Netty · 拆包'],
+ ['IdleStateHandler','读写空闲到点触发心跳/踢死连接——TCP keepalive 默认 2 小时太远','netty-illustrated','ch-heart','Netty · 心跳'],
+]},
+{k:'arch',n:'分布式与云原生',c:'var(--c-arch)',items:[
+ ['CAP 的 P','分区容错不是选项是现实；CP/AP 只在分区发生那一刻才谈','architecture-illustrated','ch-cap','架构 · CAP'],
+ ['一致性哈希','键与点同环顺时针；加节点只接走一小段弧，虚拟节点把弧切碎','architecture-illustrated','ch-lb','架构 · 哈希环'],
+ ['令牌桶漏桶','攒令牌容忍合理突发 vs 强制恒速保护下游——先问语义再选算法','architecture-illustrated','ch-rl','架构 · 限流'],
+ ['熔断三态','CLOSED 统计→OPEN 快速失败→HALF-OPEN 放探测；降级是熔断后的活法','architecture-illustrated','ch-br','架构 · 熔断'],
+ ['Snowflake 位段','41 时间+10 机器+12 序列的零和分配；时钟回拨是它的阿喀琉斯','architecture-illustrated','ch-sf','架构 · 雪花'],
+ ['本地消息表','落库与发消息绑成一个原子；定时补投换最终一致','architecture-illustrated','ch-mq','架构 · MQ 账本'],
+ ['TCC 与 Saga','Try 预留三套接口 vs 补偿链逆序走——锁资源与隔离性的取舍','architecture-illustrated','ch-txn','架构 · 分布式事务'],
+ ['单元化','按 uid 切出自给自足的世界；爆炸半径从"机房"缩到 1/N','architecture-illustrated','ch-idc','架构 · 单元化'],
+ ['RTO 与 RPO','能忍多久不可用/能丢多少数据——灾备预算的换算器','architecture-illustrated','ch-idc','架构 · 灾备'],
+ ['背封装订','QPS=日请求/86400×峰值倍率；先数量级，再谈报价单','architecture-illustrated','ch-est','架构 · 容量估算'],
+ ['Pod','共享 netns 与 volume 的协作进程组；一个 Pod 一个 IP','kubernetes-illustrated','ch-pod','K8s · Pod'],
+ ['调和循环','spec 期望 vs status 现实，watch 到差异自己动——自愈的数学定义','kubernetes-illustrated','ch-ctrl','K8s · 控制器'],
+ ['Service','虚拟 IP+DNS 名+动态 Endpoint 名单：给临时牲口发稳定工牌','kubernetes-illustrated','ch-svc','K8s · Service'],
+ ['requests 与 limits','调度看 requests 的预算，运行撞 limits 的天花板；QoS 三档由此定','kubernetes-illustrated','ch-hpa','K8s · QoS'],
+ ['三种探针','startup 免死金牌、readiness 只摘流量、liveness 假死才重启','kubernetes-illustrated','ch-life','K8s · 探针'],
+ ['least-active','用在途请求数当负载均衡的实时健康信号：慢者自动少投','spring-cloud-illustrated','ch-call','微服务 · 负载均衡'],
+ ['重试预算','单层重试+指数退避+比例封顶；否则 3×3×3=27 倍谋杀下游','spring-cloud-illustrated','ch-retry','微服务 · 重试风暴'],
+]},
+{k:'sre',n:'可靠性工程',c:'var(--c-sre)',items:[
+ ['SLI SLO SLA','测出来的比 / 内部目标 / 带赔偿的合同；SLA 永远比 SLO 松一档','sre-illustrated','ch-slo','SRE · 三词辨析'],
+ ['错误预算','99.9% = 每月 43 分钟可坏；烧光必须有牙齿(发布冻结/签字豁免)','sre-illustrated','ch-slo','SRE · 预算台'],
+ ['燃烧率告警','快窗抓现行、慢窗防误报；2/6/14.4 倍分档决定响铃还是叫人','sre-illustrated','ch-burn','SRE · 双窗口'],
+ ['MTTD 与 MTTR','发现时长×止血时长才是 KPI；破案是复盘以后的事','sre-illustrated','ch-incident','SRE · 事故度量'],
+ ['IC Comm Ops','事故三角色：指挥官不碰终端，15 分钟一报的节奏比内容重要','sre-illustrated','ch-incident','SRE · 事故指挥'],
+ ['Blameless 复盘','对事严格对人温和；5-Why 每层要证据，行动项带验收才闭环','sre-illustrated','ch-post','SRE · 复盘'],
+ ['变更七成','约七成事故来自变更(代码/配置/基础设施/回刷都算)','sre-illustrated','ch-change','SRE · 变更治理'],
+ ['特性开关','发布≠上线：代码可以天天发，行为按桶灰度','sre-illustrated','ch-change','SRE · 开关'],
+ ['容量拐点','利用率过 80% 后 P99 陡升——红线画在悬崖边而不是 100%','sre-illustrated','ch-cap','SRE · 拐点曲线'],
+ ['稳态假设','混沌四步的第一步：先定义可量化的"正常"，证伪即赚到','sre-illustrated','ch-chaos','SRE · 混沌'],
+ ['薛定谔的备份','没做过 restore 验证的备份不算备份——容灾四层楼的地基','sre-illustrated','ch-dr','SRE · 恢复演练'],
+ ['toil 上限','SRE 的岗位合法性：一半时间消灭重复劳动，否则只是值班运维','sre-illustrated','ch-life','SRE · 职业'],
+]},
+{k:'ai',n:'AI 与 Agent',c:'var(--c-ai)',items:[
+ ['token 与窗口','模型的字是子词片；中文约 1~1.5 token/字，窗口是每轮重发的总预算','ai-agent-illustrated','ch-token','Agent · token 预算'],
+ ['温度 T','logits 除 T 再 softmax：T 高分布平，低概率词抢镜，胡说同涨','ai-agent-illustrated','ch-temp','Agent · 温度采样'],
+ ['Agent 循环','LLM 在循环里被反复调用+工具回填，直到响应不再要工具','ai-agent-illustrated','ch-loop','Agent · 本质'],
+ ['tool_use','模型只吐 JSON；执行、鉴权、计费全在你手里——职责分界线','ai-agent-illustrated','ch-tool','Agent · 工具调用'],
+ ['上下文工程','全量/截断/摘要/向量召回：每换一种策略=换一种失忆方式','ai-agent-illustrated','ch-mem','Agent · 记忆策略'],
+ ['RAG','开卷考试：chunk→embedding→top-k→拼上下文并引用；病根九成在检索','ai-agent-illustrated','ch-rag','Agent · RAG'],
+ ['repair loop','schema 校验不过就把错误原样回喂重试；模型输出永远当不可信输入','ai-agent-illustrated','ch-schema','Agent · 结构化输出'],
+ ['MCP','N×M 乱线收成 N+M 星口：tools/resources/prompts；Server 描述也是注入面','ai-agent-illustrated','ch-mcp','Agent · MCP'],
+ ['pass@k pass^k','k 次至少一中是上限，k 次全中才叫稳；给用户的东西看后者','ai-agent-illustrated','ch-eval','Agent · 评测'],
+ ['间接提示注入','恶意指令藏在网页/邮件/工具返回值里混进上下文——指令与数据同介质','ai-agent-illustrated','ch-inject','Agent · 注入攻防'],
+ ['prompt cache','稳定前缀命中按 ~1/10 计价；把 system+工具定义设计成可缓存形状','ai-agent-illustrated','ch-cost','Agent · 成本工程'],
+ ['注意力 QKV','每个词拿 Q 查全场 K，softmax 加权收 V——理解=动态相关性分配','llm-illustrated','ch-qkv','大模型 · QKV 手算'],
+ ['多头与 FFN','d 维切 96 个头各看一种关系；FFN 是存知识的参数大头','llm-illustrated','ch-block','大模型 · Block'],
+ ['训练三部曲','预训练会而不说、SFT 教会话形状、对齐教分寸；上限在预训练','llm-illustrated','ch-train','大模型 · 三部曲'],
+ ['KV Cache','缓存历史 K/V：每 token 从 O(n) 重算降到 O(1) 新增——它自己吃显存','llm-illustrated','ch-decode','大模型 · 解码'],
+ ['内存墙','decode 每词全量读权重：算力利用率个位数、带宽满负荷','llm-illustrated','ch-mem','大模型 · 显存墙'],
+ ['Scaling Law','损失随参数/数据幂律平滑下降；"涌现"多是离散指标的分辨率错觉','llm-illustrated','ch-scale','大模型 · 定律'],
+ ['LoRA','ΔW≈B×A 低秩补丁：训 0.1~1% 参数，可合并推理零开销可热插拔','llm-illustrated','ch-lora','大模型 · LoRA'],
+ ['级联路由','小模型先答+置信不足升旗舰：15% 的预算买回 99% 的质量','llm-platform-illustrated','ch-cascade','平台 · 级联'],
+ ['eval 进 CI','冒烟必跑+阈值基线红灯禁合——把"体感变好"开除出上线依据','llm-platform-illustrated','ch-evalci','平台 · 质量闸门'],
+ ['语义缓存','embedding 相似度命中直接回：FAQ 场景三成命中=三成免费','llm-platform-illustrated','ch-why','平台 · AI 网关'],
+ ['模型生命周期','模型卡→离线评测→5% 灰度双跑→全量→退役；latest 是定时炸弹','llm-platform-illustrated','ch-mlife','平台 · 版本管理'],
+]},
+];
+// 断言: 五字段 + 锚点文件存在性粗查(文件名)
+let total=0;
+for(const g of G)for(const it of g.items){
+  if(!Array.isArray(it)||it.length!==5)throw new Error('字段数错误:'+JSON.stringify(it).slice(0,60));
+  total++;
+}
+// 引用文件存在性 + 锚点存在性(规范化文件名: 缺 -illustrated 后缀自动补)
+for(const g of G)for(const it of g.items){
+  if(!it[2].endsWith('-illustrated'))it[2]+='-illustrated';
+  const [,,file,anchor]=it;
+  if(!fs.existsSync(file+'.html'))throw new Error('出处文件不存在:'+file);
+  if(!fs.readFileSync(file+'.html','utf8').includes('id="'+anchor+'"'))throw new Error('锚点不存在:'+file+'#'+anchor);
+}
+console.log('词条数:',total);
+const DATA=JSON.stringify(G).replace(/</g,'\\u003c');
+const RENDER=`<script>
+const G=${DATA};
+const groups=document.getElementById('groups');
+G.forEach(g=>{
+  const sec=document.createElement('section');sec.className='grp';sec.dataset.k=g.k;sec.style.setProperty('--gc',g.c);
+  const h2=document.createElement('h2');
+  const dot=document.createElement('i');dot.style.background=g.c;
+  h2.append(dot,document.createTextNode(g.n));
+  const s=document.createElement('s');s.textContent=g.items.length+' 条';h2.append(s);
+  sec.append(h2);
+  const box=document.createElement('div');box.className='items';
+  g.items.forEach(it=>{
+    const [t,d,file,anchor,src]=it;
+    const card=document.createElement('div');card.className='it';
+    const b=document.createElement('b');b.textContent=t;
+    const p=document.createElement('p');p.textContent=d;
+    const sd=document.createElement('div');sd.className='src';
+    const a=document.createElement('a');a.href=file+'.html#'+anchor;a.textContent='↗ '+src;
+    sd.append(a);card.append(b,p,sd);box.append(card);
+  });
+  sec.append(box);groups.append(sec);
+});
+document.getElementById('date').textContent=new Date().toLocaleDateString('zh-CN');
+const q=document.getElementById('q');let filt='all';
+function apply(){
+  const kw=q.value.trim().toLowerCase();let shown=0;
+  document.querySelectorAll('.it').forEach(it=>{
+    if(!it.dataset.raw)it.dataset.raw=(it.querySelector('b').textContent+' '+it.querySelector('p').textContent+' '+it.querySelector('.src').textContent).toLowerCase();
+    const okK=filt==='all'||it.closest('.grp').dataset.k===filt;
+    const hit=okK&&(!kw||it.dataset.raw.includes(kw));
+    it.classList.toggle('hide',!hit);if(hit)shown++;
+    ['b','p'].forEach(tag=>{const n=it.querySelector(tag);const txt=n.dataset['keep'+tag]||(n.dataset['keep'+tag]=n.textContent);
+      if(kw&&hit){const i=txt.toLowerCase().indexOf(kw);
+        if(i>-1){n.innerHTML='';n.append(txt.slice(0,i),Object.assign(document.createElement('mark'),{className:'hl',textContent:txt.slice(i,i+kw.length)}),txt.slice(i+kw.length));}
+        else n.textContent=txt;
+      }else n.textContent=txt;});
+  });
+  document.querySelectorAll('.grp').forEach(grp=>{
+    grp.style.display=[...grp.querySelectorAll('.it')].some(x=>!x.classList.contains('hide'))?'':'none';
+  });
+  document.getElementById('count').textContent='共 '+shown+' 条';
+}
+q.addEventListener('input',apply);
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+  document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===c));
+  filt=c.dataset.f;apply();
+});
+apply();
+</`+`script>`;
+let html=fs.readFileSync('glossary.html','utf8');
+html=html.replace(/<script>[\s\S]*<\/script>/,RENDER);
+fs.writeFileSync('glossary.html',html);
+console.log('glossary.html script region replaced');

@@ -1263,8 +1263,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"三级缓存中第三级（singletonFactories）存在的核心理由是？","o":["加快查找速度","把\"给裸对象还是提前代理\"的决策延迟到真有人来要早期引用时","存储销毁回调","给 prototype 用的"],"a":1,"why":"若两级缓存直存裸对象，AOP 需要代理时会出现\"裸对象与代理各一份\"的分裂；存 ObjectFactory 让代理化恰好发生一次。","ref":"#ch-cycle","rt":"第三讲 · 三级缓存"},{"q":"构造器注入的循环依赖为什么三级缓存也救不了？","o":["因为构造器太慢","A 连实例化都没完成，没有任何引用可提前曝光","Spring 故意不支持","要改用 @Resource"],"a":1,"why":"早期引用依赖\"空壳对象已存在\"；构造参数解析发生在实例化之前，工厂无从注册——只能 @Lazy 占位或拆环。","ref":"#ch-cycle","rt":"第三讲 · 构造器死锁"},{"q":"@Transactional 标在私有方法上，事务生效吗？","o":["生效，CGLIB 什么都能拦","不生效：子类无法覆写 private 方法，代理织不进去","生效但只回滚不提交","抛异常启动失败"],"a":1,"why":"CGLIB 靠继承覆写，private 跨类不可见、final/static 同理——代理根本没有插手的机会，马甲没穿上。","ref":"#ch-pit","rt":"第五讲 · 代理禁区"},{"q":"REQUIRED 传播下内层方法抛异常被外层 catch，外层最后提交会？","o":["正常提交，互不影响","抛 UnexpectedRollbackException：共享事务已被标记 rollback-only","自动回滚外层但不报错","降级为 NOT_SUPPORTED"],"a":1,"why":"一条船上的标记：inner 把共享事务标成只许回滚，outer 看不见异常却提交时被事务管理器揭穿——要隔离换 REQUIRES_NEW。","ref":"#ch-prop","rt":"第八讲 · 传播行为"},{"q":"@TransactionalEventListener(AFTER_COMMIT) 解决什么问题？","o":["让事件更快","把副作用（发短信/投递）推迟到业务事务提交成功之后，回滚则不执行","替代 MQ","解决事件乱序"],"a":1,"why":"同步监听在事务提交前执行，事务回滚了短信却已发出；AFTER_COMMIT 让\"成了才做\"由容器保证。","ref":"#ch-event","rt":"第十一讲 · 事件"}]</script>
 <!--/kn:quiz-data-->
@@ -1315,7 +1315,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

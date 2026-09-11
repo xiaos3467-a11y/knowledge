@@ -965,10 +965,10 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
-<script>window.__KN_QUIZ_DATA__=[{"q":"线程池提交任务的真实顺序是？","o":["线程池满→队列→拒绝","核心→最大线程→队列","workerCount<core 建核心线程→入队→队满才建临时线程→还满才拒绝","随机分配"],"a":2,"why":"反直觉但铁律：队列没满之前，maximumPoolSize 根本没机会用；所以无界队列=max 失效（Executors.newFixedThreadPool 的坑）。","ref":"#ch-pool","rt":"第七讲 · 线程池"},{"q":"volatile 保证什么、不保证什么？","o":["保证原子性","保证可见性与有序性，不保证原子性（volatile i++ 仍丢更新）","什么都不保证","只保证顺序"],"a":1,"why":"写即刷主存+失效他核缓存；读写前后插屏障禁重排；但\"读-改-写\"三步的原子性要靠锁或原子类。","ref":"#ch-vol","rt":"第三讲 · volatile"},{"q":"DCL 单例里 new 的三步重排会造成什么？","o":["死锁","另一线程第一重检查通过，拿到\"半初始化\"对象","内存泄漏","CPU 空转"],"a":1,"why":"分配→初始化→赋引用可被重排；volatile 禁止后两步越界，配合双检锁才完整——两个知识点锁死在一起。","ref":"#ch-lock","rt":"第四讲 · 双检"},{"q":"AQS 抢锁失败的线程去了哪里？","o":["忙等自旋到底","包装成节点挂 CLH 双向队列，park 挂起，等前驱唤醒","进入 Object.wait 集","抛异常"],"a":1,"why":"state+CLH 队列+park/unpark 就是 AQS 的全部家底；公平与否只差\"加锁前先看没看队头\"一行。","ref":"#ch-aqs","rt":"第六讲 · AQS"},{"q":"ThreadLocal 在哪个场景必然泄漏？","o":["方法结束即 remove","线程池线程不死，弱 key 被回收后 value 挂表里无人再触","static 修饰 ThreadLocal","用 InheritableThreadLocal"],"a":1,"why":"Entry 弱 key 变 null 但强 value 还在；线程复用即\"永远没人再开这个抽屉\"——set 必配 finally remove 的纪律。","ref":"#ch-tl","rt":"第八讲 · ThreadLocal"}]</script>
+<script>window.__KN_QUIZ_DATA__=[{"q":"线程池提交任务的真实顺序是？","o":["线程池满→队列→拒绝","核心→最大线程→队列","workerCount\u003ccore 建核心线程→入队→队满才建临时线程→还满才拒绝","随机分配"],"a":2,"why":"反直觉但铁律：队列没满之前，maximumPoolSize 根本没机会用；所以无界队列=max 失效（Executors.newFixedThreadPool 的坑）。","ref":"#ch-pool","rt":"第七讲 · 线程池"},{"q":"volatile 保证什么、不保证什么？","o":["保证原子性","保证可见性与有序性，不保证原子性（volatile i++ 仍丢更新）","什么都不保证","只保证顺序"],"a":1,"why":"写即刷主存+失效他核缓存；读写前后插屏障禁重排；但\"读-改-写\"三步的原子性要靠锁或原子类。","ref":"#ch-vol","rt":"第三讲 · volatile"},{"q":"DCL 单例里 new 的三步重排会造成什么？","o":["死锁","另一线程第一重检查通过，拿到\"半初始化\"对象","内存泄漏","CPU 空转"],"a":1,"why":"分配→初始化→赋引用可被重排；volatile 禁止后两步越界，配合双检锁才完整——两个知识点锁死在一起。","ref":"#ch-lock","rt":"第四讲 · 双检"},{"q":"AQS 抢锁失败的线程去了哪里？","o":["忙等自旋到底","包装成节点挂 CLH 双向队列，park 挂起，等前驱唤醒","进入 Object.wait 集","抛异常"],"a":1,"why":"state+CLH 队列+park/unpark 就是 AQS 的全部家底；公平与否只差\"加锁前先看没看队头\"一行。","ref":"#ch-aqs","rt":"第六讲 · AQS"},{"q":"ThreadLocal 在哪个场景必然泄漏？","o":["方法结束即 remove","线程池线程不死，弱 key 被回收后 value 挂表里无人再触","static 修饰 ThreadLocal","用 InheritableThreadLocal"],"a":1,"why":"Entry 弱 key 变 null 但强 value 还在；线程复用即\"永远没人再开这个抽屉\"——set 必配 finally remove 的纪律。","ref":"#ch-tl","rt":"第八讲 · ThreadLocal"}]</script>
 <!--/kn:quiz-data-->
 <!--kn:quiz-engine v2-->
 <section class="demo" id="qz-root" data-slug="java-concurrency" style="margin-top:56px">
@@ -1017,7 +1017,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

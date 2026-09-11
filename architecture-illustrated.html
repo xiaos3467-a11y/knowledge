@@ -1194,8 +1194,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"CAP 里 P 的含义是？","o":["性能","分区容错不是选项而是现实:网络必坏,你只能在 C 与 A 之间选","私有化","负载均衡"],"a":1,"why":"P 被误当成\"三选二里的选项\";真相是分区发生时 CP 拒答保一致、AP 各写各的留可用——且粒度可按节点/业务拆。","ref":"#ch-cap","rt":"第一讲 · CAP"},{"q":"一致性哈希加虚拟节点的收益是？","o":["查询更快","落点均匀(负载齐)+迁移被切碎(扰动更近 1/N 且摊到所有人)","省内存","免心跳"],"a":1,"why":"三个物理点在环上会把世界切成三大块弧;每点撒 24 个分身,新节点接管的是碎片而不是整块江山。","ref":"#ch-lb","rt":"第二讲 · 哈希环"},{"q":"令牌桶与漏桶的语义分工是？","o":["前者更快","令牌桶容忍合理突发(攒令牌),漏桶强制恒速(护下游)","等价","都只能匀速"],"a":1,"why":"同一段双尖峰流量,四种算法放行进/拒两分——没有最好的算法,只有你要的语义:护下游选漏桶。","ref":"#ch-rl","rt":"第三讲 · 限流"},{"q":"MQ 三本账里\"消费端不丢消息\"的铁律是？","o":["先 ack 后处理","先处理完业务、后提交 ack;顺序反了=拿丢消息换重复","自动重试即可","开了幂等就安全"],"a":1,"why":"处理前 ack:崩在处理中途消息已销账=永久丢;处理后 ack 至多少量重复——配合幂等去重才两全,生产默认 at-least-once。","ref":"#ch-mq","rt":"第六讲 · MQ 账本"},{"q":"三地五单元架构的核心价值是？","o":["省机器","爆炸半径收敛到 1/N:单元自闭环,炸一个只切该单元流量","延迟更低","免备份"],"a":1,"why":"异地双写被 RTT 否决,单元化让绝大多数请求在本地闭环;机房起火从\"全站事故\"降级为\"1/5 用户抖动\"。","ref":"#ch-idc","rt":"第十讲 · 单元化"}]</script>
 <!--/kn:quiz-data-->
@@ -1246,7 +1246,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

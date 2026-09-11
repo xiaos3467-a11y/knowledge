@@ -681,8 +681,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"写一条文档后默认\"搜不到\",要等谁？","o":["merge","refresh(默认 1s)生成可搜的小 segment;NRT=每秒批量可搜","flush","translog"],"a":1,"why":"写入先进 in-memory buffer+translog,refresh 才建 segment 打开搜索——\"刚写的搜不到\"是设计而非 bug。","ref":"#ch-write","rt":"第二讲 · 写入路径"},{"q":"text 与 keyword 字段的分工是？","o":["等价","text 分词供全文检索;keyword 整串供精确匹配/聚合/排序","text 更快","keyword 只能存数字"],"a":1,"why":"字段先定性:要\"搜到\"用 text,要\"精确等于/分组\"用 keyword;一个字段两者常常都要(multi-field)。","ref":"#ch-map","rt":"第四讲 · 分词"},{"q":"BM25 相对 TF-IDF 的\"防刷\"改良是？","o":["引入 IDF","词频饱和:同词出现 100 次不会比 5 次相关 20 倍","用余弦","向量检索"],"a":1,"why":"TF 进 (k1+1)tf/(tf+k1(1-b+b·len/avg)) 的饱和函数,堆砌关键词收益递减;再叠字段长度归一。","ref":"#ch-bm25","rt":"第三讲 · BM25"},{"q":"from=999980&size=20 的真实代价是？","o":["只读 20 条","每分片都要取前 100 万条归并,协调节点再堆排;默认 1 万窗口是护栏","等价游标","自动转 scroll"],"a":1,"why":"深分页在分布式下被分片数放大;search_after 书签式续读才是 O(size)——跳页交互请限页或改游标。","ref":"#ch-page","rt":"第六讲 · 深分页"},{"q":"routing=hash(doc_id)%shards 决定了？","o":["副本数","文档落哪个主分片,查询同函数点名直达;分片数变更=全量搬家(split/reindex)","磁盘布局","超时"],"a":1,"why":"一个 hash 函数统治写入与查询两条路;这也是\"业务键 routing 点查单片直达\"与\"分片数不可改\"的同源原理。","ref":"#ch-clu","rt":"第七讲 · 路由"}]</script>
 <!--/kn:quiz-data-->
@@ -733,7 +733,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

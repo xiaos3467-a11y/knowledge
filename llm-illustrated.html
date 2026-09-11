@@ -623,8 +623,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"注意力机制解决了 RNN 的什么死穴？","o":["显存","任意两位置直连+全序列并行计算;长距离依赖不再靠衰减的接力传递","词表大小","采样"],"a":1,"why":"每个词对全场\"看一眼\"、权重学习而来——\"它\"看向\"猫\"不需要信息先游过 50 步;并行化顺带解放了训练规模。","ref":"#hero","rt":"开篇 · 注意力之网"},{"q":"Q·K·V 三者的角色类比最准确的是？","o":["三种编码","查询/索引/内容:我的 Q 和全场 K 打分,softmax 后加权拿走各位的 V","主谓宾","注意力头"],"a":1,"why":"一次自带检索:打分(点积)→归一(softmax)→取值(加权和);三套投影矩阵全是学出来的,模型自己发现\"什么找什么\"。","ref":"#ch-qkv","rt":"第二讲 · QKV"},{"q":"预训练模型的\"能力\"与\"会回答\"的关系是？","o":["等价——会就能说","预训练只会续写;\"回答\"是 SFT 教出的对话格式——它会而不说,微调解锁的是行为方式","SFT 制造了新能力","对齐会提高能力上限"],"a":1,"why":"同一个分布三个阶段:互联网续写器→听话助手→懂分寸助手;能力上限在预训练,形状在后训练。","ref":"#ch-train","rt":"第四讲 · 三部曲"},{"q":"KV Cache 把生成成本从什么降成什么？","o":["线性→常数","每 token 重算全历史的 O(n²) 总账,降为缓存 K/V 后单 token O(1) 新增","无变化","时间换空间"],"a":1,"why":"缓存历史 token 的 K/V,新 token 只算自己;代价是这块缓存本身随长度×并发吃显存——下一讲的主角。","ref":"#ch-decode","rt":"第五讲 · 解码"},{"q":"LoRA 敢只训 ~1% 参数的依据是？","o":["知识在注意力层","微调的权重改变量 ΔW 经验上是低秩的:B×A 两个窄矩阵即可近似,冻结主干","rank 越大越好","量化等价"],"a":1,"why":"\"大改行、小补丁\"——rank 滑块上 16×4096 vs 4096² 的比例一目了然;代价是表达上限,甜点区是领域适配而非注入新事实。","ref":"#ch-lora","rt":"第八讲 · LoRA"}]</script>
 <!--/kn:quiz-data-->
@@ -675,7 +675,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

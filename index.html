@@ -231,9 +231,11 @@ document.getElementById('today').textContent=new Date().toLocaleDateString('zh-C
   try{
     for(let i=0;i<localStorage.length;i++){
       const k=localStorage.key(i);if(!k)continue;
-      if(k.startsWith('kn.quiz.')){try{quizzes[k.slice(8)]=JSON.parse(localStorage.getItem(k));}catch(e){}}
-      else if(k.startsWith('kn.read.'))reads[k.slice(8)]=1;
-      else if(k.startsWith('kn.visit.'))visits[k.slice(9)]=+localStorage.getItem(k)||0;
+      const keyTail=k.split('.').pop();
+      if(!/^[\w-]+$/.test(keyTail))continue; // 白名单:拒绝畸形键
+      if(k.startsWith('kn.quiz.')){try{const r=JSON.parse(localStorage.getItem(k));if(r&&typeof r==='object'&&typeof r.best==='number')quizzes[keyTail]=r;}catch(e){}}
+      else if(k.startsWith('kn.read.'))reads[keyTail]=1;
+      else if(k.startsWith('kn.visit.'))visits[keyTail]=+localStorage.getItem(k)||0;
     }
   }catch(e){}
   const slug=fileKey=>fileKey.replace('-illustrated.html','');
@@ -253,18 +255,23 @@ document.getElementById('today').textContent=new Date().toLocaleDateString('zh-C
       btn.textContent=reads[s]?'✓ 已读':'标已读';a.classList.toggle('isread',!!reads[s]);stat();};
     foot.append(btn);
   });
+  const DEFAULT_STAT='册 · 讲次 190+ · 动画 140+<br>零依赖 · 离线可开';
   function stat(){
     const done=Object.keys(quizzes).length,perfect=Object.values(quizzes).filter(q=>q.best>=q.total).length,nRead=Object.keys(reads).length;
-    document.getElementById('stat-txt').innerHTML=`册 · 自测 ${done} 卷（满分 ${perfect}）· 打卡 ${nRead}<br>零依赖 · 离线可开`;
+    document.getElementById('stat-txt').innerHTML=done||nRead?`册 · 自测 ${done} 卷（满分 ${perfect}）· 打卡 ${nRead}<br>零依赖 · 离线可开`:DEFAULT_STAT;
   }
   stat();
   // 继续在读
   const vs=Object.entries(visits).sort((a,b)=>b[1]-a[1]);
-  if(vs.length){const s=vs[0][0];const el=document.getElementById('continue');
-    el.style.display='block';
-    const card=document.getElementById('b-'+s);
-    const nm=card?(card.querySelector('h4')||{}).textContent||s:s;
-    el.innerHTML=`▶ 继续在读：<a href="${s}-illustrated.html">${nm}</a> · 最近访问 ${new Date(vs[0][1]).toLocaleString('zh-CN')}`;
+  if(vs.length){const s=vs[0][0];const card=document.getElementById('b-'+s);
+    if(card){ // 键必须能对应在册卡片才渲染,防拼入未校验字符串
+      const el=document.getElementById('continue');
+      el.style.display='block';el.innerHTML='';
+      el.append(document.createTextNode('▶ 继续在读：'));
+      const a=document.createElement('a');a.href=s+'-illustrated.html';
+      a.textContent=(card.querySelector('h4')||{}).textContent||s;
+      el.append(a,document.createTextNode(' · 最近访问 '+new Date(vs[0][1]).toLocaleString('zh-CN')));
+    }
   }
 })();
 </script>

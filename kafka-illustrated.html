@@ -698,8 +698,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"HW（高水位）的定义是？","o":["Leader 的 LEO","ISR 全体副本 LEO 的最小值——消费者只能读到这条线以下","最大分区号","生产者的 ack 数"],"a":1,"why":"\"至少被 ISR 每个副本持有\"才算已提交;Leader 独跑再快,消费者也不能提前看到没复制完的数据。","ref":"#ch-replica","rt":"第二讲 · LEO/HW"},{"q":"acks=all + min.insync.replicas=2 的运行时含义是？","o":["永远不丢也不拒写","ISR≥2 才接受写；缩到 1 时直接拒绝写入——用可用性换持久性","全部副本落盘才 ack","每两秒同步一次"],"a":1,"why":"三件套(rep≥3+acks=all+min.insync=2)才是\"确认过的写不丢\"的完整契约;NotEnoughReplicasException 是它的痛觉。","ref":"#ch-replica","rt":"第二讲 · ISR"},{"q":"Kafka 的\"顺序保证\"边界是？","o":["全局有序","单分区内有序;同 key 靠 hash 进同一分区才谈得上该 key 有序","同 group 有序","跨集群有序"],"a":1,"why":"分区是唯一有序单元;扩分区会重排 hash 抽屉顺序,历史 key 的新消息可能换区——顺序承诺要按业务键设计。","ref":"#ch-order","rt":"第五讲 · 有序"},{"q":"消费端\"自动提交 offset\"最典型的事故是？","o":["重复消费","处理未完成 offset 已提交,崩溃即永久跳过这批消息","性能慢","触发 rebalance"],"a":1,"why":"提交时机与处理完成的错位:先提后做=丢,先做后提=重;要 exactly-once 语义靠幂等或事务,不靠提交时机玄学。","ref":"#ch-consume","rt":"第三讲 · 位移"},{"q":"Lag 监控里\"一个分区独高、其余贴地\"说明？","o":["网络分区","热点 key 全挤同一分区;加分区救不了 hash,要先治 key 分布","消费者太多","磁盘满"],"a":1,"why":"齐涨才是吞吐缺口;\"独高\"是数据分布问题——加盐二次分发或消费端按 key 并行,别急着扩容。","ref":"#ch-lag","rt":"第七讲 · 积压"}]</script>
 <!--/kn:quiz-data-->
@@ -750,7 +750,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

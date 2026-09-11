@@ -1837,8 +1837,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"Redis 官方口径里\"单线程\"指的是什么？","o":["整个进程只有一个线程","网络 IO 与命令执行都是单线程","仅命令执行是单线程；网络 IO 6.0+ 起多线程","只指后台定时任务线程"],"a":2,"why":"Redis 6.0 的多线程只负责网络读写与协议解析，命令执行仍然串行——\"单线程模型\"说的从来是执行。","ref":"#ch-loop","rt":"第二讲 · 事件循环"},{"q":"线上执行 KEYS * 为什么是事故？","o":["它会清空所有键","O(N) 全库扫描且串行执行下阻塞所有后续命令","它只返回前 1000 个键","它会关闭 RDB 持久化"],"a":1,"why":"单线程执行意味着一条慢命令让所有人排队；KEYS 遍历整库正是最典型的慢命令，用 SCAN 渐进替代。","ref":"#ch-loop","rt":"第二讲 · 事件循环"},{"q":"缓存\"击穿\"与\"雪崩\"的区别是？","o":["击穿是 Redis 挂了，雪崩是 MySQL 挂了","击穿=一个大热key过期被并发打穿；雪崩=大批key同时到期或实例整体不可用","两者相同，只是叫法不同","击穿只发生在 Cluster 模式"],"a":1,"why":"一个是\"单点瞬间\"（互斥重建/逻辑过期），一个是\"同一时刻\"（TTL 加随机打散/高可用兜底），病因与药方都不同。","ref":"#ch-cache","rt":"第七讲 · 三大缓存问题"},{"q":"部分复制（增量重连）依赖的三要素是？","o":["replid + offset + 环形 backlog","RDB 文件名 + 偏移 + 心跳","zmyid + epoch + 日志","binlog 位点 + GTID + UUID"],"a":0,"why":"主库把最近发送的命令写进环形 backlog，副本报上 replid 与自己的 offset，缺口还在窗口内就只补发差值；被覆盖则退回全量。","ref":"#ch-repl","rt":"第八讲 · 主从复制"},{"q":"Cluster 模式下想让两个 key 必然落在同一分片，用什么手段？","o":["把值设成一样","key 里使用相同的 {hash tag}","给它们设同样的 TTL","开 ASK 重定向"],"a":1,"why":"CRC16 只对花括号内的内容哈希：{user:1001}.name 与 {user:1001}.age 同槽，多键操作（Lua/MULTI）才有活路。","ref":"#ch-cluster","rt":"第十讲 · Cluster"}]</script>
 <!--/kn:quiz-data-->
@@ -1889,7 +1889,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

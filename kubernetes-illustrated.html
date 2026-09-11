@@ -703,8 +703,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"Pod 是调度单位而不是容器的核心原因是？","o":["省内存","表达\"必须同生共死、共享 netns/volume 的进程组\"这一协作单元","启动快","方便日志"],"a":1,"why":"应用+sidecar/init 容器共享同一网络栈与卷;把协作关系写进调度边界——这是 Pod 存在的全部理由。","ref":"#ch-pod","rt":"第一讲 · Pod"},{"q":"Service 是什么？","o":["一个进程","一组动态 Pod 的稳定访问入口(虚拟 IP+DNS+Endpoint 名单),不是容器","网关设备","Ingress"],"a":1,"why":"Pod 是临时 IP 的牲口,Service 发工牌:名字固定、后端名单随摘随补——\"谁在那\"变成动态清单。","ref":"#ch-svc","rt":"第三讲 · Service"},{"q":"Pod 就绪探针(readiness)失败与存活探针(liveness)失败的区别？","o":["都重启","readiness 只摘流量不杀容器;liveness 失败直接重启容器","都只告警","无区别"],"a":1,"why":"依赖抖了≠进程死了;把 readiness 的活派给 liveness,重启风暴就是标准结局。","ref":"#ch-life","rt":"第五讲 · 探针"},{"q":"requests 与 limits 各管什么？","o":["都管运行","requests 管调度预算(够不够放),limits 管运行天花板(CPU 限流/内存超限杀)","前者管安全","后者管启动"],"a":1,"why":"调度只看 requests;超 limit 的 OOMKill/节流是运行期的账——只设一个等于两头都失控,QoS 三档也由它们定。","ref":"#ch-hpa","rt":"第六讲 · QoS"},{"q":"kubectl apply 之后 Pod 诞生的接力顺序是？","o":["kubelet→etcd→scheduler","apiserver 校验写 etcd→controller 建 Pod→scheduler 绑定节点→kubelet 拉起","先起容器","轮询查询"],"a":1,"why":"没有任何一环是\"命令\":每一步都是 watch 到期望与现实的差异后自己动——声明式的接力棒。","ref":"#ch-arch","rt":"第七讲 · apply"}]</script>
 <!--/kn:quiz-data-->
@@ -755,7 +755,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

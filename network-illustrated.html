@@ -911,8 +911,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"TCP 三次握手最少要三次的原因是？","o":["网络规定如此","两次无法确认\"服务端发→客户端收\"这个方向；第三次恰好顺带确认双方","防重放攻击","同步时钟"],"a":1,"why":"每次握手都在验一个方向：①验我发你能收 ②验你发我能收+确认① ③确认②——两次永远差最后一条腿。","ref":"#ch-tcp","rt":"第三讲 · 握手"},{"q":"TIME_WAIT 等 2MSL 的两个目的是？","o":["等计费完成","保证最后的 ACK 丢了能重答；让本连接旧包在网络中死透再复用四元组","等 TCP_NODELAY 生效","冷却服务器端口"],"a":1,"why":"最后 ACK 丢失→对端重发 FIN 还能应答；旧包若串进同端口新连接就是数据污染——两个\"善后\"。","ref":"#ch-tcp","rt":"第四讲 · 挥手"},{"q":"收到 3 个重复 ACK 触发的动作是？","o":["超时重传","快重传：不等 RTO 立即补发丢失段","关闭连接","缩小到 1 个段"],"a":1,"why":"重复 ACK 说明后面包还在到、只有中间那一个没到——比干等 RTO 快一个数量级，是\"丢包证据\"而非\"失联证据\"。","ref":"#ch-loss","rt":"第五讲 · 快重传"},{"q":"拥塞控制里\"慢启动\"名字的真实含义是？","o":["一开始就慢速发送","指数增长快速探路，到 ssthresh 才转线性加法","先降速再恢复","仅用于新连接"],"a":1,"why":"它其实是最猛的加速阶段：每个 RTT 翻倍；AIMD 的\"乘性减+加性增\"才构成锯齿与公平收敛。","ref":"#ch-cong","rt":"第六讲 · 拥塞"},{"q":"HTTP/3(QUIC) 相对 HTTP/2 最本质的改良是？","o":["头部压缩更强","把多路复用到传输层：每条流独立重传，丢包不再连坐全部流","支持 WebSocket","使用 UDP 所以不可靠"],"a":1,"why":"H2 的复用只到应用层，TCP 有序交付一丢全堵；QUIC 把\"流\"下放传输协议，队头阻塞从根上拆掉。","ref":"#ch-hol","rt":"第七讲 · 队头阻塞"}]</script>
 <!--/kn:quiz-data-->
@@ -963,7 +963,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

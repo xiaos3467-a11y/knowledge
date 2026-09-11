@@ -653,8 +653,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"AI 网关相对\"各应用直连模型 API\"的核心价值是？","o":["显得现代","key/配额/路由/缓存/审计五件平台级关切一次收敛,升级模型=改网关不改 30 个仓库","免费额度","延迟低"],"a":1,"why":"散养阶段每个团队各自踩的坑(月底对不上账、升级要全改、出事没现场)都是治理缺位的复利;网关是收口点。","ref":"#ch-why","rt":"第一讲 · 收敛治理"},{"q":"级联路由(先小后大)的成本收益结构是？","o":["省钱必掉质量","成本降半、质量近乎持平:简单任务被小模型吸收,难任务付两级——命门是置信度校准","只降延迟","无代价"],"a":1,"why":"100 混合请求三账单对比:全旗舰 96 分 ¥100、级联 95.2 分 ¥42、全小 82 分 ¥12——15% 预算买回 99% 质量。","ref":"#ch-cascade","rt":"第二讲 · 级联"},{"q":"\"评测进 CI\"拦住的典型事故是？","o":["OOM","删掉拒答指令的 PR 通过率跳水红灯禁合——\"本地感觉挺好\"不算证据","格式化","依赖漏洞"],"a":1,"why":"冒烟必跑+全量夜间+阈值基线;把\"体感变好\"开除出上线依据,是 AI 团队脱离游击队的分水岭。","ref":"#ch-evalci","rt":"第四讲 · CI 闸门"},{"q":"自建推理的盈亏线本质在跟什么谈判？","o":["算法好坏","GPU 固定成本 vs API 单价:月账单过线+利用率达标+留冗余才自建,合规私有化另算准入题","团队规模","模型大小"],"a":1,"why":"拖滑块看见交叉点之前,自建=更贵+运维双份;八成公司没到线——\"技术自主性\"不是财务理由。","ref":"#ch-serve","rt":"第六讲 · 盈亏线"},{"q":"模型升级走状态机(candidate→离线评测→灰度→prod→退役)最重要的一步是？","o":["全量","灰度期真实指标双跑对比,恶化一键回滚——离线评测有盲区,线上 5% 才是最终面试官","注册","退役"],"a":1,"why":"latest 别名是定时炸弹,版本锁定+弃用盯梢;回滚之所以快,是因为 prompt/流量都跟着版本标签走。","ref":"#ch-mlife","rt":"第八讲 · 生命周期"}]</script>
 <!--/kn:quiz-data-->
@@ -705,7 +705,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

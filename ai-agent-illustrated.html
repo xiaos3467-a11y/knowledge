@@ -1059,8 +1059,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"Agent 的本质定义最贴近哪句？","o":["一个大模型","LLM 在循环里被反复调用,中间给它工具,直到不再请求工具","一套提示词","一个向量库"],"a":1,"why":"开场那台迷你 agent 演完了:messages 生长→tool_use→执行→回填→再发——\"自主规划\"=目标+循环把上一步喂回去。","ref":"#ch-loop","rt":"第一讲 · 循环"},{"q":"temperature 调高的实际效果是？","o":["输出更长","softmax 前的 logits 除 T,分布被抬平:低概率词上位,多样性与胡说同涨","确定性强","token 更省"],"a":1,"why":"抽 30 次的直方图说明一切:T=0.1 一个词垄断、T=2 四家平分——创意升温,抽取/代码降温。","ref":"#ch-temp","rt":"第二讲 · 温度"},{"q":"\"模型调用了天气 API\"这句话错在哪？","o":["API 不存在","模型只输出 tool_use JSON;执行、鉴权、计费全在你的运行时","不能并行调用","需要联网"],"a":1,"why":"模型连网都没碰;stop_reason=tool_use 是循环发令枪,tool_result 由你贴回——职责分界看清,事故责任才追得对。","ref":"#ch-tool","rt":"第四讲 · 工具"},{"q":"滑动窗口截断记忆最隐蔽的失败模式是？","o":["太贵","早期事实(猫的名字)被静默倒掉,模型答不上来还不报错——你只看到\"忘了\"","变慢","重复消费"],"a":1,"why":"四种策略=四种失忆方式;摘要/向量能救,但摘要器漏写、检索漏召同样是新失忆。没有免费记忆,只有选择的遗忘。","ref":"#ch-mem","rt":"第五讲 · 记忆"},{"q":"间接提示注入最典型的载体是？","o":["系统提示","被 Agent 读取的网页/邮件/工具返回值里埋\"忽略以上指令\"","日志级别","模型温度"],"a":1,"why":"模型眼里指令与数据同介质;防御靠纵深:内容标不可信+权限最小+危险动作人工确认——提示词层只是纱窗。","ref":"#ch-inject","rt":"第十一讲 · 注入"}]</script>
 <!--/kn:quiz-data-->
@@ -1111,7 +1111,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

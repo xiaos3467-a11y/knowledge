@@ -33,7 +33,7 @@ const META={ // slug -> {file,han,c,desc}
  sre:{f:'sre-illustrated',han:'炎',c:'#B03A2E',d:'SRE 与稳定性工程十讲：错误预算、多窗口燃烧率告警、事故指挥、变更治理、容量拐点与混沌演练的消防队讲义。'},
 };
 
-const CHECK=process.argv.includes('--check'),FORCED_SEO=process.argv.includes('--force-seo');
+const CHECK=process.argv.includes('--check'),FORCED_SEO=process.argv.includes('--force-seo'),FORCE_DATA=process.argv.includes('--force-data');
 const PBAR=fs.readFileSync(path.join(__dirname,'partials/pbar.html'),'utf8');
 const ENGINE=fs.readFileSync(path.join(__dirname,'partials/quiz-engine.html'),'utf8');
 
@@ -44,8 +44,8 @@ function favicon(han,c){
 function seoBlock(m,pageTitle){
   return `<!--kn:seo-->\n<meta name="description" content="${m.d}">\n<meta property="og:title" content="${pageTitle}">\n<meta property="og:description" content="${m.d}">\n<meta property="og:type" content="article">\n${favicon(m.han,m.c)}\n<!--/kn:seo-->`;
 }
-function dataBlock(slug,items){
-  return `<!--kn:quiz-data v1-->\n<script>window.__KN_QUIZ_DATA__=${JSON.stringify(items).replace(/<\//g,'<\\/')}</script>\n<!--/kn:quiz-data-->`;
+function dataBlock(items){
+  return `<!--kn:quiz-data v1-->\n<script>window.__KN_QUIZ_DATA__=${JSON.stringify(items).replace(/</g,'\\u003c')}</script>\n<!--/kn:quiz-data-->`;
 }
 // 通用: 成对标记整区替换 / 无则插入(after=true 插到锚点之后,否则之前)
 function applyBlock(html,{open,close,content,anchor,after}){
@@ -60,38 +60,46 @@ function applyBlock(html,{open,close,content,anchor,after}){
   if(html.includes('</body>'))return html.replace('</body>',content+'\n</body>');
   throw new Error('无插入点 '+open);
 }
-const results={};let changed=0,errors=[];
+/* 两阶段:全部算完放内存,零错误才统一落盘(check 模式只比对) */
+const errors=[];const pending=[];let changed=0;
 for(const slug in META){
   const m=META[slug],file=path.join(ROOT,m.f+'.html');
-  let html,title;
+  let html;
   try{html=fs.readFileSync(file,'utf8');}catch(e){errors.push(slug+':读取失败');continue;}
   const orig=html;
+  const bookSlug=m.f.replace(/-illustrated$/,''); // 契约:slug=文件名词干(与大厅卡片 id 一致)
   try{
     // head: seo
     if(FORCED_SEO||!html.includes('<!--kn:seo-->')){
-      title=(html.match(/<title>([^<]*)<\/title>/)||[,''])[1];
+      const title=(html.match(/<title>([^<]*)<\/title>/)||[,''])[1];
       html=applyBlock(html,{open:'<!--kn:seo-->',close:'<!--/kn:seo-->',content:seoBlock(m,title),anchor:'</title>',after:true});
     }
     const items=BANK[m.f];
     if(items){
-      // 数据块: 仅缺失时初写(写入前校验锚点)
-      if(!html.includes('<!--kn:quiz-data')){
-        for(const it of items){
-          const id=String(it.ref||'').replace('#','');
-          if(!id||!new RegExp('id="'+id+'"').test(html))throw new Error('锚点缺失 '+it.ref);
-          if(!Array.isArray(it.o)||it.o.length!==4)throw new Error('选项非法');
-        }
-        html=applyBlock(html,{open:'<!--kn:quiz-data',close:'<!--/kn:quiz-data-->',content:dataBlock(slug,items),anchor:'<style>.home-back'});
+      for(const it of items){
+        const id=String(it.ref||'').replace('#','');
+        if(!id||!new RegExp('id="'+id+'"').test(html))throw new Error('锚点缺失 '+it.ref);
+        if(!Array.isArray(it.o)||it.o.length!==4)throw new Error('选项非法');
+        if(!Number.isInteger(it.a)||it.a<0||it.a>3)throw new Error('正确项下标非法');
+        if(!/^#[\w-]+$/.test(String(it.ref)))throw new Error('ref 非锚点格式: '+it.ref);
+      }
+      const wantData=dataBlock(items);
+      if(!html.includes('<!--kn:quiz-data')||FORCE_DATA){
+        html=applyBlock(html,{open:'<!--kn:quiz-data',close:'<!--/kn:quiz-data-->',content:wantData,anchor:'<style>.home-back'});
+      }else if(CHECK){
+        // check 模式:在册数据区与题库重算结果比对,漂移计入 changed
+        const i0=html.indexOf('<!--kn:quiz-data'),i1=html.indexOf('<!--/kn:quiz-data-->');
+        if(html.slice(i0,i1+'<!--/kn:quiz-data-->'.length)!==wantData)html=applyBlock(html,{open:'<!--kn:quiz-data',close:'<!--/kn:quiz-data-->',content:wantData,anchor:null});
       }
       // 引擎: 版本替换
-      html=applyBlock(html,{open:'<!--kn:quiz-engine',close:'<!--/kn:quiz-engine-->',content:ENGINE.replace(/\{\{SLUG\}\}/g,slug),anchor:'<style>.home-back'});
+      html=applyBlock(html,{open:'<!--kn:quiz-engine',close:'<!--/kn:quiz-engine-->',content:ENGINE.replace(/\{\{SLUG\}\}/g,bookSlug),anchor:'<style>.home-back'});
     }else errors.push(slug+': 题库缺失');
     // pbar
     html=applyBlock(html,{open:'<!--kn:pbar',close:'<!--/kn:pbar-->',content:PBAR,anchor:'<style>.home-back'});
   }catch(e){errors.push(slug+': '+e.message);continue;}
-  results[slug]=html!==orig;
-  if(html!==orig){changed++;if(!CHECK)fs.writeFileSync(file,html);}
+  if(html!==orig){changed++;pending.push([file,html]);}
 }
+if(!errors.length&&!CHECK)for(const [f,h] of pending)fs.writeFileSync(f,h);
 console.log(JSON.stringify({mode:CHECK?'check':'inject',changed,books:Object.keys(META).length,errors},null,1));
-if(CHECK&&changed>0)process.exit(1);
 if(errors.length)process.exit(2);
+if(CHECK&&changed>0)process.exit(1);

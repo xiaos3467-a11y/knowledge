@@ -595,8 +595,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"99.9% 的 SLO 折算成月度错误预算是？","o":["4 分钟","约 43 分钟;99.99% 只剩 4.3 分钟——\"稳\"必须换算成可燃烧的分钟数","3 小时","432 秒"],"a":1,"why":"把形容词变货币:预算台滑块上四档目标四种寿命;烧完必须有后果(发布冻结/签字豁免),否则 SLO 只是墙上的标语。","ref":"#ch-slo","rt":"开篇 · 预算台"},{"q":"多窗口燃烧率告警里\"慢窗口\"的职责是？","o":["防睡过头","等雨停:30s 重启风暴不该叫醒人,持续烧预算才 page——快窗说\"出事了\",慢窗说\"还在出事吗\"","加速报警","记录日志"],"a":1,"why":"spike 剧本演示了固定阈值的深夜误报;2×/6×/14.4× 分档把\"响多大声\"接到利率上,值班信任才能重建。","ref":"#ch-burn","rt":"第二讲 · 燃烧率"},{"q":"事故响应的第一原则是？","o":["找根因","先止血:回滚>降级>扩容>重启;破案排到恢复之后,MTTR 才是 KPI","升级领导","改监控"],"a":1,"why":"双时间线对照:先破案的队伍 47 分钟仍在翻日志,止血队 4 分钟回滚恢复——而且破案能力一点没少,只是排到了后面。","ref":"#ch-incident","rt":"第三讲 · 双线"},{"q":"约七成线上事故的共同来源是？","o":["硬件老化","变更(代码/配置/基础设施/数据回刷);所以防线=可灰度+可观测+一键回滚+窗口冻结","流量突增","黑客"],"a":1,"why":"配置变更也算;评审只需要一个问题:\"这次坏了,怎么 5 分钟内回来\"——答不上来就是下次事故的预定时间。","ref":"#ch-change","rt":"第五讲 · 变更"},{"q":"利用率-P99 曲线为什么把容量红线画在 70-80%？","o":["省电","拐点之后陡升:M/M/1 排队时间随 ρ→1 爆炸,80% 再抖一下就雪崩","习惯","内核限制"],"a":1,"why":"拖过拐点是最好的体感教育——日常 60% 的规划余量不是为了\"用不完\",是为了峰值抖动留在悬崖之前。","ref":"#ch-cap","rt":"第六讲 · 拐点"}]</script>
 <!--/kn:quiz-data-->
@@ -647,7 +647,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

@@ -922,8 +922,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"JDK8 之后方法区的实现在哪里？","o":["还在堆里的永久代","Metaspace，本地内存","虚拟机栈","直接内存里固定 64M"],"a":1,"why":"永久代退役，类元数据搬进 Metaspace（受 MaxMetaspaceSize 限制）；动态生成类失控会 OOM: Metaspace 而非堆 OOM。","ref":"#ch-regs","rt":"第一讲 · 数据区"},{"q":"判断对象可回收，HotSpot 用什么算法？","o":["引用计数","可达性分析（GC Roots 遍历）","标记-清除","复制算法"],"a":1,"why":"引用计数破在循环引用；从栈引用/静态变量/JNI 等根出发走不到的即死——Python 才主要靠计数加循环探测。","ref":"#ch-alive","rt":"第三讲 · 死活"},{"q":"minor GC 后 Survivor 两块的角色是？","o":["随机用","from↔to 每次翻转，复制只发生在两块之间，免整理","一块存对象一块存引用","其中一块常驻老年代"],"a":1,"why":"复制成本只付\"活下来的\"，翻转只是换名字——但对象就在两块间反复搬家,直到熬够年龄晋升。","ref":"#ch-gen","rt":"第五讲 · 分代"},{"q":"卡表（Card Table）解决什么问题？","o":["对象分配慢","minor GC 避免把老年代当 roots 全扫：只扫脏卡里的跨代引用","类加载慢","栈溢出"],"a":1,"why":"写屏障\"记一笔\"（老年→年轻的引用落在哪张 512B 卡），换 minor 时老年代本体免扫——空间换时间的记账。","ref":"#ch-ct","rt":"第六讲 · 卡表"},{"q":"容器里 JVM 被 OOMKilled(137) 而日志无 OOM 异常，为什么？","o":["日志丢了","cgroup 内存超限速内核直接 SIGKILL，JVM 来不及抛任何异常","堆太小","JIT 崩溃"],"a":1,"why":"老 JDK 按宿主机算默认堆；容器感知或 MaxRAMPercentage 把上限画进红线内——两种死法现场完全不同。","ref":"#ch-cgroup","rt":"第十一讲 · 容器"}]</script>
 <!--/kn:quiz-data-->
@@ -974,7 +974,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

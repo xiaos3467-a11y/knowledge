@@ -40,3 +40,10 @@
 > 免费 Hobby 计划的流量额度对这种页面绰绰有余。
 > 国内网络对 `*.vercel.app` 的连通性时好时坏,介意的话绑一个自己的域名即可改善。
 
+
+## 学习进度与自测
+
+- 每册卷末有 5 题自测(判分+解析+回跳原讲),大厅有得分徽章/已读打卡/继续在读
+- 数据存在浏览器 localStorage(`kn.quiz.*` / `kn.read.*` / `kn.visit.*`),`file://` 本地打开与线上网站是**两个 origin,进度互不相通**
+- 题库源在 `tools/bank/`,改题后 `node tools/inject.mjs` 重注入(已注入册的题目数据不会被覆盖,可手改);上线前跑 `node tools/inject.mjs --check` 应零漂移
+- 术语词典 `glossary.html`:106 条跨册索引,出处锚点在生成时全量校验

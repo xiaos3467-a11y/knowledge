@@ -534,8 +534,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"注册中心\"摘除延迟\"为什么必然存在一段错误窗口？","o":["网络太慢","实例猝死时注销没发出,要等心跳超时才被摘;期间名单仍认为它活着,打到即失败","DNS 缓存","GC 停顿"],"a":1,"why":"心跳协议是\"猜死\"不是\"知死\";优雅下线(主动注销+排干)把窗口缩到 0,猝死场景靠调用侧实例级熔断兜底。","ref":"#ch-reg","rt":"第二讲 · 心跳"},{"q":"least-active 负载均衡相对轮询的本质优势是？","o":["更随机","感知实例当前在途压力:慢实例请求堆积→自动少投,异构/抖动集群不被喂死","实现简单","固定映射"],"a":1,"why":"轮询的公平是无知的公平;在途数是最便宜的实时健康信号——演示里慢实例第 4 号被清零即证据。","ref":"#ch-call","rt":"第三讲 · LB"},{"q":"灰度发布中\"按用户哈希分桶\"优于随机分桶的理由是？","o":["更省算力","同一用户体验一致(不今天新版明天旧版),问题可归因到人群","更好看","桶越多越好"],"a":1,"why":"灰度=用流量比例买信息;体验分裂与归因混乱会让这笔买卖亏本——锁桶是信息质量的前提。","ref":"#ch-gw","rt":"第四讲 · 灰度"},{"q":"配置热更新的长轮询链路里,网络分区时应用会？","o":["立刻崩溃","用内存旧值+本地快照继续运行,恢复后补拉——配置中心是增强件不是依赖件","重启","清空配置"],"a":1,"why":"\"它挂了已启动的服务照常活\"是评估配置/注册类组件的底线题;本地快照就是为这一刻存在的。","ref":"#ch-conf","rt":"第五讲 · 热更"},{"q":"三层调用链每层\"超时重试 3 次\",最底层收到几倍流量？","o":["3 倍","3×3×3=27 倍——乘法复利,善意的重试亲手打死下游","9 倍","不变"],"a":1,"why":"重试必须单层(通常边缘)+指数退避+预算+只重试幂等;每一跳各自\"负责\"就等于集体加害。","ref":"#ch-retry","rt":"第六讲 · 重试风暴"}]</script>
 <!--/kn:quiz-data-->
@@ -586,7 +586,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

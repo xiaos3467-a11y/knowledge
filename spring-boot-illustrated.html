@@ -847,13 +847,13 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"自动配置类的候选清单在 Boot 3 从哪里读取？","o":["spring.factories","META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports","bootstrap.yml","@ComponentScan"],"a":1,"why":"2.7 双轨、3.0 起 imports 文件接管自动配置清单（其余 SPI 仍在 spring.factories）；漏注册这行,自动配置类就是普通类。","ref":"#ch-auto","rt":"第三讲 · 漏斗"},{"q":"@ConditionalOnMissingBean 在自动配置里的意义是？","o":["加速启动","用户自定义了同类型 Bean 时，官方默认配置自动让位","防止重复加载 yml","开启并行装配"],"a":1,"why":"\"你没配我才配\"——覆盖默认值的机制底座；这也是自定义 starter 必须会写的一行。","ref":"#ch-auto","rt":"第三讲 · 条件"},{"q":"配置优先级（高→低）正确的是？","o":["application.yml > profile yml > 环境变量 > 命令行","命令行 > 环境变量 > profile yml > application.yml","@PropertySource 最高","默认值高于 yml"],"a":1,"why":"水塔从上往下灌：命令行救火最大；profile 压主文件；@PropertySource 更低；改配置不生效先背这条链。","ref":"#ch-cfg","rt":"第五讲 · 水塔"},{"q":"fat jar 的 Main-Class 是谁？","o":["你的 Application","JarLauncher（由它反射调用 Start-Class）","spring-boot-loader","DispatcherServlet"],"a":1,"why":"MANIFEST 里 Main-Class=JarLauncher、Start-Class=你的类；LaunchedURLClassLoader 直读嵌套 jar——\"jar 里跑 jar\"的全部秘密。","ref":"#ch-jar","rt":"第六讲 · jar 解剖"},{"q":"@WebMvcTest 里 @Autowired Repository 报无此 Bean，原因与解法是？","o":["缓存没清;重启","切片只装 web 层,Repository 根本不在场;下游改 @MockitoBean","版本 bug","加 @SpringBootTest"],"a":1,"why":"切片的快正是\"少装\"带来的；给切片要 Mock 下游，全链路才用 @SpringBootTest——测试金字塔的分工。","ref":"#ch-slice","rt":"第九讲 · 切片"}]</script>
 <!--/kn:quiz-data-->
 <!--kn:quiz-engine v2-->
-<section class="demo" id="qz-root" data-slug="boot" style="margin-top:56px">
+<section class="demo" id="qz-root" data-slug="spring-boot" style="margin-top:56px">
  <div class="fig-head"><span class="fig-no" style="background:var(--pen,#3D5A80)">自测</span><span class="fig-title">卷末自测 · 五题全对算毕业</span></div>
  <div style="font-size:13px;color:var(--ink2,#59616E)" id="qz-top"></div>
  <div id="qz-body"></div>
@@ -899,7 +899,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

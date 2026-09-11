@@ -752,8 +752,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"epoll 相对 select 的两大结构性优势是？","o":["支持更多协议","注册一次免每轮全量拷贝；就绪链表回调，返回 O(就绪数) 而非 O(总 fd)","没有 1024 限制而已","使用共享内存"],"a":1,"why":"select 每轮把整张 fd 集合用户↔内核来回搬；epoll_ctl 注册一次,epoll_wait 直接摘\"谁就绪了\"的名单。","ref":"#ch-io","rt":"第一讲 · IO 模型"},{"q":"Netty\"一个 Channel 终生绑定一个 EventLoop\"带来的最大红利是？","o":["线程更多","Handler 里无共享竞争、免加锁（无锁串行化）","零拷贝","自动重连"],"a":1,"why":"所有事件在同一线程串行处理——竞态从源头消失；代价也随之而来：绝不能在 handler 里干阻塞活。","ref":"#ch-loop","rt":"第三讲 · EventLoop"},{"q":"Pipeline 里入站事件的方向是？","o":["tail→head","head→tail，且只有 InboundHandler 参与；写向相反且只有 Outbound 参与","随机","双向广播"],"a":1,"why":"入站读事件从 head 流到业务，出站 write 从触发节点流回 head——两条单行道;忘 fireChannelRead 链就在你这站断掉。","ref":"#ch-pipe","rt":"第四讲 · Pipeline"},{"q":"ByteBuf 相比 JDK ByteBuffer 最省心的改良是？","o":["不用关闭","读游标写游标分离,flip() 整个概念消失","支持 gzip","自动扩容到无限"],"a":1,"why":"readerIndex/writerIndex 各走各的，读写之间不再需要翻转仪式；配合引用计数与池化才是完整体。","ref":"#ch-buf","rt":"第五讲 · ByteBuf"},{"q":"LengthFieldBasedFrameDecoder 的参数集在解决什么？","o":["加密","告诉拆包器:长度字段在哪、几字节、要不要加自身、跳过长 header——把 TCP 流切回消息","压缩","心跳"],"a":1,"why":"TCP 无消息边界,一切\"读固定字节数\"都会漂移;把边界规则交给长度字段,协议解码=拆包器+两个映射器。","ref":"#ch-frame","rt":"第七讲 · 拆包"}]</script>
 <!--/kn:quiz-data-->
@@ -804,7 +804,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;

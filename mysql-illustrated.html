@@ -1585,8 +1585,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <!--kn:pbar v1--><div id="kn-pbar" style="position:fixed;top:0;left:0;height:3px;width:0;background:var(--pen,#3D5A80);z-index:999;pointer-events:none"></div>
 <script>(function(){if(window.__KN_PBAR__)return;window.__KN_PBAR__=1;
 var b=document.getElementById('kn-pbar');
-addEventListener('scroll',function(){var h=document.documentElement;
-if(h)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';},{passive:true});})();</script><!--/kn:pbar-->
+function up(){var h=document.documentElement;if(h&&b)b.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';}
+addEventListener('scroll',up,{passive:true});addEventListener('resize',up,{passive:true});addEventListener('load',up);up();})();</script><!--/kn:pbar-->
 <!--kn:quiz-data v1-->
 <script>window.__KN_QUIZ_DATA__=[{"q":"InnoDB 二级索引的叶子节点里存放的是？","o":["整行数据","主键值","行物理地址","页号+偏移"],"a":1,"why":"叶子存\"索引列+主键\"，要整行得拿主键回聚簇索引再走一遍——这就是回表；存主键而非地址，是为了页分裂搬家时不用维护指针。","ref":"#ch-two","rt":"第三讲 · 回表"},{"q":"EXPLAIN 结果 Extra 出现 \"Using index\" 意味着？","o":["发生了全表扫描","覆盖索引命中，无需回表","索引用错了","需要 filesort"],"a":1,"why":"查询要的列都在二级索引叶子上（索引列+主键），二级树直接答完——省掉回表的\"第二次乘法\"。","ref":"#ch-two","rt":"第三讲 · 覆盖"},{"q":"两阶段提交中，redo 停在 prepare、binlog 完整，崩溃恢复时应该？","o":["回滚该事务","提交该事务","重放 binlog 后人工裁决","挂起等待运维确认"],"a":1,"why":"恢复时以 binlog 为裁判：redo prepare + binlog 完整 → 提交（从库也可能收到这条，必须主从一致）；没有 binlog 才回滚。","ref":"#ch-wal","rt":"第五讲 · 两阶段提交"},{"q":"REPEATABLE READ 下 InnoDB 防\"写幻读\"的主力武器是？","o":["MVCC 快照","间隙锁（Gap Lock）","串行隔离级别","表锁"],"a":1,"why":"快照读防住\"读幻\"，当前读（UPDATE/FOR UPDATE）靠 next-key/间隙锁把\"插入的空档\"也锁住；混用两种读口径仍会亲眼见\"幻\"。","ref":"#ch-lock","rt":"第八讲 · 锁"},{"q":"varchar 列 = 数字（不带引号）导致索引失效的根因是？","o":["MySQL 不支持字符串比较数字","隐式类型转换作用在列上，等价于给列套了函数","varchar 不能建索引","需要开 only_full_group_by"],"a":1,"why":"转列不转值：对每一行做 CAST(phone AS DOUBLE) 再比较，排序树被函数打乱；加引号即恢复 ref。","ref":"#ch-explain","rt":"第九讲 · EXPLAIN"}]</script>
 <!--/kn:quiz-data-->
@@ -1637,7 +1637,7 @@ function render(){
     var q=h('div');q.className='qz-q';q.textContent=(qi+1)+'. '+item.q;box.append(q);
     var why=h('div');why.className='qz-why';
     why.textContent='解析：'+item.why+' ';
-    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=item.ref;why.append(back);
+    var back=h('a');back.textContent='↩ 回看'+(item.rt?(' · '+item.rt):'');back.href=(/^#[\w-]+$/.test(String(item.ref))?item.ref:'#');why.append(back);
     var btns=[];
     item.o.forEach(function(op,oi){
       var b=h('button');b.type='button';b.className='qz-o';b.textContent=String.fromCharCode(65+oi)+'. '+op;
